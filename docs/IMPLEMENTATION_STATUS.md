@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **0, Task 1 — in progress**. API contract: `phase0.v1` (experiment only).
+Current phase: **0, Task 1 — implemented harness; verification gate pending**. API contract: `phase0.v1` (experiment only).
 
 Main is a documentation baseline, not a working release. Feature work cannot merge until required checks and device evidence pass.
 
@@ -12,14 +12,15 @@ Main is a documentation baseline, not a working release. Feature work cannot mer
 
 ### Task 1: Real-device tracking and matching experiment
 
-- [ ] Define typed start/pause/stopAndPurge and status/sample streams with consentEpoch/deviceSessionId. — **not started**
-- [ ] Write failing lifecycle assertions: pause stops samples; logout clears queue; queue caps at 200 and expires at 15 minutes; outdated epoch rejected. — **not started**
-- [ ] Implement Kotlin/Swift bridge and minimal test harness with no public discovery UI. — **not started**
-- [ ] Run paired phones on same street, opposite streets, adjacent cafés, different floors, stationary tables and fast crossings; log ground truth separately from app verdict. — **not started**
-- [ ] Test foreground, locked eight hours, background, app force-stop/force-quit, restart, network loss, permission downgrade, power saver and multiple devices per account. — **not started**
-- [ ] Measure battery against baseline with repeated comparable runs; record device/OS, duration, sampling, precision, recall and notification latency decomposition. — **not started**
-- [ ] Choose continuous/passive/adaptive trade-off from measured results; recommended adaptive. Brief-crossing rule stays off unless demonstrated. — **not started**
-- [ ] Confirm map plugin compatibility, asset/font availability and supported OS floors; pin initial versions/licenses. — **not started**
+- [ ] Define typed start/pause/stopAndPurge and status/sample streams with consentEpoch/deviceSessionId. — **implemented — typed Dart policy/sample/status contracts and native channel methods; Dart regressions pass; native runtime awaits device test**
+- [ ] Write failing lifecycle assertions: pause stops samples; logout clears queue; queue caps at 200 and expires at 15 minutes; outdated epoch rejected. — **implemented — bridge tests and debug encrypted-queue probe; populated active-delivery integration assertions added; physical execution blocked by APK prerequisites**
+- [ ] Implement Kotlin/Swift bridge and minimal test harness with no public discovery UI. — **implemented — Kotlin/Swift bridge and private harness; Kotlin custom-source compile and Swift custom-source typecheck pass; assembled builds pending**
+- [ ] Run paired phones on same street, opposite streets, adjacent cafés, different floors, stationary tables and fast crossings; log ground truth separately from app verdict. — **awaiting device test — no paired-phone evidence supplied**
+- [ ] Test foreground, locked eight hours, background, app force-stop/force-quit, restart, network loss, permission downgrade, power saver and multiple devices per account. — **awaiting device test — no locked/background/kill/permission/power/multi-device evidence supplied**
+- [ ] Measure battery against baseline with repeated comparable runs; record device/OS, duration, sampling, precision, recall and notification latency decomposition. — **awaiting device test — no battery/precision/recall figures; push latency blocked by missing test credentials and push integration**
+- [ ] Choose continuous/passive/adaptive trade-off from measured results; recommended adaptive. Brief-crossing rule stays off unless demonstrated. — **blocked — final sampling trade-off requires measured evidence; preliminary balanced foreground/background candidate only; brief-crossing rule remains off**
+- [ ] Confirm map plugin compatibility, asset/font availability and supported OS floors; pin initial versions/licenses. — **blocked — assets/fonts exported and rendered; direct Dart packages pinned from cache; native dependency compatibility, MapLibre and runtime OS floors unverified**
+
 
 ## Phase 1 — shared foundation and infrastructure
 
@@ -170,6 +171,47 @@ Main is a documentation baseline, not a working release. Feature work cannot mer
 ## Phase dependency order
 
 
-## Evidence
+## Evidence — 2026-10-17
 
-No application checks executed at baseline. See subsequent phase evidence entries for actual results and prerequisite blockers.
+- Backend `npm test` / `node --test test/phase0/*.test.ts`: **13 passed**, including an authenticated loopback HTTP test (local listener requires host permission), conservative boundaries, retries, stale leases, stop-before-start race and dense input. Not a TypeScript compiler or PostGIS integration test.
+- Mobile `flutter analyze --no-pub`: **No issues found**.
+- Mobile `flutter test --no-pub`: **25 passed**: API endpoint/scoped-stop regressions, Cubit permission/offline/native-stop flows, bridge epoch filtering and stale in-flight discard, 14 width/text-scale layouts and one rendered golden. No physical-device tests ran.
+- `python3 tools/check_android_source.py`: **exit0**; custom Kotlin compiles from existing caches. Temporary substitution of unresolved generated icon resource reference is documented in DEVICE_TESTS.md; resource linking/APK/native plugin packaging are not proven.
+- `xcrun swiftc -typecheck -D DEBUG` against installed iPhoneOS26.5 SDK, target arm64/iOS16, cached Flutter framework and generated bridging header: **exit0**, AppDelegate, SceneDelegate and PathsLocationTracker. No full iOS build, XCTest run or iOS runtime test.
+- Asset exporter executed; original primary SVG preview rendered with installed AppKit and inspected; symbol and fonts rendered by Flutter and inspected. XML parses, PNG decoding and iOS opaque-square icon checks pass. Launcher safe areas/native splash appearance await devices.
+- `git diff --check`: passes for project changes; .gitattributes preserves original third-party license whitespace verbatim.
+- Separate read-only code review found and prompted fixes for matching CPU bound, stale/reordered leases, stale Android service generation, offline native status, permission/foreground callback races, URI validation and failing-test cleanup. See REVIEW.md.
+
+Initial failed checks were not discarded: compact/200% layout overflow fixed and rerun; method-channel void cleanup fixed and rerun; endpoint regression fixed and rerun. CPU-bound failing regression was terminated and replaced by the tested bounded matcher. Initial sandbox-blocked loopback test was terminated, cleanup corrected and rerun with local listener permission.
+
+## Exact blockers and pending checks
+
+- Android APK `gradle --offline :app:assembleDebug`: blocked by SDK integration_test's uncached AGP8.11.0. Project-local diagnostic AGP9.1.0 override advances configuration, then stops on missing androidx.test runner1.2+, rules1.2+, espresso-core3.3+ listings/artifacts and Guava28.1-android. No downloads performed. Further missing native artifacts may emerge after these.
+- Android/iOS physical lifecycle, background delivery, encrypted key lifecycle, battery, encounter precision/recall, real splash/launcher masking and multiple-device behavior: **awaiting device test**. Active integration scenario is explicitly skipped unless owner opts in.
+- FCM/APNs credentials and experiment push dispatch/OS-delivery measurement: **blocked**; no alert result invented.
+- Strict backend TypeScript compilation and production NestJS/PostGIS/worker checks: **not executed**, dedicated compiler/dependencies and Phase1 infrastructure not installed/implemented.
+- MapLibre0.27.1 is present in cache but native compatibility, tiles and exact supported runtime floors are **unverified**. It is not linked into the Phase0 harness.
+- Native encrypted queue enforces expiry/prunes while executing; forced OS suspension cannot guarantee wall-clock disk erasure exactly at15min. Recorded limitation needs field validation before acceptance.
+
+No production deployments, purchases, personal data uploads, phone operations, emulator launches or app-store submissions. Only font assets were downloaded under the owner's visual-asset exception.
+
+## Repository scope and commits
+
+### paths-backend
+
+- `7b5e7e9 feat: add private two-participant experiment transport`
+- `89b99ff feat: add conservative encounter experiment policy`
+
+### paths-admin
+
+- `9861450 feat: add shared Paths brand and licensed fonts`
+
+### paths-mobile
+
+- `6b15cb6 feat: add consent-driven field harness and regression checks`
+- `86c4ea8 feat: add native tracking lifecycle and encrypted queues`
+- `df1d52e feat: add Paths identity and platform icon assets`
+
+All work remains on `feature/phase0-feasibility` from development. Main/development remain at the documentation baseline; no application release or phase merge. Later phase checklist items remain not started because the Phase0 dependency gate is pending. The final docs commit records this report; its SHA is available in git/PR and need not self-reference.
+
+Next action: supply complete local Android test artifact caches or explicitly change the no-download constraint; then run the owner's physical-device checklist. Do not advance Phase1 until Phase0 evidence and policy choice pass.
