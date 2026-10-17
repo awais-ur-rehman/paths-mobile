@@ -26,3 +26,10 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - `Inter-Variable.ttf`: `29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031`
 - `LilitaOne-OFL.txt`: `255d5debbb80eb2ea762644311f266a279e8778f00156655a516e2b7781a63e1`
 - `LilitaOne-Regular.ttf`: `f5b641c45c69d772ee4eda687bc9fda411d5cad6b0b45371491da4580cbc8d59`
+
+## Task3 onboarding photograph
+
+- Purpose: illustrative onboarding hero only; no person is presented as a Paths member or endorser.
+- Photo: MART PRODUCTION, Pexels photo8121667, “Group of Friends Walking in the Park”: https://www.pexels.com/photo/group-of-friends-walking-in-the-park-8121667/ . Download URL: https://images.pexels.com/photos/8121667/pexels-photo-8121667.jpeg?auto=compress&cs=tinysrgb&w=1600 .
+- License checked2026-10-17: https://www.pexels.com/license/ . Free commercial/app use and modification permitted; attribution not required. Do not imply endorsement, misuse identifiable people, resell unaltered copies or redistribute as stock. Optional photographer credit appears in the app's image credits.
+- Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
