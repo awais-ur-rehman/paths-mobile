@@ -17,3 +17,12 @@
 - Owner follow-up: “I have tested it and it is feasable”; explicitly authorized merging Phase0 PRs into development and continuing the plan. This is owner-reported feasibility acceptance, not a measured battery/precision report or iOS validation. Adaptive baseline retained; brief-crossing stays off. Main remains unchanged.
 - Owner selected Gmail SMTP for email and a Cloudflare bucket (R2/S3-compatible adapter) for production media. Credentials will be environment-only; no service provisioning or real-data upload authorized. Development uses Mailpit/private filesystem until their integrations.
 - Owner authorized downloading missing Android test artifacts, then separately authorized Phase1 packages and Docker images. No SDK/tool upgrades or store/deployment actions inferred.
+
+## Phase1 foundation defaults
+
+- API contract1.0.0 is exported from Nest decorators; consumer DTO generation is reproducible. The Dart generator supports current required scalar models and rejects unsupported schemas; extend it deliberately for auth/profile contracts.
+- Local email uses Mailpit. Gmail SMTP is selected for real delivery at Task3, with mandatory TLS and server-side credentials. Cloudflare R2 is selected for protected media at Task8; no public bucket or client-held keys.
+- Development database/cache remain private in base Compose; host tests opt into loopback mappings. PostGIS currently uses amd64 emulation on this Mac. No production capacity claim.
+- Integration tests own a unique temporary database and require CREATEDB; only that created database is removed after tests, preserving development fixtures/volumes.
+- Worker retries retained failed jobs from durable unprocessed outbox rows after30-second cooldown. Unknown kinds remain failures. Shutdown drains DB transactions and leaves unacknowledged jobs for idempotent replay.
+- Existing physical feasibility acceptance permits Phase1 work. Detailed Phase0 battery/accuracy and iOS evidence remain release gates. No new device test is needed for Task2's network/bootstrap-only Flutter addition; Task3 requires device authentication testing.
