@@ -53,6 +53,8 @@ class MemoryPreferences implements AuthPreferences {
 class ApiAdapter implements HttpClientAdapter {
   int refreshes = 0;
   bool profileConflict = false;
+  int trackingEpoch = 1;
+  bool trackingPaused = true;
   bool verificationSeen = false;
   String verificationStatus = 'none';
   Completer<void>? profileSaveStarted, profileSaveRelease;
@@ -98,7 +100,32 @@ class ApiAdapter implements HttpClientAdapter {
     requests.add(options);
     var status = 200;
     Object body = {};
-    if (options.path == '/v1/me/profile') {
+    if (options.path.startsWith('/v1/me/location')) {
+      if (options.method == 'POST' &&
+          (options.data as Map)['expectedConsentEpoch'] != trackingEpoch) {
+        status = 409;
+        body = {'code': 'CONFLICT'};
+      } else if (options.path.endsWith('/lease')) {
+        trackingEpoch++;
+        trackingPaused = false;
+        body = {
+          'deviceSessionId': '11111111-1111-4111-8111-111111111111',
+          'consentEpoch': trackingEpoch,
+          'uploadToken': 'a' * 64,
+          'expiresAt': DateTime.now()
+              .add(const Duration(hours: 24))
+              .toUtc()
+              .toIso8601String(),
+          'serverTimeMs': DateTime.now().millisecondsSinceEpoch,
+        };
+      } else {
+        if (options.path.endsWith('/pause')) {
+          trackingEpoch++;
+          trackingPaused = true;
+        }
+        body = {'consentEpoch': trackingEpoch, 'paused': trackingPaused};
+      }
+    } else if (options.path == '/v1/me/profile') {
       if (options.method == 'PUT') {
         profileSaveStarted?.complete();
         await profileSaveRelease?.future;

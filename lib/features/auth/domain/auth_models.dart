@@ -56,6 +56,11 @@ final class AuthFailure implements Exception {
   final String? requestId;
   bool get offline => code == 'offline' || code == 'timeout';
   String get message => switch (code) {
+    'location_permission' => 'Location access is unavailable. You can keep using your profile or open Settings.',
+    'location_unavailable' =>
+      'Location sharing could not start. Check permissions and retry.',
+    'LOCATION_LEASE_INVALID' => 'Location access ended. Enable sharing again.',
+    'LOCATION_PAUSED' => 'Location sharing is paused.',
     'media_unavailable' => 'Document uploads are not available in this build. You can skip this step.',
     'CONFLICT' =>
       'Your review status changed. Refresh before submitting again.',

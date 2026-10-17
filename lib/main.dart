@@ -18,6 +18,8 @@ import 'features/auth/presentation/auth_cubit.dart';
 import 'shared/widgets/paths_toast.dart';
 import 'features/profile/domain/profile_repository.dart';
 import 'features/verification/domain/verification_repository.dart';
+import 'features/discovery/domain/location_repository.dart';
+import 'features/discovery/data/location_sync_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +28,8 @@ void main() {
 }
 
 class PathsApp extends StatefulWidget {
-  const PathsApp({this.repository, super.key});
+  const PathsApp({this.repository, this.locationSync, super.key});
+  final LocationSyncService? locationSync;
   final AuthRepository? repository;
   @override
   State<PathsApp> createState() => _PathsAppState();
@@ -38,6 +41,7 @@ class _PathsAppState extends State<PathsApp> {
   AuthRouterRefresh? refresh;
   GoRouter? navigation;
   PlatformLocationTracker? tracker;
+  LocationSyncService? locations;
   AuthFailure? failure;
   AppLifecycleListener? lifecycle;
   @override
@@ -51,7 +55,9 @@ class _PathsAppState extends State<PathsApp> {
             origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
             vault: PlatformTokenVault(),
             preferences: PlatformAuthPreferences(),
-            purgeTracking: tracker!.stopAndPurge,
+            purgeTracking: () =>
+                locations?.stopLocalAndMarkPending(forcePending: false) ??
+                tracker!.stopAndPurge(),
           );
       cubit = AuthCubit(repository!);
       refresh = AuthRouterRefresh(cubit!);
@@ -61,12 +67,25 @@ class _PathsAppState extends State<PathsApp> {
           profiles is! VerificationRepository) {
         throw const AuthFailure('configuration');
       }
+      locations = widget.locationSync;
+      if (locations == null && tracker != null) {
+        if (profiles is! LocationRepository) {
+          throw const AuthFailure('configuration');
+        }
+        locations = LocationSyncService(
+          profiles as LocationRepository,
+          tracker!,
+          PlatformTrackingControls(),
+          const String.fromEnvironment('PATHS_API_ORIGIN'),
+        );
+      }
       navigation = createAuthRouter(
         cubit!,
         refresh!,
         profiles as ProfileRepository,
         profiles as ProfileSummaryRepository,
         profiles as VerificationRepository,
+        locations: locations,
       );
       unawaited(cubit!.initialize());
       lifecycle = AppLifecycleListener(
@@ -91,6 +110,7 @@ class _PathsAppState extends State<PathsApp> {
     final native = tracker;
     unawaited(() async {
       await owned?.close();
+      if (widget.locationSync == null) await locations?.close();
       await data?.close();
       await native?.dispose();
     }());
