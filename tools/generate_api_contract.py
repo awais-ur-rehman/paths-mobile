@@ -1,4 +1,4 @@
-"""Generate supported required scalar DTOs from the real pinned OpenAPI artifact."""
+"""Generate supported scalar DTOs from the real pinned OpenAPI artifact."""
 from pathlib import Path
 import hashlib
 import json
@@ -13,23 +13,26 @@ def generate(contract, raw):
         if schema.get('type') != 'object':
             raise ValueError(f'Unsupported schema {name}')
         properties = schema.get('properties', {})
-        if set(properties) != set(schema.get('required', [])):
-            raise ValueError(f'Optional fields need explicit support: {name}')
-        types = {'string': 'String', 'boolean': 'bool'}
+        required = set(schema.get('required', []))
+        types = {'string': 'String', 'boolean': 'bool', 'number': 'num', 'integer': 'int'}
         for field, value in properties.items():
             if value.get('type') not in types:
                 raise ValueError(f'Unsupported field {name}.{field}')
         lines += [f'final class {name} {{',
-                  f"  const {name}({{{', '.join('required this.' + f for f in properties)}}});"]
-        lines += [f"  final {types[value['type']]} {field};" for field, value in properties.items()]
+                  f"  const {name}({{{', '.join(('required this.' if f in required else 'this.') + f for f in properties)}}});"]
+        lines += [f"  final {types[value['type']]}{'?' if field not in required or value.get('nullable') else ''} {field};" for field, value in properties.items()]
         lines += [f'  factory {name}.fromJson(Map<String, dynamic> json) {{']
         for field, value in properties.items():
+            nullable = field not in required or value.get('nullable', False)
+            if field in required:
+                lines += [f"    if (!json.containsKey('{field}')) {{ throw const FormatException('Missing {name}.{field}'); }}"]
+            guard = f"{field} != null && " if nullable else ''
             lines += [f"    final {field} = json['{field}'];",
-                      f"    if ({field} is! {types[value['type']]}) {{ throw const FormatException('Invalid {name}'); }}"]
+                      f"    if ({guard}{field} is! {types[value['type']]}) {{ throw const FormatException('Invalid {name}.{field}'); }}"]
             if 'enum' in value:
-                lines += [f"    if (!const {json.dumps(value['enum'])}.contains({field})) {{ throw const FormatException('Unsupported {field}'); }}"]
+                lines += [f"    if ({guard}!const {json.dumps(value['enum'])}.contains({field})) {{ throw const FormatException('Unsupported {field}'); }}"]
         lines += [f"    return {name}({', '.join(f'{f}: {f}' for f in properties)});", '  }',
-                  "  Map<String, dynamic> toJson() => {" + ', '.join(f"'{f}': {f}" for f in properties) + '};', '}']
+                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': {f}" for f in properties) + '};', '}']
     return '\n'.join(lines) + '\n'
 
 

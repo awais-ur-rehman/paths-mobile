@@ -53,12 +53,15 @@ class MemoryPreferences implements AuthPreferences {
 class ApiAdapter implements HttpClientAdapter {
   int refreshes = 0;
   bool profileConflict = false;
+  bool verificationSeen = false;
+  String verificationStatus = 'none';
   Completer<void>? profileSaveStarted, profileSaveRelease;
   Map<String, Object> profile = {
     'username': '',
     'name': 'Fixture User',
     'gender': '',
     'bio': '',
+    'visibility': 'private',
   };
   bool revoked = false;
   int? refreshStatus;
@@ -107,7 +110,28 @@ class ApiAdapter implements HttpClientAdapter {
         if (options.method == 'PUT') {
           profile = Map<String, Object>.from(options.data as Map);
         }
-        body = {...profile, 'profileComplete': false};
+        body = {'visibility': 'private', ...profile, 'profileComplete': false};
+      }
+    } else if (options.path.startsWith('/v1/me/verification')) {
+      if (options.path.endsWith('/skip')) verificationSeen = true;
+      body = {
+        'status': verificationStatus,
+        'offerSeen': verificationSeen,
+        'uploadsAvailable': false,
+        'reason': null,
+      };
+    } else if (options.path.startsWith('/v1/profiles/')) {
+      if (profile['username'] == '') {
+        status = 404;
+        body = {'code': 'NOT_FOUND'};
+      } else {
+        body = {
+          'userId': '11111111-1111-4111-8111-111111111111',
+          ...profile,
+          'age': 26,
+          'verificationStatus': verificationStatus,
+          'photoState': 'unavailable',
+        };
       }
     } else if (options.path == '/v1/auth/config') {
       body = {
