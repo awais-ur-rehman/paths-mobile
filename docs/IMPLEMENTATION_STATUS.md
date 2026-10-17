@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase2 Task5 consent-aware ingestion; implemented, awaiting physical-device tests**. API contract: `1.4.0`; experiment contract `phase0.v1`.
+Current phase: **Phase2 Task6 encounter matching and Home; in progress**. API contract: `1.4.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -370,3 +370,10 @@ Known dependencies: Task6 matching/Home remains unimplemented; matching intents 
 
 
 Task5 draft PRs into development: [backend#5](https://github.com/awais-ur-rehman/paths-backend/pull/5), [mobile#5](https://github.com/awais-ur-rehman/paths-mobile/pull/5), [admin#5](https://github.com/awais-ur-rehman/paths-admin/pull/5). All remain draft pending the owner device gate. Final branch heads are available on these PRs; application source commits above remain the tested code.
+
+
+## Task5 acceptance and Task6 start
+
+Owner reports functionality working and asks to continue; Task5 PR5 merged into development (backend535dd86, admin086a234, mobile76e68e5). Main unchanged. Pre-merge rerun: backend9 unit/13 experiment/38 integration, mobile133 Flutter and admin2 tests pass; backend/admin CI green. Specific native OS case outcomes and iOS/quantitative evidence are not invented. User requests less UI copy/fewer competing actions going forward and defers full redesign.
+
+Current branch feature/encounter-discovery. Plan: docs/task6-encounter-plan.md. All six Task6 checklist items in progress, with policy/migration tests first. New API target1.5.0; current exported contract remains1.4.0 until implemented. See the plan for controls, exact thresholds, dependencies and review focus.
