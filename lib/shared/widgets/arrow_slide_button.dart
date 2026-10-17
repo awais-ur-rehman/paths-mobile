@@ -10,7 +10,7 @@ class ArrowSlideButton extends StatefulWidget {
     this.busy = false,
     super.key,
   });
-  final Future<void> Function() onContinue;
+  final Future<bool> Function() onContinue;
   final bool busy;
   @override
   State<ArrowSlideButton> createState() => _ArrowSlideButtonState();
@@ -26,16 +26,17 @@ class _ArrowSlideButtonState extends State<ArrowSlideButton>
   Future<void> _continue() async {
     if (running || widget.busy) return;
     setState(() => running = true);
+    var handedOff = false;
     try {
       if (!MediaQuery.disableAnimationsOf(context)) {
         await motion.forward().orCancel;
       }
       if (!mounted) return;
-      await widget.onContinue();
+      handedOff = await widget.onContinue();
     } on TickerCanceled {
       // Route disposal owns cancellation of the arrow's ticker.
     } finally {
-      if (mounted) {
+      if (mounted && !handedOff) {
         motion.reset();
         setState(() => running = false);
       }

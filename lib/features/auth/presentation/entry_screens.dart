@@ -87,6 +87,20 @@ class OnboardingScreen extends StatelessWidget {
                     ),
                   ),
                   Positioned(
+                    bottom: -1,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 32,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(32),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
                     top: MediaQuery.paddingOf(context).top + 24,
                     left: 0,
                     right: 0,
@@ -140,9 +154,11 @@ class OnboardingScreen extends StatelessWidget {
                         selector: (state) => state.busy,
                         builder: (context, busy) => ArrowSlideButton(
                           busy: busy,
-                          onContinue: () => context
-                              .read<AuthCubit>()
-                              .finishOnboarding(signIn: true),
+                          onContinue: () async {
+                            final cubit = context.read<AuthCubit>();
+                            await cubit.finishOnboarding(signIn: true);
+                            return cubit.state.stage != AuthStage.onboarding;
+                          },
                         ),
                       ),
                     ),
