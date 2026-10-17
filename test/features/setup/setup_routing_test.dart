@@ -1,6 +1,10 @@
 import 'setup_resume_test.dart' show Progress;
 
 import 'dart:convert';
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:paths_mobile/features/auth/presentation/auth_cubit.dart';
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -193,6 +197,35 @@ void main() {
         restore: true,
       );
       expect(app.router.routeInformationProvider.value.uri.path, '/likes');
+      await stop(tester, app.sync, app.tracker);
+    },
+  );
+  testWidgets(
+    'logout does not carry the previous session destination into a later sign-in',
+    (tester) async {
+      final app = await start(
+        tester,
+        SetupAdapter(),
+        Progress()..seen.add('11111111-1111-4111-8111-111111111111'),
+      );
+      app.router.go('/likes');
+      await tester.pumpAndSettle();
+      final logout = tester
+          .element(find.byType(Scaffold).first)
+          .read<AuthCubit>()
+          .logout();
+      await tester.pumpAndSettle();
+      await logout;
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email'),
+        'fixture@example.invalid',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Password'),
+        'fixture password',
+      );
+      await tap(tester, 'Sign in');
+      expect(app.router.routeInformationProvider.value.uri.path, '/home');
       await stop(tester, app.sync, app.tracker);
     },
   );

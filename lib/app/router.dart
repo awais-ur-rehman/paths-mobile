@@ -69,6 +69,7 @@ GoRouter createAuthRouter(
 }) {
   SetupDestination? setupDestination;
   String? setupAccount, pendingDestination;
+  bool discardOldDestination = false;
   final hasSetupGate = media != null && setupProgress != null;
   String setupPath(SetupDestination destination) => switch (destination) {
     SetupDestination.profile => '/setup/profile',
@@ -95,12 +96,21 @@ GoRouter createAuthRouter(
       final state = cubit.state;
       final path = route.uri.path;
       if (path == '/policies/terms' || path == '/policies/privacy') return null;
+      final endedAccount =
+          setupAccount != null && setupAccount != state.account?.id;
+      if (endedAccount) {
+        pendingDestination = null;
+        // Router refresh may revisit the old protected URI after the splash.
+        discardOldDestination = true;
+      } else if (path.startsWith('/auth/') || path == '/onboarding') {
+        discardOldDestination = false;
+      }
       if (setupAccount != state.account?.id) {
-        if (setupAccount != null) pendingDestination = null;
         setupAccount = state.account?.id;
         setupDestination = null;
       }
       if (hasSetupGate &&
+          !discardOldDestination &&
           setupDestination != SetupDestination.home &&
           route.uri.scheme.isEmpty &&
           route.uri.host.isEmpty &&
