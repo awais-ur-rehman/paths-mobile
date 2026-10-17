@@ -20,11 +20,13 @@ class AuthScaffold extends StatelessWidget {
     required this.subtitle,
     required this.child,
     this.onBack,
+    this.onRefresh,
     super.key,
   });
   final String title, subtitle;
   final Widget child;
   final VoidCallback? onBack;
+  final Future<void> Function()? onRefresh;
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SizedBox.expand(
@@ -32,58 +34,69 @@ class AuthScaffold extends StatelessWidget {
         color: Colors.white,
         child: SafeArea(
           child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                PathsTokens.gutter(constraints.maxWidth),
-                20,
-                PathsTokens.gutter(constraints.maxWidth),
-                32,
-              ),
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: PathsTokens.maxFormWidth,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          if (onBack != null)
-                            IconButton(
-                              onPressed: onBack,
-                              icon: const Icon(Icons.arrow_back_rounded),
-                              tooltip: 'Back',
-                            ),
-                          const AuthBrand(),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF101418),
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          height: 1.5,
-                          color: Color(0xFF52616D),
+            builder: (context, constraints) {
+              final scroll = SingleChildScrollView(
+                physics: onRefresh == null
+                    ? null
+                    : const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  PathsTokens.gutter(constraints.maxWidth),
+                  20,
+                  PathsTokens.gutter(constraints.maxWidth),
+                  32,
+                ),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: PathsTokens.maxFormWidth,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            if (onBack != null)
+                              IconButton(
+                                onPressed: onBack,
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                tooltip: 'Back',
+                              ),
+                            const AuthBrand(),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 28),
-                      child,
-                    ],
+                        const SizedBox(height: 32),
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF101418),
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            height: 1.5,
+                            color: Color(0xFF52616D),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        child,
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
+              );
+              return onRefresh == null
+                  ? scroll
+                  : RefreshIndicator.noSpinner(
+                      onRefresh: onRefresh!,
+                      child: scroll,
+                    );
+            },
           ),
         ),
       ),

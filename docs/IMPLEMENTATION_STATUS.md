@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase2 Task5 consent-aware ingestion; implemented, awaiting physical-device tests**. API contract: `1.4.0`; experiment contract `phase0.v1`.
+Current phase: **Phase2 Task6 encounter matching and Home; awaiting device evidence**. API contract: `1.5.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -58,17 +58,17 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 - [x] Test max50 batch, invalid coordinate, future>30sec, stale>15min, duplicate ID, old device lease and paused/deleting account rejection. — **verified — real PostGIS location-ingest cases and policy boundary tests**
 - [x] Implement transactionally stored sample/outbox records and 24h retention worker. — **verified — migration0005, atomic rollback/dedup, bounded sample/orphan intent retention and deletion cases pass**
-- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **implemented; awaiting device test — native uploader and disclosure integrated; offline Android/unsigned iOS compilation and Flutter control tests pass; OS behavior pending**
-- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **verified in automated models/API; awaiting device test — stale generation, account switch, late stop, queued purge/retry regressions pass; native runtime requires owner evidence**
+- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **owner functional acceptance; integrated in development — native uploader/disclosure and local checks pass; unreported detailed OS/iOS evidence remains separate**
+- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **verified in automated models/API and owner functional acceptance recorded — stale generation/account switch/purge/retry regressions pass; detailed native runtime observations remain separate**
 
 ### Task 6: Encounter matcher and privacy-safe Home
 
-- [ ] Write boundary tests for <=50m/<=60sec and accuracy rules; two evidence pairs 20–120sec apart; reject invented stationary dwell. — **not started**
-- [ ] Test concurrent inverse ingestion creates one session and two notification intents; retry does not inflate encounter count. — **not started**
-- [ ] Test spatial neighbors across arbitrary grid edges, adjacent venue false positives and delayed historical batches without live push. — **not started**
-- [ ] Implement PostGIS query, pair lock/session dedup and coarse-area/time serialization; exclude blocked/paused/deleting users. — **not started**
-- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **not started**
-- [ ] Verify API responses and network captures contain no peer coordinates, exact distances or exact timestamps. — **not started**
+- [x] Write boundary tests for <=50m/<=60sec and accuracy rules; two evidence pairs 20–120sec apart; reject invented stationary dwell. — **verified locally — 15 unit tests and 13 Phase0 regressions; conservative inclusive limits and independent advancing observations**
+- [x] Test concurrent inverse ingestion creates one session and two notification intents; retry does not inflate encounter count. — **verified locally — real PostGIS concurrency, retry, ordered late jobs, notification rollback/replay and session-gap cases**
+- [x] Test spatial neighbors across arbitrary grid edges, adjacent venue false positives and delayed historical batches without live push. — **verified locally — cross-cell exact spatial query, uncertainty rejection and historical-no-live-intent regressions; field accuracy remains separate**
+- [x] Implement PostGIS query, pair lock/session dedup and coarse-area/time serialization; exclude blocked/paused/deleting users. — **verified locally — migration0006, ordered user/pair locks, durable proof and per-session intents, authorized API1.5.0 and retention/erasure tests**
+- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **implemented and locally verified; awaiting device test — 153 Flutter tests, inspected Home golden and offline Android build; native map/attribution/physical behavior pending; unsigned iOS compile now passes**
+- [ ] Verify API responses and network captures contain no peer coordinates, exact distances or exact timestamps. — **API serialization verified locally — live HTTP and DTO allowlist tests expose only coarse areas/date buckets; owner runtime network inspection pending**
 
 ## Phase 3 — saves, requests and push
 
@@ -370,3 +370,65 @@ Known dependencies: Task6 matching/Home remains unimplemented; matching intents 
 
 
 Task5 draft PRs into development: [backend#5](https://github.com/awais-ur-rehman/paths-backend/pull/5), [mobile#5](https://github.com/awais-ur-rehman/paths-mobile/pull/5), [admin#5](https://github.com/awais-ur-rehman/paths-admin/pull/5). All remain draft pending the owner device gate. Final branch heads are available on these PRs; application source commits above remain the tested code.
+
+
+## Task5 acceptance and Task6 start
+
+Owner reports functionality working and asks to continue; Task5 PR5 merged into development (backend535dd86, admin086a234, mobile76e68e5). Main unchanged. Pre-merge rerun: backend9 unit/13 experiment/38 integration, mobile133 Flutter and admin2 tests pass; backend/admin CI green. Specific native OS case outcomes and iOS/quantitative evidence are not invented. User requests less UI copy/fewer competing actions going forward and defers full redesign.
+
+Current branch feature/encounter-discovery. Plan: docs/task6-encounter-plan.md. All six Task6 checklist items in progress, with policy/migration tests first. New API target1.5.0; current exported contract remains1.4.0 until implemented. See the plan for controls, exact thresholds, dependencies and review focus.
+
+## Task6 evidence and handoff — 2026-10-17
+
+Status: **implemented, locally verified, awaiting physical Android evidence; unsigned iOS build verified**. Task6 is not complete and Task7 is gated. API contract is1.5.0. Task5 PR5 was merged into development after owner functional acceptance; this does not supply unreported Phase0 battery/accuracy or iOS results. Main remains the documentation baseline.
+
+Changes: exact PostGIS neighbor search and conservative two-pair corroboration; canonical locks, retry-safe proof/session/notification intents and bounded retention; authorized coarse Recent/Nearby cards and peer summaries; concise Home, contextual filters, map/list fallback and persistent Home/Profile navigation. No push is sent until Task7 and no fake photo/profile completion is claimed before Task8. Existing permission-screen redesign is deferred to the owner's later screen-by-screen pass.
+
+Actual checks after source fixes:
+- Backend: lint/typecheck/build pass;15 unit,13 Phase0 and52 isolated PostgreSQL/PostGIS integration tests pass, including13 encounter cases. Migrations retain bounded DDL timeouts separately from application requests.
+- Real existing Compose stack: build/health/migration0006 pass with --pull never. auth:verify passes API/worker/Mailpit/signup/profile/location/pause/reset. encounters:verify passes real API/worker synthetic matching, deduplication, coarse listing/peer access and pause hiding. No Gmail, R2 or real user data is used.
+- Mobile: analyzer clean;153 Flutter tests and7 Python generator tests pass. Home golden inspected and responsive320/390/768 widths at100%/200% text pass. Android debug APK assembled offline using installed JDK21; compilation does not establish native map rendering or encounter accuracy.
+- Admin: generation/lint/typecheck/build pass;2 transport tests and3 Chromium tests pass. No new admin workflow in this task.
+- Contract: actual Nest export is byte-identical across all repositories; regenerated Dart and admin types have no drift. git diff --check passes.
+
+One fresh read-only whole-branch review identified peer replacement retaining the previous cubit, append pagination moving the map center, and retention erasing active-session intent deduplication. Each was reproduced by a failing regression and fixed; relevant full suites reran green. Author checks also fixed implausible device movement, private pending/declined badge leakage, Recent following a new own location, Swagger's inferred Object schema and migration DDL budgets. Inspection cannot prove OS scheduling, native SDK rendering, real encounter precision/recall, battery or signed iOS behavior.
+
+Resolved iOS prerequisite: owner approved only the required MapLibre download. Xcode resolved MapLibre Native6.28.0 at revision5ee345ca5d65238a6fce29bba87816204be7df20 and generated the committed Package.resolved. Unsigned generic iphoneos Debug build then passed with automatic package resolution disabled and resolved-file-only mode enabled. Embedded MapLibre framework verified; Info.plist/entitlements lint passed. Original BSD2-Clause license retained in mobile docs/licenses/maplibre-native-ios-6.28.0.txt. No additional SDK/tool/package was installed. Signed physical iOS, HTTPS endpoint, map rendering/attribution and permission/background behavior remain unverified.
+
+Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test feature/encounter-discovery; source commits backend80dfda7, mobile68f7ed1, admin17bf501. Later commits only record evidence/handoff. PR links and final branch heads are recorded below after push. Source and generated configuration contain no credentials; preserve ignored local env and existing Docker volumes.
+
+
+### Task6 pushed branches
+
+- paths-backend: [draft PR6](https://github.com/awais-ur-rehman/paths-backend/pull/6), verification/handoff commit `7fe1d38`, branch `feature/encounter-discovery` → `development`.
+- paths-mobile: [draft PR6](https://github.com/awais-ur-rehman/paths-mobile/pull/6), verification/handoff commit `c60a93b`, branch `feature/encounter-discovery` → `development`.
+- paths-admin: [draft PR6](https://github.com/awais-ur-rehman/paths-admin/pull/6), verification/handoff commit `4b696a1`, branch `feature/encounter-discovery` → `development`.
+
+These commits contain final source evidence/handoff; subsequent linkage commits change documentation only. Drafts remain unmerged pending owner runtime results. Main has not changed.
+
+
+### Approved iOS dependency follow-up
+
+MapLibre Native6.28.0 resolution and unsigned iOS build now pass; this supersedes the previous missing-dependency blocker. Only the approved MapLibre package/binary was fetched; existing local Flutter packages were retained. The real generated pin and BSD license are in the mobile repository. No application behavior changed and broader unit/widget suites were not rerun for this native dependency-only follow-up. Task6 remains awaiting owner physical results; draft PR6 stays unmerged and main unchanged.
+
+Native dependency follow-up commit: mobile `68f7ed1` adds the actual Xcode-generated MapLibre pin and copied BSD notice; Dart application behavior is unchanged. Use this commit or the latest feature/encounter-discovery head when repeating iOS checks.
+
+## Profile UI feedback follow-up — 2026-10-17
+
+Current task: **Task6 device retest, with requested profile UI changes implemented and locally verified; awaiting owner Android feedback**. API remains1.5.0. Backend/admin application source and contracts are unchanged; their previous evidence was not rerun for this mobile-only update. Task6 remains incomplete and PR6 stays draft; no main promotion or Task7 advance.
+
+| Requested behavior | Status and evidence |
+| --- | --- |
+| Creation has one Next action that saves before advancing | implemented, verified locally — real repository/form route tests; validation/conflict retain edits, pending retry cannot navigate early, duplicate saves guarded |
+| Themed custom gender dropdown and option menu | implemented, verified locally — shared PathsDropdownField; selection/validation/reopen/controlled update/disabled/Escape/system-back/open-menu teardown and320px/200% text tests |
+| Visibility row contains only toggle and label | implemented, verified locally — no subtitle; public/private persists through Next/edit |
+| Minimal Verification heading/copy and side-by-side dotted front/back slots | implemented, verified locally — both server and real local adapter readiness required; no real CNIC collection before Task8; Submit disabled, Skip persists; review details/consent retained for enabled future media |
+| Refresh pending/approved/declined status without an extra action button | implemented, verified locally — pull refresh on short scroll surfaces, with Paths loader; skips refresh during active operations |
+| Reference profile cover/centered identity/framed bio with supported actions only | implemented, verified locally — shared owner/eligible peer ProfileSurface; neutral unavailable-photo cover; no fabricated people/gallery/follow counters/actions; owner controls in one options menu, including loading/errors |
+| Physical layout, keyboard, menu/back gestures and native rendering | awaiting device test — docs/PROFILE_UI_RETEST.md; separate Task6 matching/map checklist remains open; signed iOS runtime unverified |
+
+Actual final checks: analyzer clean; all163 Flutter tests and7 Python tooling tests pass; Android Debug assembled offline (197 Gradle tasks); unsigned generic iphoneos Debug build passes with automatic resolution disabled and pinned-file-only mode. No package/tool/asset download. Updated profile-details, optional-verification and own-profile goldens inspected;320/390/768 widths at100%/200% text pass. git diff --check passes. The first full run exposed an outdated location-menu test; updated it to open the actual options menu and reran the full suite successfully.
+
+One fresh read-only review found four issues. Failing regressions reproduced each before fixes: header vertically centered by expanded Stack, summary error hiding signout/options, pending review unable to refresh, and backend-only upload readiness. All four regressions pass after correction. Source inspection does not prove physical gestures/OS behavior or real media readiness. A formatter telemetry sandbox warning was resolved by rerunning formatting with required local SDK access; final formatting/analyzer pass.
+
+Source commits: f2ace5f (dropdown),7fc83d5 (one save action),06e2f33 (verification/refresh/readiness),b5e09ac (profile surface/options/routing). Test source b5e09ac or later documentation-only head on feature/encounter-discovery. Existing draft: https://github.com/awais-ur-rehman/paths-mobile/pull/6 . Follow docs/PROFILE_UI_RETEST.md before accepting the changed visuals; Task6's broader physical evidence remains pending.

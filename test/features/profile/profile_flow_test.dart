@@ -41,11 +41,12 @@ void main() {
         tester.view.viewInsets = const FakeViewPadding(bottom: 300);
         addTearDown(tester.view.resetViewInsets);
         await tester.pumpAndSettle();
-        await tester.ensureVisible(find.text('Save and continue'));
+        await tester.ensureVisible(find.text('Next'));
         expect(tester.takeException(), isNull);
         tester.view.resetViewInsets();
         await tester.pumpAndSettle();
-        await tap(tester, 'View your profile');
+        GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
+        await tester.pumpAndSettle();
         expect(find.text('Fixture User, 26'), findsOneWidget);
         await tester.ensureVisible(find.text('Edit profile'));
         expect(tester.takeException(), isNull);
@@ -69,7 +70,8 @@ void main() {
         'visibility': 'private',
       };
     await signInForSetup(tester, adapter);
-    await tap(tester, 'View your profile');
+    GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
+    await tester.pumpAndSettle();
     await expectLater(
       find.byType(Scaffold),
       matchesGoldenFile('goldens/own-profile.png'),
@@ -86,7 +88,7 @@ void main() {
     final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
     router.go('/setup/verification');
     await tester.pumpAndSettle();
-    await tap(tester, 'Skip for now');
+    await tap(tester, 'Skip');
     expect(
       adapter.requests.where((r) => r.path.startsWith('/v1/profiles/')).length,
       1,
@@ -114,17 +116,22 @@ void main() {
       await tester.ensureVisible(find.byType(SwitchListTile));
       await tester.tap(find.byType(SwitchListTile));
       await tester.pump();
-      await tap(tester, 'Save and continue');
+      await tap(tester, 'Next');
       expect(adapter.profile['visibility'], 'public');
-      expect(find.text('A little more reassurance'), findsOneWidget);
-      expect(find.text('Skip for now'), findsOneWidget);
-      await tap(tester, 'Skip for now');
+      expect(find.text('Verification'), findsOneWidget);
+      expect(find.text('Skip'), findsOneWidget);
+      await tap(tester, 'Skip');
       expect(adapter.verificationSeen, true);
-      expect(find.text('Your profile'), findsOneWidget);
+      expect(find.text('Follow'), findsNothing);
+      expect(find.text('Followers'), findsNothing);
       expect(find.text('Fixture User, 26'), findsOneWidget);
       await tap(tester, 'Edit profile');
       expect(find.text('Public profile'), findsOneWidget);
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
+      router.go('/profile');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Profile options'));
+      await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
       router.go('/setup/verification');
       await tester.pumpAndSettle();

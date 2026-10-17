@@ -20,4 +20,7 @@ class ContractGeneratorTest(unittest.TestCase):
   self.assertIn('List<Child>',result);self.assertIn('Child.fromJson(item)',result);self.assertIn('item.toJson()',result);self.assertIn('List<String>',result)
  def test_nested_schema_fails_explicitly(self):
   with self.assertRaises(ValueError):module.generate({'info':{'version':'1'},'components':{'schemas':{'X':{'type':'object','properties':{'x':{'type':'object'}}}}}},b'')
+ def test_reserved_dart_type_names_are_rejected(self):
+  with self.assertRaisesRegex(ValueError, 'Reserved'):
+   module.generate({'info':{'version':'1'},'components':{'schemas':{'Object':{'type':'object','properties':{}}}}},b'')
 if __name__=='__main__':unittest.main()

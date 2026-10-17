@@ -10,6 +10,7 @@ import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
 import '../../discovery/domain/location_repository.dart';
+import '../../discovery/domain/encounter_repository.dart';
 import '../../verification/domain/verification_repository.dart';
 import '../domain/auth_repository.dart';
 
@@ -19,7 +20,8 @@ final class HttpAuthRepository
         ProfileRepository,
         ProfileSummaryRepository,
         VerificationRepository,
-        LocationRepository {
+        LocationRepository,
+        EncounterRepository {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -464,6 +466,68 @@ final class HttpAuthRepository
       visibility: dto.visibility,
       verificationStatus: dto.verificationStatus,
     );
+  }
+
+  @override
+  String? get discoveryAccountId => currentTrackingAccountId;
+
+  @override
+  Future<EncounterPage> loadEncounters({
+    EncounterMode mode = EncounterMode.recent,
+    double radiusKm = 1,
+    String? cursor,
+    CancelToken? cancelToken,
+  }) async {
+    if (!encounterRadii.contains(radiusKm)) {
+      throw ArgumentError.value(radiusKm, 'radiusKm');
+    }
+    final path = Uri(
+      path: '/v1/encounters',
+      queryParameters: {
+        'mode': mode.name,
+        'radiusKm': radiusKm.toString(),
+        'cursor': ?cursor,
+      },
+    ).toString();
+    try {
+      final dto = EncounterPageDto.fromJson(
+        await _request(
+          'GET',
+          path,
+          authenticated: true,
+          cancelToken: cancelToken,
+        ),
+      );
+      return EncounterPage(
+        items: dto.items
+            .map(
+              (item) => Encounter(
+                encounterId: item.encounterId,
+                userId: item.userId,
+                username: item.username,
+                displayName: item.displayName,
+                age: item.age.toInt(),
+                bio: item.bio,
+                verificationStatus: item.verificationStatus,
+                coarseAreaId: item.coarseAreaId,
+                coarseAreaLabel: item.coarseAreaLabel,
+                areaLatitude: item.areaLatitude.toDouble(),
+                areaLongitude: item.areaLongitude.toDouble(),
+                timeBucket: item.timeBucket,
+                encounterDate: item.encounterDate,
+                encounterCount: item.encounterCount.toInt(),
+                eligibilityExpiresAt: item.eligibilityExpiresAt,
+              ),
+            )
+            .toList(),
+        nextCursor: dto.nextCursor,
+        nearbyAvailable: dto.nearbyAvailable,
+        centerLatitude: dto.centerLatitude?.toDouble(),
+        centerLongitude: dto.centerLongitude?.toDouble(),
+      );
+    } on FormatException {
+      throw const AuthFailure('invalid_response');
+    }
   }
 
   VerificationInfo _verification(VerificationDto dto) => VerificationInfo(

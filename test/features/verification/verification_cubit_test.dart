@@ -8,6 +8,8 @@ import 'package:paths_mobile/features/verification/presentation/verification_cub
 
 class FixtureVerification
     implements VerificationRepository, VerificationDocuments {
+  @override
+  bool get available => true;
   VerificationInfo info = const VerificationInfo(
     status: 'none',
     offerSeen: false,

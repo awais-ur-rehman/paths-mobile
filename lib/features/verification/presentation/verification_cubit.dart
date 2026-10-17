@@ -103,9 +103,21 @@ class VerificationCubit extends Cubit<VerificationState> {
     }
   }
 
+  VerificationInfo _forApp(VerificationInfo info) => VerificationInfo(
+    status: info.status,
+    offerSeen: info.offerSeen,
+    reason: info.reason,
+    uploadsAvailable: info.uploadsAvailable && documents.available,
+  );
+  Future<void> refresh() async {
+    if (isClosed || state.loading || state.busy) return;
+    await load();
+  }
+
   Future<void> load() => _run(
-    (token) async =>
-        state.copy(info: await repository.loadVerification(cancelToken: token)),
+    (token) async => state.copy(
+      info: _forApp(await repository.loadVerification(cancelToken: token)),
+    ),
     loading: true,
   );
   void setConsent(bool value) {
@@ -134,11 +146,13 @@ class VerificationCubit extends Cubit<VerificationState> {
     final front = state.front!, back = state.back;
     await _run(
       (token) async => state.copy(
-        info: await repository.submitVerification(
-          frontAssetId: front.id,
-          backAssetId: back?.id,
-          consent: true,
-          cancelToken: token,
+        info: _forApp(
+          await repository.submitVerification(
+            frontAssetId: front.id,
+            backAssetId: back?.id,
+            consent: true,
+            cancelToken: token,
+          ),
         ),
         submitRevision: state.submitRevision + 1,
       ),
@@ -149,7 +163,7 @@ class VerificationCubit extends Cubit<VerificationState> {
     if (isClosed || (state.busy && !state.uploading)) return;
     await _run(
       (token) async => state.copy(
-        info: await repository.skipVerification(cancelToken: token),
+        info: _forApp(await repository.skipVerification(cancelToken: token)),
         skipRevision: state.skipRevision + 1,
       ),
     );

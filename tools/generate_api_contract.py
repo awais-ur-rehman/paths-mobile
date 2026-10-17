@@ -10,6 +10,8 @@ def generate(contract, raw):
              f"const apiContractVersion = '{contract['info']['version']}';",
              f"const apiContractSha256 = '{hashlib.sha256(raw).hexdigest()}';"]
     for name, schema in contract['components']['schemas'].items():
+        if name in {'Object', 'String', 'Map', 'List', 'Future', 'Stream', 'Type', 'Function', 'num', 'int', 'bool', 'double', 'dynamic', 'Null', 'Never'}:
+            raise ValueError(f'Reserved Dart type name: {name}')
         if schema.get('type') != 'object':
             raise ValueError(f'Unsupported schema {name}')
         properties = schema.get('properties', {})

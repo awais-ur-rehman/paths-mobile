@@ -5,10 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/presentation/auth_cubit.dart';
-import '../../auth/presentation/auth_widgets.dart';
 import '../../../shared/widgets/paths_loader.dart';
-import '../../../shared/widgets/paths_avatar.dart';
-import '../../../shared/widgets/verification_badge.dart';
+import 'profile_surface.dart';
 import '../domain/profile_repository.dart';
 import 'profile_preview_cubit.dart';
 
@@ -17,16 +15,19 @@ class ProfilePreviewScreen extends StatelessWidget {
     required this.repository,
     required this.userId,
     this.onLocationSetup,
+    this.onBack,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
-  final VoidCallback? onLocationSetup;
+  final VoidCallback? onLocationSetup, onBack;
   @override
   Widget build(BuildContext context) => _PreviewOwner(
+    key: ValueKey(userId),
     repository: repository,
     userId: userId,
     onLocationSetup: onLocationSetup,
+    onBack: onBack,
   );
 }
 
@@ -35,8 +36,10 @@ class _PreviewOwner extends StatefulWidget {
     required this.repository,
     required this.userId,
     this.onLocationSetup,
+    this.onBack,
+    super.key,
   });
-  final VoidCallback? onLocationSetup;
+  final VoidCallback? onLocationSetup, onBack;
   final ProfileSummaryRepository repository;
   final String userId;
   @override
@@ -57,109 +60,106 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) => BlocProvider.value(
-    value: cubit,
-    child: AuthScaffold(
-      title: 'Your profile',
-      subtitle: 'Your details are saved. Photo uploads aren’t available in this build yet.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
-            builder: (context, state) {
-              if (state.loading) return const Center(child: PathsLoader());
-              final p = state.profile;
-              if (p == null) {
-                return Column(
-                  children: [
-                    Text(
-                      state.error?.message ??
-                          'Your profile could not be loaded.',
-                    ),
-                    TextButton(
-                      onPressed: cubit.load,
-                      child: const Text('Retry'),
-                    ),
-                    TextButton(
-                      onPressed: () => context.go('/setup/profile'),
-                      child: const Text('Back to profile setup'),
-                    ),
-                  ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Center(child: PathsAvatar(size: 104)),
-                  const SizedBox(height: 20),
-                  Text(
-                    '${p.name}, ${p.age}',
-                    style: Theme.of(context).textTheme.headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 4),
-                  Text('@${p.username}'),
-                  VerificationBadge(status: p.verificationStatus),
-                  const SizedBox(height: 12),
-                  Text(switch (p.gender) {
-                    'man' => 'Man',
-                    'woman' => 'Woman',
-                    'another_identity' => 'Another identity',
-                    _ => 'Prefer not to say',
-                  }),
-                  if (p.bio.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text(p.bio),
-                  ],
-                  const SizedBox(height: 24),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        p.visibility == 'private'
-                            ? Icons.lock_outline
-                            : Icons.public_outlined,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          p.visibility == 'private'
-                              ? 'Private profile. Posts are visible only to connections.'
-                              : 'Public profile. Posts are visible to eligible signed-in members.',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: () => context.go('/setup/profile?edit=1'),
-                    child: const Text('Edit profile'),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () => context.go('/setup/verification'),
-                    child: const Text('Document review'),
-                  ),
-                  if (widget.onLocationSetup != null) ...[
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      onPressed: widget.onLocationSetup,
-                      icon: const Icon(Icons.location_on_outlined),
-                      label: const Text('Location & permissions'),
-                    ),
-                  ],
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-          TextButton(
-            onPressed: () => context.read<AuthCubit>().logout(),
-            child: const Text('Sign out'),
-          ),
-        ],
+  void _options() {
+    final auth = context.read<AuthCubit>();
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.verified_outlined),
+              title: const Text('Verification'),
+              onTap: () {
+                Navigator.pop(sheet);
+                context.go('/setup/verification');
+              },
+            ),
+            if (widget.onLocationSetup != null)
+              ListTile(
+                leading: const Icon(Icons.location_on_outlined),
+                title: const Text('Location & permissions'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  widget.onLocationSetup!();
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded),
+              title: const Text('Sign out'),
+              onTap: () {
+                Navigator.pop(sheet);
+                unawaited(auth.logout());
+              },
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _withOptions(Widget child) {
+    final ink = Theme.of(context).colorScheme.onSurface;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Center(child: child),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ProfileHeader(
+            onBack: widget.onBack,
+            foregroundColor: ink,
+            menu: ProfileOptionsButton(onPressed: _options, color: ink),
+          ),
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
+      bloc: cubit,
+      builder: (context, state) {
+        if (state.loading) return _withOptions(const PathsLoader());
+        final profile = state.profile;
+        if (profile == null) {
+          return _withOptions(
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  state.error?.offline == true
+                      ? 'You’re offline'
+                      : 'Profile unavailable',
+                ),
+                TextButton(onPressed: cubit.load, child: const Text('Retry')),
+                TextButton(
+                  onPressed: () => context.go('/setup/profile'),
+                  child: const Text('Back to profile setup'),
+                ),
+              ],
+            ),
+          );
+        }
+        return ProfileSurface(
+          profile: profile,
+          onBack: widget.onBack,
+          menu: ProfileOptionsButton(onPressed: _options),
+          action: FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF101418),
+            ),
+            onPressed: () => context.go('/setup/profile?edit=1'),
+            child: const Text('Edit profile'),
+          ),
+        );
+      },
     ),
   );
 }

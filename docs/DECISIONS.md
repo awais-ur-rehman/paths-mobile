@@ -70,3 +70,29 @@ A full adult session explicitly grants a24h location-only upload capability boun
 Batch ingestion accepts up to50 observations, validates finite/time/coordinate/accuracy/speed bounds and deduplicates IDs/sequence under the account lock. Samples and matching intents commit atomically. Observations older120sec or affected by establishment clock offset over30sec are historical-only. Proposed defensive bounds: accuracy<=10000m, speed<=100m/s; these are routine validation defaults, not measured encounter guarantees. Coordinates remain only in private PostGIS samples, not logs/outbox payloads/responses. Worker removes observations and orphan matching intents in bounded24h retention batches. Matcher dispatch is deferred to Task6.
 
 Foreground permission is requested first; background is a separate choice with best-effort OS delivery. Native handles receipts, bounded retries/reachability and redirect refusal without Dart timers or mounted pages. The200-item/15min encrypted queue is purged locally before remote pause/logout; pending remote control is durable and scoped. Android HTTP is allowed only for debug loopback; real endpoints require HTTPS. iOS ATS remains intact and device testing requires HTTPS. No force-stop resurrection or iOS runtime result is claimed.
+
+
+## Owner feedback and Task6 start
+
+Owner reports Task5 functionality working smoothly and authorizes continuing according to the plan; UI is too text-heavy. Record this as functional acceptance of the slice, not fabricated case-by-case background/iOS/quantitative evidence. Task5 PR5 is merged into development; main unchanged. New screens use concise copy, one primary action and contextual secondary controls. Full screen-by-screen redesign is deferred at the owner's request. Installed frontend-design guides composition; existing Paths branding/fonts take precedence over generic skill defaults. No new skill/plugin installation is needed.
+
+
+Task6 map setup: existing MapLibre GL0.27.1 packages and transitive dependencies resolved with pub get --offline, with source licenses retained. Android requires the already installed Homebrew JDK21 (the system Java registry lists17 only). No JDK was downloaded. Map style remains configurable via PATHS_MAP_STYLE_URL; config/development.example.json supplies the official OpenFreeMap Liberty style for owner testing, without an account/key or a paid resource. Blank/unreachable style retains the authorized list. See ASSETS.md for provider source/attribution and runtime data boundaries. Owner subsequently approved the required iOS dependency download. MapLibre Native6.28.0 is now pinned by Xcode and the unsigned build passes; signed runtime remains separate.
+
+
+## Task6 encounter contract and gates
+
+Conservative standard matching follows documented50m/60s/25m/70m and two independent advancing20–120s observation pairs; proposed defensive travel bound100m/s also rejects implausible paired movement. Live evidence age120s, admission15min, evidence10min, session gap30min and history30days. Approximately500m fixed display areas are serialization only; exact PostGIS candidates cross those boundaries. Actor/filter-bound opaque cursors contain no timestamps. Recent uses historical areas; Nearby24h uses a fresh own server coarse center with0.5/1/3/5km presets. Peer summaries require current eligibility and expose approved verification only.
+
+Notification intents are durable per-session records retained with active sessions; Task7 owns delivery/cooldowns. Full photos/profile completion remain Task8. Home shows only working Home/Profile destinations. Mobile reuses original branding, neutral avatars and concise states; full existing-screen redesign is deferred per owner. Auth private errors/logging and exact coordinates remain protected. API1.5.0 is copied/generated in all three repos. Main is not promoted.
+
+
+Task6 iOS follow-up: owner approved the required MapLibre Native6.28.0 package/binary download. Keep the Xcode-generated exact revision pin and BSD license; future builds use resolved-file-only mode. Unsigned compilation is verified; no device runtime result or Task6 completion is inferred.
+
+## Profile UI feedback — 2026-10-17
+
+Owner requests one Next action during creation, concise visibility, themed custom dropdown, two disabled dotted CNIC slots and a profile layout matching the supplied portrait reference. This update stays on the pending Task6 feature branch/draft PR6. Next saves real details then enters optional verification; editing has one Save and returns only after persistence. Removed the obsolete save/continue flag from ProfileCubit; navigation belongs to the screen listener.
+
+PathsDropdownField provides a themed anchored menu with form validation, focus ownership, Escape/outside/system-back dismissal and disposal. It is reusable for future form selections; contextual Home radius/actions remain contextual menus. ProfileSurface shares the cover/centered identity/framed bio layout across owner and eligible peers. Existing media is unavailable until Task8, so the cover remains explicitly neutral; no fake portraits/gallery or unsupported social statistics/actions are added. Owner account controls move to one Profile options menu, including in loading/error states. Forms remain white; the requested profile cover uses the reference's dark treatment.
+
+Verification combines backend capability with the actual local adapter's readiness. Production's unavailable adapter keeps slots/submit disabled even if the server advertises availability. Consent/retention disclosure remains reachable when uploads exist. Pull-to-refresh uses the Paths loader during status loading, without another action button or a default spinner. No package/SDK/asset download was needed for this UI update. Full photo/CNIC processing remains Task8; physical feedback and Task6 encounter evidence remain owner gates.

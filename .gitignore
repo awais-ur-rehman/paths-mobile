@@ -56,3 +56,5 @@ coverage/
 .DS_Store
 .superpowers/
 *.local
+
+/android/.kotlin/
