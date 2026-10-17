@@ -11,10 +11,9 @@ final class ProfileState {
     this.saving = false,
     this.error,
     this.saveRevision = 0,
-    this.continueSetup = false,
   });
   final ProfileDetails? details;
-  final bool loading, saving, continueSetup;
+  final bool loading, saving;
   final AuthFailure? error;
   final int saveRevision;
 }
@@ -46,10 +45,7 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  Future<void> save(
-    ProfileDetails details, {
-    bool continueSetup = false,
-  }) async {
+  Future<void> save(ProfileDetails details) async {
     if (state.loading || state.saving || isClosed) return;
     final previous = state;
     final token = _request = CancelToken();
@@ -65,11 +61,7 @@ class ProfileCubit extends Cubit<ProfileState> {
       final saved = await repository.saveProfile(details, cancelToken: token);
       if (!isClosed && generation == _generation) {
         emit(
-          ProfileState(
-            details: saved,
-            saveRevision: previous.saveRevision + 1,
-            continueSetup: continueSetup,
-          ),
+          ProfileState(details: saved, saveRevision: previous.saveRevision + 1),
         );
       }
     } on AuthFailure catch (error) {

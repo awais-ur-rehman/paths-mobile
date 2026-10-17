@@ -5,9 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../auth/presentation/auth_widgets.dart';
-import '../../auth/presentation/auth_cubit.dart';
 import '../../../shared/widgets/paths_loader.dart';
-import '../../../shared/widgets/paths_avatar.dart';
+import '../../../shared/widgets/paths_dropdown_field.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import '../domain/profile_repository.dart';
 import 'profile_cubit.dart';
@@ -58,21 +57,13 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
         if (state.error case final error?) {
           PathsToast.show(context, error.message);
         } else if (state.saveRevision > 0) {
-          if (state.continueSetup) {
-            context.go('/setup/verification');
-          } else {
-            PathsToast.show(
-              context,
-              'Your profile details are saved.',
-              tone: ToastTone.success,
-            );
-          }
+          context.go(widget.editing ? '/profile' : '/setup/verification');
         }
       },
       child: AuthScaffold(
         title: widget.editing ? 'Edit your profile' : 'Make it your profile',
         onBack: widget.editing ? () => context.go('/profile') : null,
-        subtitle: 'Start with the basics. Your profile stays private while you finish setup.',
+        subtitle: 'A few details about you.',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -91,7 +82,10 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
                   );
                 }
                 if (state.details case final details?) {
-                  return _ProfileForm(details: details);
+                  return _ProfileForm(
+                    details: details,
+                    editing: widget.editing,
+                  );
                 }
                 return Column(
                   children: [
@@ -108,11 +102,6 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
                 );
               },
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () => context.read<AuthCubit>().logout(),
-              child: const Text('Sign out'),
-            ),
           ],
         ),
       ),
@@ -121,7 +110,8 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
 }
 
 class _ProfileForm extends StatefulWidget {
-  const _ProfileForm({required this.details});
+  const _ProfileForm({required this.details, required this.editing});
+  final bool editing;
   final ProfileDetails details;
   @override
   State<_ProfileForm> createState() => _ProfileFormState();
@@ -156,7 +146,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     super.dispose();
   }
 
-  void save({bool continueSetup = false}) {
+  void save() {
     if (form.currentState!.validate()) {
       context.read<ProfileCubit>().save(
         ProfileDetails(
@@ -166,7 +156,6 @@ class _ProfileFormState extends State<_ProfileForm> {
           bio: bio.text,
           visibility: privateProfile ? 'private' : 'public',
         ),
-        continueSetup: continueSetup,
       );
     }
   }
@@ -180,15 +169,6 @@ class _ProfileFormState extends State<_ProfileForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(child: PathsAvatar(size: 72)),
-              const SizedBox(height: 12),
-              const Text('Profile photo required', textAlign: TextAlign.center),
-              const SizedBox(height: 4),
-              const Text(
-                'Photo uploads aren’t available in this build yet. Your profile is not yet complete.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
               TextFormField(
                 controller: name,
                 readOnly: saving,
@@ -222,24 +202,19 @@ class _ProfileFormState extends State<_ProfileForm> {
                     : null,
               ),
               const SizedBox(height: 20),
-              DropdownButtonFormField<String>(
-                initialValue: gender,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Gender'),
-                items: const [
-                  DropdownMenuItem(value: 'man', child: Text('Man')),
-                  DropdownMenuItem(value: 'woman', child: Text('Woman')),
-                  DropdownMenuItem(
-                    value: 'another_identity',
-                    child: Text('Another identity'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'prefer_not_to_say',
-                    child: Text('Prefer not to say'),
-                  ),
+              PathsDropdownField<String>(
+                label: 'Gender',
+                value: gender,
+                enabled: !saving,
+                options: const [
+                  PathsDropdownOption('man', 'Man'),
+                  PathsDropdownOption('woman', 'Woman'),
+                  PathsDropdownOption('another_identity', 'Another identity'),
+                  PathsDropdownOption('prefer_not_to_say', 'Prefer not to say'),
                 ],
-                onChanged: saving ? null : (value) => gender = value,
-                validator: (v) => v == null ? 'Choose an option.' : null,
+                onChanged: (value) => gender = value,
+                validator: (value) =>
+                    value == null ? 'Choose an option.' : null,
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -265,29 +240,14 @@ class _ProfileFormState extends State<_ProfileForm> {
                 title: Text(
                   privateProfile ? 'Private profile' : 'Public profile',
                 ),
-                subtitle: Text(
-                  privateProfile
-                      ? 'Only connections can see your posts. Your basic card remains visible to eligible members.'
-                      : 'Eligible signed-in members can see your posts. Your exact location and date of birth stay private.',
-                ),
               ),
               const SizedBox(height: 24),
               FilledButton(
-                onPressed: saving ? null : () => save(),
+                onPressed: saving ? null : save,
                 child: saving
                     ? const PathsLoader(size: 28, color: Colors.white)
-                    : const Text('Save details'),
+                    : Text(widget.editing ? 'Save' : 'Next'),
               ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: saving ? null : () => save(continueSetup: true),
-                child: const Text('Save and continue'),
-              ),
-              if (widget.details.username.isNotEmpty)
-                TextButton(
-                  onPressed: saving ? null : () => context.go('/profile'),
-                  child: const Text('View your profile'),
-                ),
             ],
           ),
         ),

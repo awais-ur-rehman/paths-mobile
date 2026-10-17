@@ -1,3 +1,5 @@
+import 'package:paths_mobile/shared/widgets/paths_dropdown_field.dart';
+
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -105,7 +107,7 @@ void main() {
       await tap(tester, 'Confirm age');
       expect(find.text('Age confirmed'), findsNothing);
       expect(find.text('Contact support'), findsNothing);
-      expect(find.text('Sign out'), findsOneWidget);
+      expect(find.text('Sign out'), findsNothing);
       expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
       expect(adapter.requests.any((r) => r.path.contains('locations')), false);
       await tester.pumpWidget(const SizedBox());
@@ -235,8 +237,8 @@ void main() {
         find.widgetWithText(TextFormField, 'Username'),
         'Test_Case',
       );
-      await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.ensureVisible(find.byType(PathsDropdownField<String>));
+      await tester.tap(find.byType(PathsDropdownField<String>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Prefer not to say').last);
       await tester.pumpAndSettle();
@@ -245,15 +247,15 @@ void main() {
         'A fixture bio',
       );
       adapter.profileConflict = true;
-      await tap(tester, 'Save details');
+      await tap(tester, 'Next');
       expect(
         find.text('That username is already taken. Choose another.'),
         findsOneWidget,
       );
       expect(find.text('Test_Case'), findsOneWidget);
       adapter.profileConflict = false;
-      await tap(tester, 'Save details');
-      expect(find.text('Your profile details are saved.'), findsOneWidget);
+      await tap(tester, 'Next');
+      expect(find.text('Verification'), findsOneWidget);
       expect(adapter.profile['username'], 'test_case');
       expect(adapter.profile['gender'], 'prefer_not_to_say');
       expect(adapter.profile['bio'], 'A fixture bio');
@@ -263,42 +265,44 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
-  testWidgets(
-    'retrying an edit does not announce saved while the retry is pending',
-    (tester) async {
-      final adapter = ApiAdapter()..adultChecked = true;
-      await signInForSetup(tester, adapter);
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Username'),
-        'fixture_person',
-      );
-      await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
-      await tester.tap(find.byType(DropdownButtonFormField<String>));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Man').last);
-      await tester.pumpAndSettle();
-      await tap(tester, 'Save details');
-      expect(find.text('Your profile details are saved.'), findsOneWidget);
-      adapter.profileConflict = true;
-      await tap(tester, 'Save details');
-      expect(
-        find.text('That username is already taken. Choose another.'),
-        findsOneWidget,
-      );
-      adapter.profileSaveStarted = Completer<void>();
-      adapter.profileSaveRelease = Completer<void>();
-      await tester.tap(find.text('Save details'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 250));
-      expect(adapter.profileSaveStarted!.isCompleted, true);
-      expect(find.text('Your profile details are saved.'), findsNothing);
-      adapter.profileSaveRelease!.complete();
-      await tester.pumpAndSettle();
-      expect(find.text('Your profile details are saved.'), findsNothing);
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpAndSettle();
-    },
-  );
+  testWidgets('a failed edit cannot navigate until the retry is saved', (
+    tester,
+  ) async {
+    final adapter = ApiAdapter()
+      ..adultChecked = true
+      ..profile = {
+        'username': 'fixture_user',
+        'name': 'Fixture User',
+        'gender': 'man',
+        'bio': '',
+        'visibility': 'private',
+      };
+    await signInForSetup(tester, adapter);
+    final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
+    router.go('/setup/profile?edit=1');
+    await tester.pumpAndSettle();
+    adapter.profileConflict = true;
+    await tap(tester, 'Save');
+    expect(
+      find.text('That username is already taken. Choose another.'),
+      findsOneWidget,
+    );
+    adapter.profileConflict = false;
+    adapter.profileSaveStarted = Completer<void>();
+    adapter.profileSaveRelease = Completer<void>();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(adapter.profileSaveStarted!.isCompleted, true);
+    expect(find.text('Edit your profile'), findsOneWidget);
+    expect(find.text('Edit profile'), findsNothing);
+    adapter.profileSaveRelease!.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Fixture User, 26'), findsOneWidget);
+    expect(find.text('Edit profile'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
 
   for (final adult in [false, true]) {
     testWidgets('${adult ? 'profile details' : 'age check'} visual fixture', (
@@ -322,23 +326,15 @@ void main() {
       await tester.pumpAndSettle();
     });
   }
-  testWidgets(
-    'profile setup keeps sign-out available after the age-only page',
-    (tester) async {
-      final adapter = ApiAdapter()..adultChecked = true;
-      await signInForSetup(tester, adapter);
-      expect(find.text('Sign out'), findsOneWidget);
-      await tap(tester, 'Sign out');
-      expect(find.text('Good to see you'), findsOneWidget);
-      expect(find.text('Make it your profile'), findsNothing);
-      expect(
-        adapter.requests.where((r) => r.path == '/v1/auth/logout').length,
-        1,
-      );
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpAndSettle();
-    },
-  );
+  testWidgets('profile creation keeps only the Next action', (tester) async {
+    await signInForSetup(tester, ApiAdapter()..adultChecked = true);
+    expect(find.text('Next'), findsOneWidget);
+    expect(find.text('Sign out'), findsNothing);
+    expect(find.text('Save details'), findsNothing);
+    expect(find.text('Save and continue'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
   testWidgets('onboarding visual fixture', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
