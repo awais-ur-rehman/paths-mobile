@@ -15,3 +15,15 @@ A separate read-only reviewer inspected the full source against Task1. The autho
 Executed checks and exact scope are recorded in IMPLEMENTATION_STATUS.md. Native source compilation/type checking is weaker than an assembled and exercised device build. Background delivery, battery, precision/recall, OS notification behavior, key invalidation, disk failure, queued-control recovery after process death and iOS runtime remain unproven. Do not merge the draft PR or advance the Phase0 gate from inspection alone.
 
 Follow-up inspection also fixed endpoint URI validation (empty root paths are valid), guaranteed active-test cleanup on timeout via registered teardown, refreshed service generation on reused background start commands, and prevented permission-revoked Activity resume from throwing a native startup exception. Two API transport regressions cover the exact runbook URL and scoped stop payload.
+
+## Task3 source review
+
+A fresh read-only reviewer inspected backend authentication/retention/outbox/SMTP/guards/migrations, mobile storage/repository/refresh/Cubit/router/screens/tests and the admin contract diff. Four important findings were confirmed and fixed with regressions: expired signup resend after worker retention, 429/500/503 refresh preserving saved credentials, cleanup failures keeping authentication blocked, and stale refresh parsing/storage errors not invalidating newer sessions. Signup retention also clears superseded password hashes; cleanup attempts secure deletion even if preference persistence fails and requires retry before restoration. No second reviewer pass is claimed.
+
+Author reran the relevant complete suites after fixes. Review and tests do not establish native secure-storage reliability under OS faults, signed iOS behavior, OS autofill, email-client handoff, Gmail delivery or device usability. Those limits remain in IMPLEMENTATION_STATUS.md and the mobile AUTH_DEVICE_TESTS.md gate.
+
+## Device-feedback source review
+
+A fresh read-only reviewer inspected the auth presentation/routing/components, native splash, profile repository/Cubit and backend profile details/contract changes. It identified a premature success toast when retrying a failed edit after an earlier successful save. A regression reproduced the incorrect pending-success message; the listener now requires a new completed save revision. Source review did not establish visual/OS/runtime results or deferred photo/verification behavior. Author tests and visual/build evidence are reported separately in IMPLEMENTATION_STATUS.md.
+
+Final arrow regression: successful navigation previously reset its controller before route disposal, snapping the circle back left. The callback now reports route handoff, keeping the button disabled at the right endpoint; failed persistence resets it for retry. Successful handoff, failure/retry and reduced-motion tests pass in the88-test suite.

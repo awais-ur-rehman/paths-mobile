@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class PathsTheme {
-  static const background = Color(0xFFF5FBFF),
+  static const background = Colors.white,
       ink = Color(0xFF101418),
       blue = Color(0xFF147DCE),
       aqua = Color(0xFFC4F2F3);
@@ -19,6 +19,26 @@ abstract final class PathsTheme {
         color: ink,
       ),
       bodyLarge: TextStyle(fontSize: 16, height: 1.5, color: ink),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD8E4EC)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFD8E4EC)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: blue, width: 2),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(minimumSize: const Size(48, 48)),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

@@ -61,7 +61,7 @@ Use two consenting adult testers and two phones. One phone can test lifecycle/ba
 1. In paths-backend run `npm run experiment:configure`. It creates ignored, permission-restricted `.env.phase0.local` and mobile `device-a.local` / `device-b.local`. It prints no keys. These disposable test keys identify only participants A/B; they are not real-account sessions.
 2. Run `npm run experiment`. The Node experiment binds **127.0.0.1:8787**, holds samples only in memory, purges candidate samples after 10 minutes and dedup IDs after 15 minutes, and logs no requests/sample bodies. Stop it after the trial to erase remaining memory. It is not NestJS production infrastructure.
 3. Connect both Android phones by USB; run `adb -s <phone-a-id> reverse tcp:8787 tcp:8787` and the same for B. Do not expose a plain HTTP listener to the LAN.
-4. Build A and B with their matching `--dart-define-from-file=device-a.local` / `device-b.local`. With Gradle offline init in effect, run `flutter run --no-pub -d <physical-id> --dart-define-from-file=device-a.local` (B uses device-b.local). No production tokens, secrets or personal profiles belong in these configs.
+4. Build A and B with their matching `--dart-define-from-file=device-a.local` / `device-b.local`. With Gradle offline init in effect, run `flutter run --no-pub -t lib/main_phase0.dart -d <physical-id> --dart-define-from-file=device-a.local` (B uses device-b.local). No production tokens, secrets or personal profiles belong in these configs.
 5. Before each separately labeled trial, pause both phones, run `node --env-file=.env.phase0.local tools/feasibility/reset-trial.ts` in paths-backend, then explicitly start each experiment again. Reset clears all in-memory trial state, so reset only when both testers have paused. Do not paste bearer values into chat or shell history.
 6. Enable foreground or explicitly opt into background capture. The status panel shows pending queue count and whether the conservative two-observation rule qualified during this trial. A matched verdict is historic for the trial, not proof of continued presence or same-venue certainty. `/summary` contains aggregate counts, no sample positions.
 
@@ -89,3 +89,6 @@ On failure return: branch/commit, sanitized build error (artifact/version), devi
 ## Follow-up
 
 Owner authorized the missing Android dependencies; debug APK assembly now passes without the diagnostic init override. Historical missing-cache list above is resolved for this build. Owner accepts continuation; no additional device operation was performed by Codex.
+
+
+Task3 entry-point change: ordinary lib/main.dart now launches authentication. Always select `-t lib/main_phase0.dart` for these retained private feasibility trials. Current authentication device checks are in [AUTH_DEVICE_TESTS.md](AUTH_DEVICE_TESTS.md); historical no-download blockers above have been superseded by the explicitly authorized artifacts and recorded successful builds.

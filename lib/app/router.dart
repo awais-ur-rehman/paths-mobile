@@ -1,25 +1,99 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/platform/location_tracker.dart';
-import '../features/experiment/data/experiment_api.dart';
-import '../features/experiment/presentation/experiment_cubit.dart';
-import '../features/experiment/presentation/experiment_screen.dart';
+import '../features/auth/presentation/auth_cubit.dart';
+import '../features/profile/domain/profile_repository.dart';
+import '../features/profile/presentation/profile_setup_screen.dart';
+import '../features/auth/presentation/entry_screens.dart';
+import '../features/auth/presentation/credential_screens.dart';
+import '../features/auth/presentation/otp_screen.dart';
+import '../features/auth/presentation/reset_screen.dart';
+import '../features/auth/presentation/account_screens.dart';
+import '../features/auth/presentation/policy_screen.dart';
 
-GoRouter createRouter() => GoRouter(
+class AuthRouterRefresh extends ChangeNotifier {
+  AuthRouterRefresh(AuthCubit cubit) {
+    _subscription = cubit.stream.listen((_) {
+      notifyListeners();
+    });
+  }
+  late final StreamSubscription<AuthState> _subscription;
+  @override
+  void dispose() {
+    unawaited(_subscription.cancel());
+    super.dispose();
+  }
+}
+
+GoRouter createAuthRouter(
+  AuthCubit cubit,
+  AuthRouterRefresh refresh,
+  ProfileRepository profiles,
+) => GoRouter(
+  initialLocation: '/',
+  refreshListenable: refresh,
+  redirect: (context, route) {
+    final state = cubit.state;
+    final path = route.uri.path;
+    if (path == '/policies/terms' || path == '/policies/privacy') return null;
+    final target = switch (state.stage) {
+      AuthStage.booting || AuthStage.blocked => '/',
+      AuthStage.onboarding => '/onboarding',
+      AuthStage.otp => '/auth/otp',
+      AuthStage.reset => '/auth/reset-password',
+      AuthStage.authenticated =>
+        state.account?.restricted == true
+            ? '/account/restricted'
+            : state.account?.adultChecked == true
+            ? '/setup/profile'
+            : '/setup/age',
+      AuthStage.signedOut =>
+        ['/auth/login', '/auth/signup', '/auth/forgot-password'].contains(path)
+            ? path
+            : state.signupPreferred
+            ? '/auth/signup'
+            : '/auth/login',
+    };
+    return target == path ? null : target;
+  },
   routes: [
+    GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
+    GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
     GoRoute(
-      path: '/',
-      builder: (context, state) => BlocProvider(
-        create: (_) => ExperimentCubit(
-          PlatformLocationTracker(),
-          ExperimentApi(
-            endpoint: const String.fromEnvironment('PATHS_TEST_ENDPOINT'),
-            token: const String.fromEnvironment('PATHS_TEST_TOKEN'),
-          ),
-        ),
-        child: const ExperimentScreen(),
-      ),
+      path: '/auth/signup',
+      builder: (_, _) => const CredentialsScreen(signup: true),
+    ),
+    GoRoute(
+      path: '/auth/login',
+      builder: (_, _) => const CredentialsScreen(signup: false),
+    ),
+    GoRoute(
+      path: '/auth/forgot-password',
+      builder: (_, _) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(path: '/auth/otp', builder: (_, _) => const OtpScreen()),
+    GoRoute(
+      path: '/auth/reset-password',
+      builder: (_, _) => const ResetPasswordScreen(),
+    ),
+    GoRoute(path: '/setup/age', builder: (_, _) => const AgeCheckScreen()),
+    GoRoute(
+      path: '/setup/profile',
+      builder: (_, _) => ProfileSetupScreen(repository: profiles),
+    ),
+    GoRoute(
+      path: '/account/restricted',
+      builder: (_, _) => const RestrictedAccountScreen(),
+    ),
+    GoRoute(
+      path: '/policies/terms',
+      builder: (_, _) => const PolicyScreen(privacy: false),
+    ),
+    GoRoute(
+      path: '/policies/privacy',
+      builder: (_, _) => const PolicyScreen(privacy: true),
     ),
   ],
 );

@@ -26,3 +26,25 @@
 - Integration tests own a unique temporary database and require CREATEDB; only that created database is removed after tests, preserving development fixtures/volumes.
 - Worker retries retained failed jobs from durable unprocessed outbox rows after30-second cooldown. Unknown kinds remain failures. Shutdown drains DB transactions and leaves unacknowledged jobs for idempotent replay.
 - Existing physical feasibility acceptance permits Phase1 work. Detailed Phase0 battery/accuracy and iOS evidence remain release gates. No new device test is needed for Task2's network/bootstrap-only Flutter addition; Task3 requires device authentication testing.
+
+## Task3 session transport boundary
+
+The refresh component owns volatile coordination only. Auth-repository integration must persist rotations in platform secure storage and apply terminal refresh revocation; it is not connected to the current harness. Authenticated transport pins its origin, disables redirects and rejects generation-mismatched responses as well as retries. Refresh failures never expose the separate refresh request. Streaming requests require explicit retry; multipart bodies use a cloned body. This boundary does not replace backend authorization or logout revocation.
+
+## Task3 authentication decisions
+
+- API contract1.1.0 uses opaque, hashed bearer sessions with immediate database revocation; the documentation requires bearer authorization, not JWT encoding. Access lifetime10min; refresh family absolute lifetime30days with one-use rotation/reuse revocation.
+- Signup credentials are challenge-bound until email verification. Codes last5min, allow5 guesses, and resend after60sec. Pending password hashes remain only within the 24-hour expired-challenge retention window to permit resend; successful verification clears them immediately.
+- DOB is private, checked using a UTC calendar18-year boundary at guarded setup entry, and excluded from account responses. Remaining profile fields are Task4.
+- Public one-use authentication mutations are not automatically replayed. Protected retries require an idempotent verb or explicit idempotency key. Temporary refresh outages preserve credentials behind explicit retry; definitive revocation clears them.
+- Restricted accounts can view their own status, sign out, and contact support about deletion. Automated account erasure remains Task12; support mail handoff does not claim a completed deletion.
+- Owner supplied temporary Gmail/support address; configure SUPPORT_EMAIL/SMTP_USER/SMTP_FROM server-side only. TERMS_URL and PRIVACY_URL are editable HTTPS environment values. Blank values display development testing notices pending published policies; they are not final legal documents.
+- Actual Gmail delivery requires an app password supplied privately. Mailpit verifies local SMTP/outbox behavior. R2 integration remains Task8; no storage credentials belong in clients.
+
+## Owner device feedback overrides (2026-10-17)
+
+- New user instructions override earlier onboarding footer/signup defaults: one full-bleed photo-led page, centered copy and single Get started CTA, white lower/auth backgrounds, animated arrow before login. Policies/credits stay on reachable auth policy routes.
+- Native Android12 splash uses a separately scaled vector inside its circular safe area; launcher foreground art is retained. Older Android/iOS and Flutter splash sizes are bounded explicitly. Physical masking remains an owner retest.
+- Branded loader is drawn from original Paths Bezier vectors with a disposed Flutter ticker and reduced-motion still state; editable SVG source retained. Toasts enter at top right, replace prior notices, allow swipe-right/manual dismissal and remain persistent for accessible navigation.
+- User explicitly requested an actual profile form after age confirmation. Add only the needed private details slice now, preserving pending Task3 retest and not completing all Task4/Task8 work. Routine username default:3–24 lowercase ASCII letters/digits/underscore; server canonicalizes trim/case and the database arbitrates unique claims. Bio limit300 and gender choices follow confirmed scope.
+- Saving profile details is idempotent and does not grant profile completion, image moderation or verification entitlements. DOB remains separate/private. No extra package, tool, SDK, emulator or phone operation is required.

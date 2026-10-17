@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase1, Task2 foundation locally verified; Tasks3–4 not started**. API contract: `1.0.0`; isolated experiment contract remains `phase0.v1`.
+Current phase: **Phase1 Task3 device corrections and requested profile-details entry; awaiting retest**. API contract: `1.2.0`; isolated experiment contract remains `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -36,17 +36,18 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 3: Email authentication, age gate and sessions
 
-- [ ] Test OTP purpose/expiry/attempts/resend invalidation, replay, under-18 DOB, password reset revocation and refresh-family reuse. — **not started**
-- [ ] Implement signup/login/OTP/recovery with Argon2id and hashed secrets; server guards enforce account status. — **not started**
-- [ ] Implement splash, one onboarding screen, auth forms and guarded setup routes. — **not started**
-- [ ] Implement single-flight Dio refresh; test ten concurrent 401s produce one refresh, one replay each and no loop. — **not started**
-- [ ] Verify keyboard, paste/autofill, offline/error states and suspended-account support/deletion access. — **not started**
+- [x] Test OTP purpose/expiry/attempts/resend invalidation, replay, under-18 DOB, password reset revocation and refresh-family reuse. — **verified — PostGIS OTP/reset/refresh/status/adult tests pass**
+- [x] Implement signup/login/OTP/recovery with Argon2id and hashed secrets; server guards enforce account status. — **implemented and locally verified — real SMTP outbox/API flow passes against Mailpit**
+- [ ] Implement splash, one onboarding screen, auth forms and guarded setup routes. — **implemented — auth screens/router/widget journeys pass; physical Android test pending**
+- [x] Implement single-flight Dio refresh; test ten concurrent 401s produce one refresh, one replay each and no loop. — **verified — single-flight/one replay and secure-storage/logout races pass**
+- [ ] Verify keyboard, paste/autofill, offline/error states and suspended-account support/deletion access. — **implemented — automated paste/keyboard/layout/restricted routing verified; OS autofill, mailto and storage runtime awaiting device test**
+
 
 ### Task 4: Design system, profile and optional verification submission
 
-- [ ] Build tokens/components from UI doc; record reference-to-product substitutions. — **not started**
-- [ ] Test username uniqueness, private DOB exclusion, adult gate, public/private response fields and CNIC skip entitlement. — **not started**
-- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **not started**
+- [ ] Build tokens/components from UI doc; record reference-to-product substitutions. — **in progress — shared loader/toast/CTA and white auth surfaces implemented; full product components pending Task4**
+- [ ] Test username uniqueness, private DOB exclusion, adult gate, public/private response fields and CNIC skip entitlement. — **in progress — private profile-details ownership/adult/uniqueness/cascade tests verified; public profiles and CNIC skip entitlement pending**
+- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **in progress — requested editable profile-details entry saves to backend; photo/verification flows not completed and upload integration retains Task8 dependency**
 - [ ] Add selective rebuild checks for badge/save/status and controller disposal tests where relevant. — **not started**
 - [ ] Verify layouts at 320/390/768 widths and 200% text; add meaningful golden tests with approved assets. — **not started**
 
@@ -248,3 +249,54 @@ Foundation implementation commits: backend `d8dab8b`, `446979e`; admin `269b353`
 GitHub follow-up: corrected backend CI run39017845238 and admin CI run39017849088 pass, including lint/types/build/tests/integration (backend) and generated-artifact drift. Mobile analyzer/tests are local evidence; no hosted Flutter SDK download or iOS runtime check was performed. Foundation PRs: https://github.com/awais-ur-rehman/paths-backend/pull/2 ; https://github.com/awais-ur-rehman/paths-admin/pull/2 ; https://github.com/awais-ur-rehman/paths-mobile/pull/2 . Task2 is verified; Phase1 Tasks3–4 remain open.
 
 Final transport review: malformed JSON was initially classified as offline by Dio. A new test failed on that classification; ApiClient now maps wrapped FormatException to invalidResponse. Full Flutter analyzer has no issues and all28 tests pass after the fix. This adds no native behavior and does not replace device validation.
+
+## Phase1 Task3 — first session component (in progress)
+
+Branch `feature/session-refresh`, from development merge8bda1c5. Task2 foundation PR2 merged in all repos (backend6707061, admin7568cdf, mobile8bda1c5). Main is unchanged.
+
+`lib/core/network/refresh_coordinator.dart` implements one shared refresh for concurrent401s, one replay/request, late401 reuse, generation invalidation on sign-in/logout, original-origin restriction, no redirect following, cancellation and non-replayable stream handling. Volatile tokens are intentionally not connected to the current app. A real auth repository must own secure persistence/rotation and terminal revocation before integration; the callback uses a separate bounded HTTP client.
+
+`test/core/refresh_coordinator_test.dart`: eleven tests, including ten concurrent requests (one refresh, exactly20 transport calls), replay401 limit, stale refresh across logout/new sign-in, shared failure, foreign-origin rejection, cancelled request, old401 and successful200 across account changes, and suppression of separate refresh-request secrets. Fixtures contain synthetic tokens only. Full no-resolution Flutter analyzer has no issues; all39 mobile tests pass. Initial missing-component test failure established red; runtime/header-map and race-test failures were diagnosed and corrected before green. Read-only review found stale successful/error response leakage and raw refresh transport errors; both fixed with regression coverage and re-reviewed.
+
+This is an unconnected Task3 component, not a completed authentication flow. Signup/login/OTP/reset, Argon2id, server sessions/status guards, secure persistence, AuthCubit/forms/routes and physical signup/reset checks remain **not started**. No device testing requested for an incomplete flow. Draft PR remains pending the rest of Task3 integration. API export remains1.0.0; no unpublished auth endpoint or generated response is fabricated. Task4 profiles remain not started. No missing dependency is claimed as a blocker for these remaining tasks.
+
+Task3 implementation commit: `49dde5a`; initial evidence commit: `919dcb7`. Draft https://github.com/awais-ur-rehman/paths-mobile/pull/3 targets development from feature/session-refresh; do not merge until real authentication/secure-storage integration and applicable checks pass. Foundation PR2 merged; no release promotion.
+
+## Task3 current implementation and gate (2026-10-17)
+
+Backend feature/email-auth: Argon2id, challenge-bound keyed OTP digests (5min/5 guesses/60s), purpose/resend invalidation, encrypted transactional SMTP outbox, 10-minute opaque hashed access tokens and rotating30-day refresh families with reuse revocation; reset grants never act as sessions. Restricted accounts retain own session metadata/logout and support contact. Public account metadata never includes DOB. JWT is not a requirement of the bearer contract.
+
+Mobile feature/session-refresh: platform secure storage (Android Keystore/AES-GCM; iOS this-device-only non-synchronizing Keychain), serialized credential persistence, install marker and sign-out tombstone, explicit native queue cleanup, single-flight refresh and bounded replay. Native key persistence remains a runtime gate. Bootstrap/onboarding/signup/login/OTP/forgot/reset/guarded adult-check/restricted screens are implemented. The default main entry is auth; private feasibility harness moved to lib/main_phase0.dart. Full profile fields/media remain Task4/Task8, not falsely completed here.
+
+Executed before final review: backend lint/type/build, 5 unit +13 Phase0 +20 PostGIS/Valkey tests pass; real proxy→API→outbox→worker→Mailpit signup/reset script passes and cleans its synthetic fixtures. Admin lint/types/build,2 transport and3 Chrome checks pass. Flutter analyzer reports no issues;61 tests and2 Python generator tests pass. Onboarding/login golden renders inspected with actual bundled fonts/icon glyphs;320/390/768 widths at100%/200% with keyboard pass. Android debug assembly passes with existing Gradle/SDK and authorized artifacts (177tasks). iOS full unsigned Debug iphoneos build passes using local Swift packages, package resolution disabled; entitlements/plists lint passes. No device, simulator or emulator launched. Final source review/CI/final-image rerun still pending; append final results below.
+
+Gmail/support address supplied by owner is configured only in ignored local env. TERMS_URL/PRIVACY_URL remain editable in backend .env; blanks intentionally show development testing notices pending final URLs. Gmail settings require credentials and TLS; actual Gmail delivery is unverified because no app password was provided. Local test delivery uses Mailpit; no external email, deployment or real user data upload occurred.
+
+Task3 remains **awaiting device test**, not complete. Do not merge the auth draft PRs or advance a dependent gate before owner Android results. iOS runtime, secure storage across OS restarts/uninstall, email-app handoff and OS autofill remain separately unverified. Detailed Phase0 quantitative evidence remains a release gate.
+
+## Task3 final mobile evidence
+
+Source commits: f92bfc5 (assets),4fbfd7f (secure repository),c78338c (screens/routes),b35debc (licenses/logout contract),0350b24 and bc6161a (review fixes). Final Flutter analyzer: no issues. All68 Flutter tests pass, plus2 Python contract-generator tests. Android final debug build passes177 tasks; final iOS unsigned iphoneos build succeeds with automatic package resolution disabled. iOS plist/entitlements lint passes. Exact OpenAPI copies match and Dart regeneration has no drift. A first generator check accidentally discovered zero tests; the correct test/tools discovery was subsequently run and passed2 tests. A sandbox telemetry timestamp warning during formatting was resolved by rerunning formatting with the installed SDK's required access; generated bytes remain unchanged.
+
+Final source review fixes and limits are recorded in docs/REVIEW.md. Device checklist: docs/AUTH_DEVICE_TESTS.md. Support/URLs are configured server-side in ignored env; no credentials are committed. Mobile draft PR3: https://github.com/awais-ur-rehman/paths-mobile/pull/3 . Branch feature/session-refresh. Required owner Android results and separate iOS runtime evidence remain pending; Task3 and Phase1 are not complete. Main/development have not received this auth implementation.
+
+## Physical-device feedback correction (2026-10-17)
+
+Owner ran the app on Android and reported UI defects; this is not acceptance of all Task3 device cases. Requested corrections implement a smaller mask-safe splash; full-bleed52%-height onboarding photo, centered text and one animated arrow CTA to login; white auth surfaces; an age-only form that immediately routes to actual profile details; shared vector crossing-paths loader and top-right swipe-right-dismissible success/error toast. No onboarding footer links/account copy remain. Existing login content remains, with white background. Credits remain accessible from policy screens.
+
+The requested profile page starts only the necessary details slice of Task4: canonical unique username, name, documented gender choice and optional300-character bio, guarded by verified active adult session. GET/PUT /v1/me/profile saves private details; profileComplete remains false. Photo upload, optional verification, public profile completion and later product routes are not claimed complete. No fake save/upload/Home response was introduced. Full Task4 remains pending the auth device gate and its own plan work.
+
+Fresh read-only review found a false-success toast on retry after an earlier successful save. Reproduced with a failing widget journey and fixed: success follows a completed save revision, not clearing an error. Reviewed limits remain physical native rendering, OS behavior and deferred upload/verification. No second reviewer pass claimed.
+
+Current files: backend db/migrations/0003_profile_details.sql, db/schema/profiles.ts, src/modules/profiles, scripts/verify-auth-mail.ts; mobile lib/shared/widgets, lib/features/profile, auth screens/router/theme/native splash and real generated API1.2.0; admin pinned contract1.2.0. Final source/build/CI evidence and commits follow below. Draft PR3 in each repository remains open; main/development unchanged until owner retest.
+
+Verified device-feedback checks: backend lint/types/build,5 unit +13 Phase0 +25 database integration tests pass. Proxy/API/outbox/worker/Mailpit signup→adult-check→profile save/read→reset smoke passes. Admin lint/types/build,2 transport tests and3 installed-Chrome cases pass; real API1.2.0 copies match. At the intermediate checkpoint, the mobile analyzer was clean and84 Flutter tests passed;3 Python tests pass (2 generator + native circular splash safe-area geometry). Four phone goldens inspected with actual fonts and synchronous original vector branding. Final native builds/CI recorded below after completion; no physical results invented.
+
+Profile setup retains the existing secure sign-out action after the age-only page; the age page itself has none of the removed support/deletion/sign-out controls. This prevents stranding an authenticated user during incomplete setup. Final regression count follows below.
+
+
+### Final device-correction verification
+
+Mobile source commits: b917642 (profile API), a7afe47 (shared vector branding, loader, toast and arrow), 9e6bc9e (screens/routes/native splash), 561896f (profile sign-out), 15c025e (navigation handoff and regression tests). Final Flutter analyzer reports no issues; all88 Flutter tests pass, including successful arrow handoff, retry and reduced-motion cases. All3 Python generator/splash geometry tests pass. Final offline Android Debug assembly succeeds (177 tasks); final unsigned generic iphoneos Debug build succeeds with automatic package resolution disabled. These are compile checks, not Android/iOS runtime proof. Four golden renders were inspected; no phone or emulator was operated.
+
+Review corrections include preventing a false saved toast while retrying after an earlier successful save, retaining secure sign-out after the age-only page, and keeping the arrow at the right endpoint until navigation replaces onboarding. API copies remain1.2.0. Backend source/status c563f2f and admin1066f39 are pushed; GitHub CI passed those heads (runs39024766234 and39024770130). Mobile CI follows the final push. Focused owner retest: docs/DEVICE_UI_RETEST.md. Task3 remains awaiting device test; no draft PR merge or release promotion is authorized by these automated results alone.

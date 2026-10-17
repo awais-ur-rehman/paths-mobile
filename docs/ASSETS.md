@@ -18,7 +18,7 @@ Mobile assets: assets/brand, assets/fonts, android/app/src/main/res, ios/Runner/
 
 ## Verification scope
 
-Exporter executed locally. SVGs parsed as XML; all raster variants opened with Pillow. Flutter widget rendering checked at 320/360/390/430/600/768/1024 and 100%/200% text. Real launcher masking and native splash appearance require device evidence; screenshot unit tests cannot prove them. Photo-led onboarding and full product UI belong to subsequent phases; no unlicensed photo placeholders were added.
+Exporter executed locally. SVGs parsed as XML; all raster variants opened with Pillow. Flutter widget rendering checked at 320/360/390/430/600/768/1024 and 100%/200% text. Real launcher masking and native splash appearance require device evidence; screenshot unit tests cannot prove them. Task3 adds the licensed photo below; full profile/product UI remains in subsequent tasks.
 
 ## Downloaded font SHA-256
 
@@ -26,3 +26,20 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - `Inter-Variable.ttf`: `29160a80ff49ddcab2c97711247e08b1fab27a484a329ce8b813d820dc559031`
 - `LilitaOne-OFL.txt`: `255d5debbb80eb2ea762644311f266a279e8778f00156655a516e2b7781a63e1`
 - `LilitaOne-Regular.ttf`: `f5b641c45c69d772ee4eda687bc9fda411d5cad6b0b45371491da4580cbc8d59`
+
+## Task3 onboarding photograph
+
+- Purpose: illustrative onboarding hero only; no person is presented as a Paths member or endorser.
+- Photo: MART PRODUCTION, Pexels photo8121667, “Group of Friends Walking in the Park”: https://www.pexels.com/photo/group-of-friends-walking-in-the-park-8121667/ . Download URL: https://images.pexels.com/photos/8121667/pexels-photo-8121667.jpeg?auto=compress&cs=tinysrgb&w=1600 .
+- License checked2026-10-17: https://www.pexels.com/license/ . Free commercial/app use and modification permitted; attribution not required. Do not imply endorsement, misuse identifiable people, resell unaltered copies or redistribute as stock. Optional photographer credit appears in the app's image credits.
+- Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
+
+Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained tools/render_logo.swift. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
+
+## Device-feedback loader and splash
+
+- assets/brand/paths-loader.svg: original Paths Bezier artwork with moving travellers; project-owned source, no third-party attribution. Runtime equivalent: lib/shared/widgets/paths_loader.dart (Flutter vector painter, no SVG/animation dependency). Curve/stroke/color source retained for editing. Reduced motion uses a static vector state.
+- android/app/src/main/res/drawable/paths_splash.xml: original symbol scaled about its center to fit Android12's circular safe area. Native background is white; older Android uses96dp bounds. iOS launch storyboard uses96pt bounds and aspect fit; Flutter bootstrap uses72px bounds/contain. No stretched source or replacement reference-app logo.
+- Existing licensed onboarding photo/font sources are unchanged. Onboarding uses a full-bleed top crop; photo/font notices moved to reachable policy credits rather than adding footer copy. Updated phone goldens: test/features/auth/goldens/{auth-onboarding,auth-login,age-check,profile-details}.png. Native masking still requires device retest.
+
+In-app Paths wordmark/symbol now render synchronously from the original SVG geometry via lib/shared/widgets/paths_brand.dart; loader uses the same curve builder. Existing SVG/raster exports remain editable handoff assets. This preserves aspect ratios and avoids raster decoder timing when changing routes; no new asset package is installed.
