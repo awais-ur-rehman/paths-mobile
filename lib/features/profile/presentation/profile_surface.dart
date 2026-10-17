@@ -66,7 +66,9 @@ class ProfileSurface extends StatelessWidget {
                               )
                             : Center(
                                 child: Semantics(
-                                  label: 'Profile photo unavailable',
+                                  label: profile.photoState == 'pending'
+                                      ? 'Profile photo awaiting review'
+                                      : 'Profile photo unavailable',
                                   child: ExcludeSemantics(
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
@@ -81,9 +83,11 @@ class ProfileSurface extends StatelessWidget {
                                             alpha: .24,
                                           ),
                                         ),
-                                        const Text(
-                                          'No photo yet',
-                                          style: TextStyle(
+                                        Text(
+                                          profile.photoState == 'pending'
+                                              ? 'Photo in review'
+                                              : 'No photo yet',
+                                          style: const TextStyle(
                                             color: Colors.white70,
                                             fontSize: 14,
                                           ),
