@@ -58,3 +58,5 @@ Mobile features/media: domain interfaces, picker/data upload + authenticated mem
 - [ ] Provide exact physical Android permission/gallery/camera/upload-failure/cancel/logout test steps and source commits. Signed iOS and real private R2 access remain separate evidence; no real personal upload/service creation/deployment. Await owner results before dependent gate.
 
 Implementation/local checks are verified as recorded in IMPLEMENTATION_STATUS.md. Owner Android results, real R2 and iOS runtime remain pending; the phase is not complete. No Task9 work has started.
+
+Owner initially accepted Task8 on2026-10-17; backend/admin PR8 merged. A subsequent Android photo-cleanup failure reopens the mobile device gate. Fix3535e4c is implemented and tested locally; await the focused phone retest before mobile PR8 merge. No Task9 work or other subsequent tasks begin.

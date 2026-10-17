@@ -1,3 +1,23 @@
+> Photo-cleanup fix3535e4c is on feature/protected-media. Backend/admin PR8 merged; mobile PR8 remains draft pending the focused retest below. Main is unchanged.
+
+## Focused Android photo-cleanup retest
+
+Stop the current flutter run with q (or Stop in your IDE). This changes a native Android method channel, so hot reload/hot restart alone is insufficient. No new dependency or setup is needed. Use the existing device ID and API origin; for the existing USB local setup:
+
+```sh
+cd /Users/awaisurrehman/Documents/experimental/Paths/paths-mobile
+adb reverse tcp:8080 tcp:8080
+flutter --suppress-analytics --no-version-check run --no-pub -d <ANDROID_DEVICE_ID> --dart-define=PATHS_API_ORIGIN=http://127.0.0.1:8080
+```
+
+1. Open profile photo → Gallery and choose the synthetic profile card. Expected: preview opens without the cleanup error; Use photo completes processing and saving retains the profile. A pending-review image remains neutral publicly.
+2. Open Camera, photograph a synthetic test card and accept. Expected: preview opens and upload works without the cleanup error.
+3. Open Camera again, cancel the system picker, then choose Gallery. Expected: no stale draft/error and a fresh selection works. The gallery original remains in your photo library.
+
+Return the failing step, Camera/Gallery source, exact toast and Android version if it fails. Do not send real CNICs or private images. These results are needed before mobile PR8 merge; all later tasks remain on hold.
+
+---
+
 # Task8 Android device checks
 
 Status: implemented and locally checked; physical Android evidence pending. Branch `feature/protected-media` in all three repositories. Main is unchanged. API1.7.0. Source checkpoints: backend e1a5a86 (media fixes6399af6, quota f46a3ef); mobile55e0110 (uploads2ae4c8b, screens14dd691, setup6f278ca, camera cleanup14f664d, session routing55e0110); admin67af1e5. Later commits record evidence/docs only.
