@@ -1,6 +1,418 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/media/intents": {
+      "post": {
+        "operationId": "MediaController_intent",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadIntentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/v1/media/{id}": {
+      "get": {
+        "operationId": "MediaController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      },
+      "delete": {
+        "operationId": "MediaController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/v1/media/{id}/source": {
+      "put": {
+        "operationId": "MediaController_upload",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/v1/media/{id}/complete": {
+      "post": {
+        "operationId": "MediaController_complete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/v1/media/{id}/content": {
+      "get": {
+        "operationId": "MediaController_content",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variant",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "thumbnail",
+              "type": "string",
+              "enum": [
+                "display",
+                "thumbnail"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/v1/posts": {
+      "post": {
+        "operationId": "PostController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "posts"
+        ]
+      }
+    },
+    "/v1/profiles/{id}/posts": {
+      "get": {
+        "operationId": "PostController_list",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "posts"
+        ]
+      }
+    },
+    "/v1/posts/{id}": {
+      "get": {
+        "operationId": "PostController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "posts"
+        ]
+      },
+      "delete": {
+        "operationId": "PostController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovedDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "posts"
+        ]
+      }
+    },
     "/v1/devices": {
       "post": {
         "operationId": "NotificationController_register",
@@ -1538,7 +1950,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "contact": {}
   },
   "tags": [],
@@ -1552,6 +1964,182 @@
       }
     },
     "schemas": {
+      "UploadIntentInput": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "post",
+              "cnic_front",
+              "cnic_back"
+            ]
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "required": [
+          "kind",
+          "mimeType",
+          "sizeBytes",
+          "sha256"
+        ]
+      },
+      "AssetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "avatar",
+              "post",
+              "cnic_front",
+              "cnic_back"
+            ]
+          },
+          "processingState": {
+            "type": "string",
+            "enum": [
+              "intent",
+              "uploaded",
+              "queued",
+              "processing",
+              "ready",
+              "rejected",
+              "removed"
+            ]
+          },
+          "safetyState": {
+            "type": "string",
+            "enum": [
+              "not_required",
+              "pending",
+              "approved",
+              "rejected"
+            ]
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "failureCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "processingState",
+          "safetyState",
+          "expiresAt",
+          "failureCode"
+        ]
+      },
+      "RemovedDto": {
+        "type": "object",
+        "properties": {
+          "removed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "removed"
+        ]
+      },
+      "PostInput": {
+        "type": "object",
+        "properties": {
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "assetId",
+          "caption"
+        ]
+      },
+      "PostDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "caption": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "published",
+              "rejected"
+            ]
+          },
+          "createdDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "assetId",
+          "caption",
+          "state",
+          "createdDate"
+        ]
+      },
+      "PostPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PostDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "locked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "locked"
+        ]
+      },
       "DeviceInput": {
         "type": "object",
         "properties": {
@@ -1816,10 +2404,16 @@
               "approved"
             ]
           },
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "photoState": {
             "type": "string",
             "enum": [
-              "unavailable"
+              "unavailable",
+              "approved"
             ]
           },
           "available": {
@@ -1934,10 +2528,16 @@
               "declined"
             ]
           },
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "photoState": {
             "type": "string",
             "enum": [
-              "unavailable"
+              "unavailable",
+              "approved"
             ]
           },
           "coarseAreaId": {
@@ -2054,7 +2654,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.6.0"
+              "1.7.0"
             ]
           }
         },
@@ -2388,6 +2988,11 @@
       "ProfileDetailsDto": {
         "type": "object",
         "properties": {
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "username": {
             "type": "string"
           },
@@ -2416,7 +3021,7 @@
           },
           "profileComplete": {
             "type": "boolean",
-            "description": "Details alone do not complete photo/verification setup."
+            "description": "Required details and a processed profile photo are saved; verification is optional."
           }
         },
         "required": [
@@ -2431,6 +3036,11 @@
       "ProfileDetailsInput": {
         "type": "object",
         "properties": {
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "username": {
             "type": "string",
             "minLength": 3,
@@ -2515,10 +3125,17 @@
               "declined"
             ]
           },
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "photoState": {
             "type": "string",
             "enum": [
-              "unavailable"
+              "unavailable",
+              "pending",
+              "approved"
             ]
           }
         },

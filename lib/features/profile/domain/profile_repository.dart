@@ -7,8 +7,12 @@ final class ProfileDetails {
     required this.gender,
     required this.bio,
     this.visibility = 'private',
+    this.avatarAssetId,
+    this.profileComplete = false,
   });
   final String username, name, gender, bio, visibility;
+  final String? avatarAssetId;
+  final bool profileComplete;
 }
 
 abstract interface class ProfileRepository {
@@ -29,6 +33,8 @@ final class ProfileSummary {
     required this.bio,
     required this.visibility,
     required this.verificationStatus,
+    this.avatarAssetId,
+    this.photoState = 'unavailable',
   });
   final String userId,
       username,
@@ -38,6 +44,8 @@ final class ProfileSummary {
       visibility,
       verificationStatus;
   final int age;
+  final String? avatarAssetId;
+  final String photoState;
 }
 
 abstract interface class ProfileSummaryRepository {

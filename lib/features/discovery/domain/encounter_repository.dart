@@ -8,6 +8,7 @@ final class Encounter {
   const Encounter({
     required this.encounterId,
     this.isSaved = false,
+    this.avatarAssetId,
     this.requestState = "none",
     required this.userId,
     required this.username,
@@ -37,6 +38,7 @@ final class Encounter {
       eligibilityExpiresAt;
   final int age, encounterCount;
   final bool isSaved;
+  final String? avatarAssetId;
   final String requestState;
   final double areaLatitude, areaLongitude;
   String get timeLabel => switch (timeBucket) {
