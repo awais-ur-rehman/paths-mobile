@@ -31,10 +31,14 @@ class MemoryVault implements TokenVault {
 class MemoryPreferences implements AuthPreferences {
   final values = <String, bool>{'paths.auth.installed': true};
   String? device;
+  bool failTombstone = false;
   @override
   Future<bool?> flag(String key) async => values[key];
   @override
   Future<void> setFlag(String key, bool value) async {
+    if (failTombstone && key == 'paths.auth.signedOut' && value) {
+      throw StateError('fixture preferences failure');
+    }
     values[key] = value;
   }
 
@@ -179,6 +183,31 @@ class ApiAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test('failed sign-out tombstone still clears vault and retries cleanup before restore', () async {
+    final vault = MemoryVault(),
+        preferences = MemoryPreferences(),
+        adapter = ApiAdapter();
+    final repo = HttpAuthRepository(
+      origin: 'https://api.example.invalid',
+      vault: vault,
+      preferences: preferences,
+      publicTransport: Dio()..httpClientAdapter = adapter,
+      authenticatedTransport: Dio()..httpClientAdapter = adapter,
+    );
+    await repo.login('fixture@example.invalid', 'a long fixture password');
+    preferences.failTombstone = true;
+    await expectLater(
+      repo.logout(),
+      throwsA(isA<AuthFailure>().having((e) => e.code, 'code', 'storage')),
+    );
+    expect(vault.value, null);
+    await expectLater(repo.restore(), throwsA(isA<AuthFailure>()));
+    preferences.failTombstone = false;
+    expect(await repo.restore(), null);
+    expect(preferences.values['paths.auth.signedOut'], true);
+    await repo.close();
+  });
+
   test('a failed stale refresh write cannot invalidate a new login', () async {
     final vault = MemoryVault(), adapter = ApiAdapter();
     final repo = HttpAuthRepository(

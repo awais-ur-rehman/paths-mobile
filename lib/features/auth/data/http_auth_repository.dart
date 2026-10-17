@@ -53,6 +53,7 @@ final class HttpAuthRepository implements AuthRepository {
   final _changes = StreamController<AuthAccount?>.broadcast(sync: true);
   AuthSession? _session;
   int _generation = 0;
+  bool _cleanupPending = false;
   Future<void> _storageTail = Future.value();
   Future<String>? _device;
   @override
@@ -211,6 +212,7 @@ final class HttpAuthRepository implements AuthRepository {
   Future<void> _persist(AuthSession session, int generation) async {
     await _serialize(() async {
       if (generation != _generation) throw const SessionUnavailable();
+      if (_cleanupPending) throw const AuthFailure('storage');
       await _vault.write(jsonEncode(_encode(session)));
       if (generation != _generation) throw const SessionUnavailable();
       await _preferences.setFlag('paths.auth.signedOut', false);
@@ -229,13 +231,17 @@ final class HttpAuthRepository implements AuthRepository {
 
   Future<void> _invalidate() async {
     final generation = ++_generation;
+    _cleanupPending = true;
     _session = null;
     _coordinator.replace(null);
     try {
       await Future.wait([
         _serialize(() async {
-          await _preferences.setFlag('paths.auth.signedOut', true);
-          await _vault.clear();
+          // Attempt credential deletion even if the durable tombstone cannot be written.
+          await Future.wait([
+            _preferences.setFlag('paths.auth.signedOut', true),
+            _vault.clear(),
+          ]);
         }),
         _purge(),
       ]);
@@ -245,7 +251,10 @@ final class HttpAuthRepository implements AuthRepository {
       }
       rethrow;
     }
-    if (generation == _generation) _changes.add(null);
+    if (generation == _generation) {
+      _cleanupPending = false;
+      _changes.add(null);
+    }
   }
 
   Future<AuthSession> _accept(SessionDto dto, int generation) async {
@@ -311,6 +320,10 @@ final class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<AuthSession?> restore({CancelToken? cancelToken}) async {
+    if (_cleanupPending) {
+      await _invalidate();
+      return null;
+    }
     await _purge();
     if (!await _stored<bool?>(() => _preferences.flag('paths.auth.installed'))
         .then((value) => value ?? false)) {

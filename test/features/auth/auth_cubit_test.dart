@@ -35,7 +35,7 @@ void main() {
       expect(vault.value, null);
       cleanupFails = false;
       await cubit.initialize();
-      expect(cubit.state.stage, AuthStage.onboarding);
+      expect(cubit.state.stage, AuthStage.signedOut);
       await cubit.close();
       await repo.close();
     },
