@@ -9,9 +9,15 @@ import '../../../core/network/generated/api_contract.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
+import '../../verification/domain/verification_repository.dart';
 import '../domain/auth_repository.dart';
 
-final class HttpAuthRepository implements AuthRepository, ProfileRepository {
+final class HttpAuthRepository
+    implements
+        AuthRepository,
+        ProfileRepository,
+        ProfileSummaryRepository,
+        VerificationRepository {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -397,6 +403,7 @@ final class HttpAuthRepository implements AuthRepository, ProfileRepository {
     name: dto.name,
     gender: dto.gender,
     bio: dto.bio,
+    visibility: dto.visibility,
   );
   @override
   Future<ProfileDetails> loadProfile({CancelToken? cancelToken}) async =>
@@ -426,6 +433,84 @@ final class HttpAuthRepository implements AuthRepository, ProfileRepository {
           name: profile.name,
           gender: profile.gender,
           bio: profile.bio,
+          visibility: profile.visibility,
+        ).toJson(),
+      ),
+    ),
+  );
+
+  @override
+  Future<ProfileSummary> loadProfileSummary(
+    String userId, {
+    CancelToken? cancelToken,
+  }) async {
+    final dto = ProfileSummaryDto.fromJson(
+      await _request(
+        'GET',
+        '/v1/profiles/$userId',
+        authenticated: true,
+        cancelToken: cancelToken,
+      ),
+    );
+    return ProfileSummary(
+      userId: dto.userId,
+      username: dto.username,
+      name: dto.name,
+      age: dto.age.toInt(),
+      gender: dto.gender,
+      bio: dto.bio,
+      visibility: dto.visibility,
+      verificationStatus: dto.verificationStatus,
+    );
+  }
+
+  VerificationInfo _verification(VerificationDto dto) => VerificationInfo(
+    status: dto.status,
+    offerSeen: dto.offerSeen,
+    uploadsAvailable: dto.uploadsAvailable,
+    reason: dto.reason,
+  );
+  @override
+  Future<VerificationInfo> loadVerification({CancelToken? cancelToken}) async =>
+      _verification(
+        VerificationDto.fromJson(
+          await _request(
+            'GET',
+            '/v1/me/verification',
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        ),
+      );
+  @override
+  Future<VerificationInfo> skipVerification({CancelToken? cancelToken}) async =>
+      _verification(
+        VerificationDto.fromJson(
+          await _request(
+            'POST',
+            '/v1/me/verification/skip',
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        ),
+      );
+  @override
+  Future<VerificationInfo> submitVerification({
+    required String frontAssetId,
+    String? backAssetId,
+    required bool consent,
+    CancelToken? cancelToken,
+  }) async => _verification(
+    VerificationDto.fromJson(
+      await _request(
+        'POST',
+        '/v1/me/verification',
+        authenticated: true,
+        cancelToken: cancelToken,
+        data: VerificationInput(
+          frontAssetId: frontAssetId,
+          backAssetId: backAssetId,
+          consent: consent,
         ).toJson(),
       ),
     ),

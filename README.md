@@ -17,3 +17,5 @@ See [implementation status](docs/IMPLEMENTATION_STATUS.md) for every phase check
 Task3 email authentication is implemented on a feature branch and awaits owner Android testing. The default Flutter entry is auth; use `-t lib/main_phase0.dart` for the isolated experiment. See [auth device tests](docs/AUTH_DEVICE_TESTS.md).
 
 Device-feedback fixes and the requested profile-details entry are tracked in [focused Android retest](docs/DEVICE_UI_RETEST.md). Full profile photo/verification completion remains separate plan work.
+
+Profile/privacy and optional review retest: [docs/TASK4_DEVICE_TESTS.md](docs/TASK4_DEVICE_TESTS.md). Real photo/CNIC uploads remain Task8; this build never reports a complete profile from details alone.

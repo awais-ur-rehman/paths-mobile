@@ -8,4 +8,6 @@ RefreshCoordinator owns single-flight refresh and at most one authorized replay.
 
 Public config provides supportEmail/termsUrl/privacyUrl only; SMTP/R2/auth secrets remain server-side. DOB travels only in the private adult-check input and is excluded from account/session metadata. Production auth mutations never return fixture successes.
 
-API1.2.0 adds authenticated adult-only GET/PUT /v1/me/profile for private editable details. Input has username/name/gender/bio only. Response excludes DOB and explicitly does not complete setup.
+API1.2.0 added authenticated adult-only GET/PUT /v1/me/profile for private editable details. Input has username/name/gender/bio only. Response excludes DOB and explicitly does not complete setup.
+
+API1.3.0 adds optional visibility to profile writes and required visibility to details; GET /v1/profiles/:id returns an allowlisted own basic summary including calendar age. Peer eligibility is denied until Task6. GET/POST /v1/me/verification and POST /v1/me/verification/skip return typed status/offerSeen/availability/private decline reason. Submit requires explicit true consent and processed owned front/back assets; live adapter is unavailable until Task8. Nullable required reason and optional back/visibility fields are generated with precise scalar guards; optional null inputs are omitted. No DOB, raw documents or private object URL is exposed.

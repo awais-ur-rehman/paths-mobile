@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase1 Task3 device corrections and requested profile-details entry; awaiting retest**. API contract: `1.2.0`; isolated experiment contract remains `phase0.v1`.
+Current phase: **Phase1 Task4 profile/privacy and optional verification; awaiting Task4 device test, real media deferred to Task8**. API contract: `1.3.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -38,18 +38,18 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 - [x] Test OTP purpose/expiry/attempts/resend invalidation, replay, under-18 DOB, password reset revocation and refresh-family reuse. — **verified — PostGIS OTP/reset/refresh/status/adult tests pass**
 - [x] Implement signup/login/OTP/recovery with Argon2id and hashed secrets; server guards enforce account status. — **implemented and locally verified — real SMTP outbox/API flow passes against Mailpit**
-- [ ] Implement splash, one onboarding screen, auth forms and guarded setup routes. — **implemented — auth screens/router/widget journeys pass; physical Android test pending**
+- [x] Implement splash, one onboarding screen, auth forms and guarded setup routes. — **verified locally and accepted by owner on physical Android; PR3 merged into development**
 - [x] Implement single-flight Dio refresh; test ten concurrent 401s produce one refresh, one replay each and no loop. — **verified — single-flight/one replay and secure-storage/logout races pass**
 - [ ] Verify keyboard, paste/autofill, offline/error states and suspended-account support/deletion access. — **implemented — automated paste/keyboard/layout/restricted routing verified; OS autofill, mailto and storage runtime awaiting device test**
 
 
 ### Task 4: Design system, profile and optional verification submission
 
-- [ ] Build tokens/components from UI doc; record reference-to-product substitutions. — **in progress — shared loader/toast/CTA and white auth surfaces implemented; full product components pending Task4**
-- [ ] Test username uniqueness, private DOB exclusion, adult gate, public/private response fields and CNIC skip entitlement. — **in progress — private profile-details ownership/adult/uniqueness/cascade tests verified; public profiles and CNIC skip entitlement pending**
-- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **in progress — requested editable profile-details entry saves to backend; photo/verification flows not completed and upload integration retains Task8 dependency**
-- [ ] Add selective rebuild checks for badge/save/status and controller disposal tests where relevant. — **not started**
-- [ ] Verify layouts at 320/390/768 widths and 200% text; add meaningful golden tests with approved assets. — **not started**
+- [x] Build tokens/components from UI doc; record reference-to-product substitutions. — **verified locally — PathsTokens, shared neutral avatar/badge, original vector feedback; approved white auth surfaces retained**
+- [x] Test username uniqueness, private DOB exclusion, adult gate, public/private response fields and CNIC skip entitlement. — **verified — real profile-access suite and private/public allowlist tests; strangers denied until Task6**
+- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **implemented; awaiting device test — details/privacy/edit/preview and real status/skip persist; test-only media exercises submit; real uploads/profile completion blocked by Task8 as specified**
+- [x] Add selective rebuild checks for badge/save/status and controller disposal tests where relevant. — **verified locally — unchanged badge instance on consent change; single-flight save; cancellation, late-success and upload-skip regressions**
+- [x] Verify layouts at 320/390/768 widths and 200% text; add meaningful golden tests with approved assets. — **verified locally — profile/edit/review scroll and keyboard fixtures; own-profile and review goldens inspected; physical rendering awaits owner**
 
 ## Phase 2 — location ingestion, matching and discovery
 
@@ -300,3 +300,31 @@ Profile setup retains the existing secure sign-out action after the age-only pag
 Mobile source commits: b917642 (profile API), a7afe47 (shared vector branding, loader, toast and arrow), 9e6bc9e (screens/routes/native splash), 561896f (profile sign-out), 15c025e (navigation handoff and regression tests). Final Flutter analyzer reports no issues; all88 Flutter tests pass, including successful arrow handoff, retry and reduced-motion cases. All3 Python generator/splash geometry tests pass. Final offline Android Debug assembly succeeds (177 tasks); final unsigned generic iphoneos Debug build succeeds with automatic package resolution disabled. These are compile checks, not Android/iOS runtime proof. Four golden renders were inspected; no phone or emulator was operated.
 
 Review corrections include preventing a false saved toast while retrying after an earlier successful save, retaining secure sign-out after the age-only page, and keeping the arrow at the right endpoint until navigation replaces onboarding. API copies remain1.2.0. Backend source/status c563f2f and admin1066f39 are pushed; GitHub CI passed those heads (runs39024766234 and39024770130). Mobile CI follows the final push. Focused owner retest: docs/DEVICE_UI_RETEST.md. Task3 remains awaiting device test; no draft PR merge or release promotion is authorized by these automated results alone.
+
+
+## Task3 integration and Task4 start (2026-10-17)
+
+Owner reports the corrected Android build looks good and explicitly authorizes merge and continuation. PR3 merged into development: backend4c6f11d, admin019a8a9, mobilec156ab2. Main unchanged. Pre-merge rerun: backend5 unit +13 Phase0 +25 PostGIS/Valkey tests; admin2 tests; mobile88 Flutter tests pass. Prior backend/admin CI heads passed. This records owner approval without inventing individual OS/autofill/battery cases or iOS runtime evidence; those release checks remain tracked.
+
+Current: Phase1 Task4, feature/profile-verification branched from merged development. Plan: docs/task4-profile-plan.md.
+
+| Task4 checklist | Status | Evidence / dependency |
+|---|---|---|
+| Tokens/components and reference substitutions | in progress | Existing approved white theme, black pills and shared vector feedback; extend only reused profile pieces |
+| Username/adult/DOB/public-private/CNIC skip tests | in progress | Existing profile tests; expand profile-access suite |
+| Profile setup/edit and optional submit/status | in progress | Details slice exists; Task8 blocks real uploads and complete profile |
+| Selective badge/save/status rebuilds and disposal | not started | Add widget/Cubit regressions |
+| 320/390/768,200% layouts and goldens | not started | Include profile and verification |
+
+Task4 may use test-only pending media fixtures per plan. Production must refuse unavailable uploads; no real CNIC collection, fake successful submission or completed photo setup. Gmail SMTP and Cloudflare R2 remain intended providers; no new service purchase, deployment or credential request is needed for this task.
+
+
+## Task4 final local verification
+
+Source: backend0b92e85 (privacy/summary) andfc35740 (optional review); admin ec5411f (contract); mobile84d4ca7 (shared design), db7d2db (generated contracts/data) and2f35ddd (profile/review flows). Contract1.3.0 is exported from Nest and identical in all three repos. Dart and TypeScript regeneration have no drift.
+
+Executed: backend lint/typecheck/build,8 unit +13 retained Phase0 +31 real PostGIS/Valkey integration tests pass. Compose migrates0004, and the real proxy/API/outbox/worker/Mailpit signup→adult→profile save/read/summary→verification skip/read→password reset verifier passes, then cleans its synthetic fixture. Admin lint/types/build,2 transport tests and3 installed-Chrome cases pass. Mobile analyzer is clean; all115 Flutter tests and4 Python generator/splash tests pass. Responsive profile/edit/review fixtures cover320/390/768 at100%/200% text, with keyboard cases; own-profile, profile-details and optional-review goldens inspected with bundled fonts. Final offline Android Debug assembly succeeds177 tasks; final unsigned generic iphoneos build succeeds with package resolution disabled. No package installation, external email, personal document upload, device or emulator operation occurred.
+
+Fresh read-only branch review found one Important missing-profile navigation dead end. Reproduced an adult/no-details→review→skip→summary404 journey, added explicit Back to profile setup recovery, and reran the full suite. Generator review also caught Swagger boolean-enum emission as number; an API contract regression now protects boolean consent. A raw database DATE parser mismatch was fixed by selecting explicit calendar text. Skip during fixture upload cancels and ignores late completion; duplicate pending submissions and profile saves are guarded.
+
+Current handoff: mobile docs/TASK4_DEVICE_TESTS.md. Task4 is not marked complete: owner phone retest remains pending; required photo and live CNIC uploads are explicitly blocked until Task8 media processing/private storage/ownership FKs. Full profileComplete remains false, no fake Home/post grid or approved badge is invented. Test-only processed/pending assets establish workflow behavior without collecting images. Task6 eligibility and Task11 reviewer decisions remain separate plan dependencies. iOS runtime, earlier quantitative Phase0 evidence and actual Gmail delivery remain distinct release checks. No Task4 PR merge or main promotion is implied by local checks.

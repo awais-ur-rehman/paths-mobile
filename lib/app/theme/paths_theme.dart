@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'paths_tokens.dart';
+
 abstract final class PathsTheme {
   static const background = Colors.white,
       ink = Color(0xFF101418),
@@ -7,6 +9,7 @@ abstract final class PathsTheme {
       aqua = Color(0xFFC4F2F3);
   static ThemeData get light => ThemeData(
     useMaterial3: true,
+    extensions: const [PathsTokens()],
     fontFamily: 'Inter',
     scaffoldBackgroundColor: background,
     colorScheme: ColorScheme.fromSeed(seedColor: blue, surface: background),

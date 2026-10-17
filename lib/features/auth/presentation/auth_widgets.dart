@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/paths_loader.dart';
+import '../../../app/theme/paths_tokens.dart';
 import '../../../shared/widgets/paths_brand.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import 'auth_cubit.dart';
@@ -32,11 +33,18 @@ class AuthScaffold extends StatelessWidget {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              padding: EdgeInsets.fromLTRB(
+                PathsTokens.gutter(constraints.maxWidth),
+                20,
+                PathsTokens.gutter(constraints.maxWidth),
+                32,
+              ),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(
+                    maxWidth: PathsTokens.maxFormWidth,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [

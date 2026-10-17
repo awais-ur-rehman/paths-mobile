@@ -6,6 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../features/auth/presentation/auth_cubit.dart';
 import '../features/profile/domain/profile_repository.dart';
 import '../features/profile/presentation/profile_setup_screen.dart';
+import '../features/profile/presentation/profile_preview_screen.dart';
+import '../features/verification/domain/verification_repository.dart';
+import '../features/verification/presentation/verification_screen.dart';
 import '../features/auth/presentation/entry_screens.dart';
 import '../features/auth/presentation/credential_screens.dart';
 import '../features/auth/presentation/otp_screen.dart';
@@ -31,6 +34,8 @@ GoRouter createAuthRouter(
   AuthCubit cubit,
   AuthRouterRefresh refresh,
   ProfileRepository profiles,
+  ProfileSummaryRepository summaries,
+  VerificationRepository verification,
 ) => GoRouter(
   initialLocation: '/',
   refreshListenable: refresh,
@@ -47,7 +52,13 @@ GoRouter createAuthRouter(
         state.account?.restricted == true
             ? '/account/restricted'
             : state.account?.adultChecked == true
-            ? '/setup/profile'
+            ? ([
+                    '/setup/profile',
+                    '/setup/verification',
+                    '/profile',
+                  ].contains(path)
+                  ? path
+                  : '/setup/profile')
             : '/setup/age',
       AuthStage.signedOut =>
         ['/auth/login', '/auth/signup', '/auth/forgot-password'].contains(path)
@@ -81,7 +92,21 @@ GoRouter createAuthRouter(
     GoRoute(path: '/setup/age', builder: (_, _) => const AgeCheckScreen()),
     GoRoute(
       path: '/setup/profile',
-      builder: (_, _) => ProfileSetupScreen(repository: profiles),
+      builder: (_, route) => ProfileSetupScreen(
+        repository: profiles,
+        editing: route.uri.queryParameters['edit'] == '1',
+      ),
+    ),
+    GoRoute(
+      path: '/setup/verification',
+      builder: (_, _) => VerificationScreen(repository: verification),
+    ),
+    GoRoute(
+      path: '/profile',
+      builder: (_, _) => ProfilePreviewScreen(
+        repository: summaries,
+        userId: cubit.state.account!.id,
+      ),
     ),
     GoRoute(
       path: '/account/restricted',
