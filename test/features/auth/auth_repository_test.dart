@@ -210,9 +210,13 @@ void main() {
 
   test('a failed stale refresh write cannot invalidate a new login', () async {
     final vault = MemoryVault(), adapter = ApiAdapter();
+    var purges = 0;
     final repo = HttpAuthRepository(
       origin: 'https://api.example.invalid',
       vault: vault,
+      purgeTracking: () async {
+        purges++;
+      },
       preferences: MemoryPreferences(),
       publicTransport: Dio()..httpClientAdapter = adapter,
       authenticatedTransport: Dio()..httpClientAdapter = adapter,
@@ -228,6 +232,11 @@ void main() {
     vault.pause!.complete();
     await rejected;
     await logout;
+    expect(
+      purges,
+      2,
+      reason: 'Only restore and explicit logout may purge; the stale failure must not invalidate again.',
+    );
     vault.pause = null;
     vault.writeStarted = null;
     vault.failWrite = false;
