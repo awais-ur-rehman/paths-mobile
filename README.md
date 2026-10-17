@@ -21,3 +21,5 @@ Device-feedback fixes and the requested profile-details entry are tracked in [fo
 Profile/privacy and optional review retest: [docs/TASK4_DEVICE_TESTS.md](docs/TASK4_DEVICE_TESTS.md). Real photo/CNIC uploads remain Task8; this build never reports a complete profile from details alone.
 
 Task5 ingestion is accepted and merged into development. Task6 matching and concise Home use API1.5.0 on feature/encounter-discovery. See [Task6 device tests](docs/TASK6_DEVICE_TESTS.md) and implementation status for evidence and remaining runtime gates. Main remains unchanged.
+
+Requested profile UI updates: [focused device retest](docs/PROFILE_UI_RETEST.md). Creation now has one Next action; Verification and owner/peer profiles use the revised layouts. Task6 draft PR6 remains pending owner results.

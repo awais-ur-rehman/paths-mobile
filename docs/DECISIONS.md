@@ -88,3 +88,11 @@ Notification intents are durable per-session records retained with active sessio
 
 
 Task6 iOS follow-up: owner approved the required MapLibre Native6.28.0 package/binary download. Keep the Xcode-generated exact revision pin and BSD license; future builds use resolved-file-only mode. Unsigned compilation is verified; no device runtime result or Task6 completion is inferred.
+
+## Profile UI feedback — 2026-10-17
+
+Owner requests one Next action during creation, concise visibility, themed custom dropdown, two disabled dotted CNIC slots and a profile layout matching the supplied portrait reference. This update stays on the pending Task6 feature branch/draft PR6. Next saves real details then enters optional verification; editing has one Save and returns only after persistence. Removed the obsolete save/continue flag from ProfileCubit; navigation belongs to the screen listener.
+
+PathsDropdownField provides a themed anchored menu with form validation, focus ownership, Escape/outside/system-back dismissal and disposal. It is reusable for future form selections; contextual Home radius/actions remain contextual menus. ProfileSurface shares the cover/centered identity/framed bio layout across owner and eligible peers. Existing media is unavailable until Task8, so the cover remains explicitly neutral; no fake portraits/gallery or unsupported social statistics/actions are added. Owner account controls move to one Profile options menu, including in loading/error states. Forms remain white; the requested profile cover uses the reference's dark treatment.
+
+Verification combines backend capability with the actual local adapter's readiness. Production's unavailable adapter keeps slots/submit disabled even if the server advertises availability. Consent/retention disclosure remains reachable when uploads exist. Pull-to-refresh uses the Paths loader during status loading, without another action button or a default spinner. No package/SDK/asset download was needed for this UI update. Full photo/CNIC processing remains Task8; physical feedback and Task6 encounter evidence remain owner gates.

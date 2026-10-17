@@ -412,3 +412,23 @@ These commits contain final source evidence/handoff; subsequent linkage commits 
 MapLibre Native6.28.0 resolution and unsigned iOS build now pass; this supersedes the previous missing-dependency blocker. Only the approved MapLibre package/binary was fetched; existing local Flutter packages were retained. The real generated pin and BSD license are in the mobile repository. No application behavior changed and broader unit/widget suites were not rerun for this native dependency-only follow-up. Task6 remains awaiting owner physical results; draft PR6 stays unmerged and main unchanged.
 
 Native dependency follow-up commit: mobile `68f7ed1` adds the actual Xcode-generated MapLibre pin and copied BSD notice; Dart application behavior is unchanged. Use this commit or the latest feature/encounter-discovery head when repeating iOS checks.
+
+## Profile UI feedback follow-up — 2026-10-17
+
+Current task: **Task6 device retest, with requested profile UI changes implemented and locally verified; awaiting owner Android feedback**. API remains1.5.0. Backend/admin application source and contracts are unchanged; their previous evidence was not rerun for this mobile-only update. Task6 remains incomplete and PR6 stays draft; no main promotion or Task7 advance.
+
+| Requested behavior | Status and evidence |
+| --- | --- |
+| Creation has one Next action that saves before advancing | implemented, verified locally — real repository/form route tests; validation/conflict retain edits, pending retry cannot navigate early, duplicate saves guarded |
+| Themed custom gender dropdown and option menu | implemented, verified locally — shared PathsDropdownField; selection/validation/reopen/controlled update/disabled/Escape/system-back/open-menu teardown and320px/200% text tests |
+| Visibility row contains only toggle and label | implemented, verified locally — no subtitle; public/private persists through Next/edit |
+| Minimal Verification heading/copy and side-by-side dotted front/back slots | implemented, verified locally — both server and real local adapter readiness required; no real CNIC collection before Task8; Submit disabled, Skip persists; review details/consent retained for enabled future media |
+| Refresh pending/approved/declined status without an extra action button | implemented, verified locally — pull refresh on short scroll surfaces, with Paths loader; skips refresh during active operations |
+| Reference profile cover/centered identity/framed bio with supported actions only | implemented, verified locally — shared owner/eligible peer ProfileSurface; neutral unavailable-photo cover; no fabricated people/gallery/follow counters/actions; owner controls in one options menu, including loading/errors |
+| Physical layout, keyboard, menu/back gestures and native rendering | awaiting device test — docs/PROFILE_UI_RETEST.md; separate Task6 matching/map checklist remains open; signed iOS runtime unverified |
+
+Actual final checks: analyzer clean; all163 Flutter tests and7 Python tooling tests pass; Android Debug assembled offline (197 Gradle tasks); unsigned generic iphoneos Debug build passes with automatic resolution disabled and pinned-file-only mode. No package/tool/asset download. Updated profile-details, optional-verification and own-profile goldens inspected;320/390/768 widths at100%/200% text pass. git diff --check passes. The first full run exposed an outdated location-menu test; updated it to open the actual options menu and reran the full suite successfully.
+
+One fresh read-only review found four issues. Failing regressions reproduced each before fixes: header vertically centered by expanded Stack, summary error hiding signout/options, pending review unable to refresh, and backend-only upload readiness. All four regressions pass after correction. Source inspection does not prove physical gestures/OS behavior or real media readiness. A formatter telemetry sandbox warning was resolved by rerunning formatting with required local SDK access; final formatting/analyzer pass.
+
+Source commits: f2ace5f (dropdown),7fc83d5 (one save action),06e2f33 (verification/refresh/readiness),b5e09ac (profile surface/options/routing). Test source b5e09ac or later documentation-only head on feature/encounter-discovery. Existing draft: https://github.com/awais-ur-rehman/paths-mobile/pull/6 . Follow docs/PROFILE_UI_RETEST.md before accepting the changed visuals; Task6's broader physical evidence remains pending.
