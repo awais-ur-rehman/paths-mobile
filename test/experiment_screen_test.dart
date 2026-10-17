@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:paths_mobile/main.dart';
+import 'package:paths_mobile/main_phase0.dart';
 
 void main() {
   setUpAll(() async {
