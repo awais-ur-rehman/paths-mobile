@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../auth/presentation/auth_widgets.dart';
+import '../../auth/presentation/auth_cubit.dart';
 import '../../../shared/widgets/paths_loader.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import '../domain/profile_repository.dart';
@@ -58,33 +59,47 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
       child: AuthScaffold(
         title: 'Make it your profile',
         subtitle: 'Start with the basics. Your profile stays private while you finish setup.',
-        child: BlocBuilder<ProfileCubit, ProfileState>(
-          buildWhen: (a, b) =>
-              a.loading != b.loading ||
-              a.details != b.details ||
-              (a.details == null && a.error != b.error),
-          builder: (context, state) {
-            if (state.loading) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: PathsLoader(),
-                ),
-              );
-            }
-            if (state.details case final details?) {
-              return _ProfileForm(details: details);
-            }
-            return Column(
-              children: [
-                Text(
-                  state.error?.message ?? 'Your details could not be loaded.',
-                ),
-                const SizedBox(height: 20),
-                FilledButton(onPressed: cubit.load, child: const Text('Retry')),
-              ],
-            );
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BlocBuilder<ProfileCubit, ProfileState>(
+              buildWhen: (a, b) =>
+                  a.loading != b.loading ||
+                  a.details != b.details ||
+                  (a.details == null && a.error != b.error),
+              builder: (context, state) {
+                if (state.loading) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32),
+                      child: PathsLoader(),
+                    ),
+                  );
+                }
+                if (state.details case final details?) {
+                  return _ProfileForm(details: details);
+                }
+                return Column(
+                  children: [
+                    Text(
+                      state.error?.message ??
+                          'Your details could not be loaded.',
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      onPressed: cubit.load,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () => context.read<AuthCubit>().logout(),
+              child: const Text('Sign out'),
+            ),
+          ],
         ),
       ),
     ),

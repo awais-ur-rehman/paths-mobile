@@ -105,7 +105,7 @@ void main() {
       await tap(tester, 'Confirm age');
       expect(find.text('Age confirmed'), findsNothing);
       expect(find.text('Contact support'), findsNothing);
-      expect(find.text('Sign out'), findsNothing);
+      expect(find.text('Sign out'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, 'Username'), findsOneWidget);
       expect(adapter.requests.any((r) => r.path.contains('locations')), false);
       await tester.pumpWidget(const SizedBox());
@@ -322,6 +322,23 @@ void main() {
       await tester.pumpAndSettle();
     });
   }
+  testWidgets(
+    'profile setup keeps sign-out available after the age-only page',
+    (tester) async {
+      final adapter = ApiAdapter()..adultChecked = true;
+      await signInForSetup(tester, adapter);
+      expect(find.text('Sign out'), findsOneWidget);
+      await tap(tester, 'Sign out');
+      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Make it your profile'), findsNothing);
+      expect(
+        adapter.requests.where((r) => r.path == '/v1/auth/logout').length,
+        1,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    },
+  );
   testWidgets('onboarding visual fixture', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
