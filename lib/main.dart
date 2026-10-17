@@ -17,6 +17,7 @@ import 'features/auth/domain/auth_repository.dart';
 import 'features/auth/presentation/auth_cubit.dart';
 import 'shared/widgets/paths_toast.dart';
 import 'features/profile/domain/profile_repository.dart';
+import 'features/verification/domain/verification_repository.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,13 +56,17 @@ class _PathsAppState extends State<PathsApp> {
       cubit = AuthCubit(repository!);
       refresh = AuthRouterRefresh(cubit!);
       final profiles = repository;
-      if (profiles is! ProfileRepository) {
+      if (profiles is! ProfileRepository ||
+          profiles is! ProfileSummaryRepository ||
+          profiles is! VerificationRepository) {
         throw const AuthFailure('configuration');
       }
       navigation = createAuthRouter(
         cubit!,
         refresh!,
         profiles as ProfileRepository,
+        profiles as ProfileSummaryRepository,
+        profiles as VerificationRepository,
       );
       unawaited(cubit!.initialize());
       lifecycle = AppLifecycleListener(
