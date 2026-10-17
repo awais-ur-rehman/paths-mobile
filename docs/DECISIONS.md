@@ -30,3 +30,13 @@
 ## Task3 session transport boundary
 
 The refresh component owns volatile coordination only. Auth-repository integration must persist rotations in platform secure storage and apply terminal refresh revocation; it is not connected to the current harness. Authenticated transport pins its origin, disables redirects and rejects generation-mismatched responses as well as retries. Refresh failures never expose the separate refresh request. Streaming requests require explicit retry; multipart bodies use a cloned body. This boundary does not replace backend authorization or logout revocation.
+
+## Task3 authentication decisions
+
+- API contract1.1.0 uses opaque, hashed bearer sessions with immediate database revocation; the documentation requires bearer authorization, not JWT encoding. Access lifetime10min; refresh family absolute lifetime30days with one-use rotation/reuse revocation.
+- Signup credentials are challenge-bound until email verification. Codes last5min, allow5 guesses, and resend after60sec. Pending password hashes remain only within the 24-hour expired-challenge retention window to permit resend; successful verification clears them immediately.
+- DOB is private, checked using a UTC calendar18-year boundary at guarded setup entry, and excluded from account responses. Remaining profile fields are Task4.
+- Public one-use authentication mutations are not automatically replayed. Protected retries require an idempotent verb or explicit idempotency key. Temporary refresh outages preserve credentials behind explicit retry; definitive revocation clears them.
+- Restricted accounts can view their own status, sign out, and contact support about deletion. Automated account erasure remains Task12; support mail handoff does not claim a completed deletion.
+- Owner supplied temporary Gmail/support address; configure SUPPORT_EMAIL/SMTP_USER/SMTP_FROM server-side only. TERMS_URL and PRIVACY_URL are editable HTTPS environment values. Blank values display development testing notices pending published policies; they are not final legal documents.
+- Actual Gmail delivery requires an app password supplied privately. Mailpit verifies local SMTP/outbox behavior. R2 integration remains Task8; no storage credentials belong in clients.

@@ -10,6 +10,8 @@ Flutter Android/iOS app. Phase 0 is an explicitly opted-in private location expe
 
 The owner authorized Android test dependencies and Phase1 project packages/Docker images. SDK upgrades and production deployment remain outside this authorization.
 
-## Phase 0 handoff
+## Current work
 
 See [implementation status](docs/IMPLEMENTATION_STATUS.md) for every phase checkbox, executed checks, exact blockers and commit references. The private harness runbook is [DEVICE_TESTS.md](docs/DEVICE_TESTS.md). Use `--no-pub` for local Flutter checks; installed dependencies are already locked.
+
+Task3 email authentication is implemented on a feature branch and awaits owner Android testing. The default Flutter entry is auth; use `-t lib/main_phase0.dart` for the isolated experiment. See [auth device tests](docs/AUTH_DEVICE_TESTS.md).

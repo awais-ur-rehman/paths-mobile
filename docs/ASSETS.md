@@ -18,7 +18,7 @@ Mobile assets: assets/brand, assets/fonts, android/app/src/main/res, ios/Runner/
 
 ## Verification scope
 
-Exporter executed locally. SVGs parsed as XML; all raster variants opened with Pillow. Flutter widget rendering checked at 320/360/390/430/600/768/1024 and 100%/200% text. Real launcher masking and native splash appearance require device evidence; screenshot unit tests cannot prove them. Photo-led onboarding and full product UI belong to subsequent phases; no unlicensed photo placeholders were added.
+Exporter executed locally. SVGs parsed as XML; all raster variants opened with Pillow. Flutter widget rendering checked at 320/360/390/430/600/768/1024 and 100%/200% text. Real launcher masking and native splash appearance require device evidence; screenshot unit tests cannot prove them. Task3 adds the licensed photo below; full profile/product UI remains in subsequent tasks.
 
 ## Downloaded font SHA-256
 
@@ -33,3 +33,5 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - Photo: MART PRODUCTION, Pexels photo8121667, “Group of Friends Walking in the Park”: https://www.pexels.com/photo/group-of-friends-walking-in-the-park-8121667/ . Download URL: https://images.pexels.com/photos/8121667/pexels-photo-8121667.jpeg?auto=compress&cs=tinysrgb&w=1600 .
 - License checked2026-10-17: https://www.pexels.com/license/ . Free commercial/app use and modification permitted; attribution not required. Do not imply endorsement, misuse identifiable people, resell unaltered copies or redistribute as stock. Optional photographer credit appears in the app's image credits.
 - Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
+
+Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained tools/render_logo.swift. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
