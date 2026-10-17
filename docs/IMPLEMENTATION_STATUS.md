@@ -508,3 +508,14 @@ Pending prerequisites and gate:
 - Actual image/CNIC staff review, appeals and authorization are Tasks10/11. Real uploads remain pending until that workflow exists; no fake approvals or staff-success routes were introduced.
 
 No real personal images/documents, credentials or raw coordinates were committed or uploaded by these checks. No deployment, purchase or app-store submission occurred. Feature PRs remain draft for the device gate; PR links and final docs heads are recorded in the handoff.
+
+
+Task8 handoff links (all draft, base development):
+
+- Backend: https://github.com/awais-ur-rehman/paths-backend/pull/8
+- Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/8
+- Admin: https://github.com/awais-ur-rehman/paths-admin/pull/8
+
+All three feature branches and their verification records are pushed. Source checkpoints remain those recorded above; subsequent changes are documentation only. Mobile has no hosted workflow; its native/static/test checks were run locally. Android owner acceptance remains pending. No PR8 merge or main promotion occurred.
+
+Hosted verification passed for backend777e4b3 ([run39039682108](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39039682108)) and admin e4ba53f ([run39039680971](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39039680971)). Later commits add PR links/documentation only; their current checks remain visible on the draft PRs. No mobile hosted check is configured.

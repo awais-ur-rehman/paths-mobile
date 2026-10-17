@@ -83,4 +83,4 @@ No new production stock photos, fonts or icon packages. Camera/gallery/post cont
 | --- | --- | --- | --- | --- |
 | Profile, front and back test cards | Owner gallery/camera/upload testing, isolated from production seeds | Original Paths crossing symbol and text; editable SVG, PNG exported by existing Sharp via paths-backend/scripts/create-media-fixtures.ts | Original project artwork; no third-party image attribution | docs/testing/media/{profile,cnic-front,cnic-back}.{svg,png} |
 
-Cards contain no people, identity numbers, real accounts or testimonials. SVG is editable source; upload the generated PNG. Exports are600×800, inspected locally, below10MB, and generated without external fonts/assets or a new dependency. Production app branding/fonts remain the existing locally bundled assets.
+Cards contain no people, identity numbers, real accounts or testimonials. SVG is editable source; upload the generated PNG. Exports are600×800, inspected locally, below10MB, and generated without downloading fonts/assets or a new dependency. Production app branding/fonts remain the existing locally bundled assets.
