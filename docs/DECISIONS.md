@@ -48,3 +48,14 @@ The refresh component owns volatile coordination only. Auth-repository integrati
 - Branded loader is drawn from original Paths Bezier vectors with a disposed Flutter ticker and reduced-motion still state; editable SVG source retained. Toasts enter at top right, replace prior notices, allow swipe-right/manual dismissal and remain persistent for accessible navigation.
 - User explicitly requested an actual profile form after age confirmation. Add only the needed private details slice now, preserving pending Task3 retest and not completing all Task4/Task8 work. Routine username default:3–24 lowercase ASCII letters/digits/underscore; server canonicalizes trim/case and the database arbitrates unique claims. Bio limit300 and gender choices follow confirmed scope.
 - Saving profile details is idempotent and does not grant profile completion, image moderation or verification entitlements. DOB remains separate/private. No extra package, tool, SDK, emulator or phone operation is required.
+
+
+## Task4 profile and optional review
+
+Owner accepted Task3 Android UI and authorized PR3 merges into development on2026-10-17. Main remains a verified-release gate. Existing dedicated checkouts are reused on feature/profile-verification without dependency installations.
+
+Private is the default; visibility is editable. Older clients omitting visibility preserve the existing setting. Basic summaries use an explicit field allowlist and UTC calendar age (Feb29 birthdays on Mar1 in non-leap years), never DOB/email/document fields. Until Task6 provides encounter/relationship eligibility, only an owner can read their summary; strangers receive the same404 for existing and missing IDs. Public visibility does not grant stranger discovery.
+
+The optional offer-seen marker is separate from review status. Skip is idempotent and never changes pending/approved/declined status or profile entitlements. User-first transaction locks serialize submissions and account-status/session changes. Pending duplicates conflict; decline resubmissions retain earlier records; deletion cascades offer/review records. Production media adapter refuses every asset until Task8's private storage/processing/ownership FK exists. Test-only fixture media covers owned front/back, processing and review states without collecting images. Reviewer decisions remain Task11. Cloudflare R2 is the intended private object store; no bucket or SDK is configured early.
+
+Task4 does not invent completed setup or Home: required photo upload remains unavailable, profileComplete=false. The saved private preview exposes edit/review actions and neutral avatar; upload and post publishing remain Task8. Shared design components are added where reused, with original white/black/blue style and existing fonts/Material line icons. No assets downloaded.
