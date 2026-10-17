@@ -67,7 +67,7 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 - [x] Test concurrent inverse ingestion creates one session and two notification intents; retry does not inflate encounter count. — **verified locally — real PostGIS concurrency, retry, ordered late jobs, notification rollback/replay and session-gap cases**
 - [x] Test spatial neighbors across arbitrary grid edges, adjacent venue false positives and delayed historical batches without live push. — **verified locally — cross-cell exact spatial query, uncertainty rejection and historical-no-live-intent regressions; field accuracy remains separate**
 - [x] Implement PostGIS query, pair lock/session dedup and coarse-area/time serialization; exclude blocked/paused/deleting users. — **verified locally — migration0006, ordered user/pair locks, durable proof and per-session intents, authorized API1.5.0 and retention/erasure tests**
-- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **implemented and locally verified; awaiting device test — 153 Flutter tests, inspected Home golden and offline Android build; native map/attribution/physical behavior pending; iOS compile blocked**
+- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **implemented and locally verified; awaiting device test — 153 Flutter tests, inspected Home golden and offline Android build; native map/attribution/physical behavior pending; unsigned iOS compile now passes**
 - [ ] Verify API responses and network captures contain no peer coordinates, exact distances or exact timestamps. — **API serialization verified locally — live HTTP and DTO allowlist tests expose only coarse areas/date buckets; owner runtime network inspection pending**
 
 ## Phase 3 — saves, requests and push
@@ -380,7 +380,7 @@ Current branch feature/encounter-discovery. Plan: docs/task6-encounter-plan.md. 
 
 ## Task6 evidence and handoff — 2026-10-17
 
-Status: **implemented, locally verified, awaiting physical Android evidence; iOS native build blocked**. Task6 is not complete and Task7 is gated. API contract is1.5.0. Task5 PR5 was merged into development after owner functional acceptance; this does not supply unreported Phase0 battery/accuracy or iOS results. Main remains the documentation baseline.
+Status: **implemented, locally verified, awaiting physical Android evidence; unsigned iOS build verified**. Task6 is not complete and Task7 is gated. API contract is1.5.0. Task5 PR5 was merged into development after owner functional acceptance; this does not supply unreported Phase0 battery/accuracy or iOS results. Main remains the documentation baseline.
 
 Changes: exact PostGIS neighbor search and conservative two-pair corroboration; canonical locks, retry-safe proof/session/notification intents and bounded retention; authorized coarse Recent/Nearby cards and peer summaries; concise Home, contextual filters, map/list fallback and persistent Home/Profile navigation. No push is sent until Task7 and no fake photo/profile completion is claimed before Task8. Existing permission-screen redesign is deferred to the owner's later screen-by-screen pass.
 
@@ -393,9 +393,9 @@ Actual checks after source fixes:
 
 One fresh read-only whole-branch review identified peer replacement retaining the previous cubit, append pagination moving the map center, and retention erasing active-session intent deduplication. Each was reproduced by a failing regression and fixed; relevant full suites reran green. Author checks also fixed implausible device movement, private pending/declined badge leakage, Recent following a new own location, Swagger's inferred Object schema and migration DDL budgets. Inspection cannot prove OS scheduling, native SDK rendering, real encounter precision/recall, battery or signed iOS behavior.
 
-Blocker: unsigned iOS compile fails because MapLibre Native6.28.0 package resolution is absent. Required source: https://github.com/maplibre/maplibre-gl-native-distribution.git at6.28.0. Automatic resolution stayed disabled; download approval was requested and is pending. Do not claim the pre-Task6 iOS build validates this dependency. Signed physical iOS/HTTPS testing remains separate even after resolution.
+Resolved iOS prerequisite: owner approved only the required MapLibre download. Xcode resolved MapLibre Native6.28.0 at revision5ee345ca5d65238a6fce29bba87816204be7df20 and generated the committed Package.resolved. Unsigned generic iphoneos Debug build then passed with automatic package resolution disabled and resolved-file-only mode enabled. Embedded MapLibre framework verified; Info.plist/entitlements lint passed. Original BSD2-Clause license retained in mobile docs/licenses/maplibre-native-ios-6.28.0.txt. No additional SDK/tool/package was installed. Signed physical iOS, HTTPS endpoint, map rendering/attribution and permission/background behavior remain unverified.
 
-Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test feature/encounter-discovery; source commits backend80dfda7, mobile198de63, admin17bf501. Later commits only record evidence/handoff. PR links and final branch heads are recorded below after push. Source and generated configuration contain no credentials; preserve ignored local env and existing Docker volumes.
+Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test feature/encounter-discovery; source commits backend80dfda7, mobile68f7ed1, admin17bf501. Later commits only record evidence/handoff. PR links and final branch heads are recorded below after push. Source and generated configuration contain no credentials; preserve ignored local env and existing Docker volumes.
 
 
 ### Task6 pushed branches
@@ -405,3 +405,10 @@ Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test featur
 - paths-admin: [draft PR6](https://github.com/awais-ur-rehman/paths-admin/pull/6), verification/handoff commit `4b696a1`, branch `feature/encounter-discovery` → `development`.
 
 These commits contain final source evidence/handoff; subsequent linkage commits change documentation only. Drafts remain unmerged pending owner runtime results. Main has not changed.
+
+
+### Approved iOS dependency follow-up
+
+MapLibre Native6.28.0 resolution and unsigned iOS build now pass; this supersedes the previous missing-dependency blocker. Only the approved MapLibre package/binary was fetched; existing local Flutter packages were retained. The real generated pin and BSD license are in the mobile repository. No application behavior changed and broader unit/widget suites were not rerun for this native dependency-only follow-up. Task6 remains awaiting owner physical results; draft PR6 stays unmerged and main unchanged.
+
+Native dependency follow-up commit: mobile `68f7ed1` adds the actual Xcode-generated MapLibre pin and copied BSD notice; Dart application behavior is unchanged. Use this commit or the latest feature/encounter-discovery head when repeating iOS checks.

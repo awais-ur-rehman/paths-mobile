@@ -1,6 +1,6 @@
 # Task6 physical-device checks
 
-Task5 functional approval is recorded and PR5 is merged. Task6 source is `feature/encounter-discovery`: mobile `198de63`, backend `80dfda7`, admin `17bf501`; subsequent commits record documentation only. Final branch heads/PRs are in IMPLEMENTATION_STATUS.md. Task6 stays pending until owner results; main is unchanged.
+Task5 functional approval is recorded and PR5 is merged. Task6 source is `feature/encounter-discovery`: mobile `68f7ed1`, backend `80dfda7`, admin `17bf501`; subsequent commits record documentation only. Final branch heads/PRs are in IMPLEMENTATION_STATUS.md. Task6 stays pending until owner results; main is unchanged.
 
 ## Setup and prerequisites
 
@@ -28,7 +28,13 @@ adb -s <physical-phone-id> reverse tcp:8080 tcp:8080
 
 The existing system Java17 cannot compile the cached map plugin; the installed JDK21 path above works without changing global Flutter settings. The final offline Android assembly passed197 Gradle tasks. APK: `build/app/outputs/apk/debug/app-debug.apk`. Flutter run can resolve native artifacts if caches differ; report a missing artifact rather than installing other SDKs. The map configuration is public and editable: PATHS_API_ORIGIN is debug loopback and PATHS_MAP_STYLE_URL is an HTTPS style. Do not put SMTP, R2, auth or private tile credentials there. Release/non-loopback APIs require HTTPS.
 
-Missing separate iOS prerequisite: MapLibre Native6.28.0 Swift package resolution from https://github.com/maplibre/maplibre-gl-native-distribution.git . Automatic fetching was disabled and download approval is pending. The unsigned iOS build is blocked; earlier iOS compilation predates this plugin. After resolution, iOS still requires unsigned compilation plus a signed owner device, HTTPS API and separate runtime evidence. Android does not validate iOS.
+iOS native dependency is resolved following owner approval: MapLibre Native6.28.0, revision5ee345ca5d65238a6fce29bba87816204be7df20, pinned in the real Xcode-generated Package.resolved. Unsigned generic iphoneos Debug compilation now passes, including the embedded native framework. To repeat using the populated local cache:
+
+```sh
+xcodebuild -project ios/Runner.xcodeproj -scheme Runner -configuration Debug -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/ios-auth -clonedSourcePackagesDirPath build/ios-auth/SourcePackages -disableAutomaticPackageResolution -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+```
+
+This does not install or operate a device. Physical iOS checks still need an owner-signed build and HTTPS API, then separate map/attribution/permission/background testing. Android does not validate iOS. No additional runtime results are claimed.
 
 ## Checks and expected results
 
