@@ -13,3 +13,7 @@
 - Trial transport is loopback HTTP over owner-operated Android USB reverse; iOS requires trusted private-LAN TLS. No TLS bypass and no public trial listener.
 - Preliminary foreground/background balanced collection is a candidate, not measured final adaptive policy. No claims for battery, venue certainty or push delivery.
 - Keep native TTL execution limitations and missing MapLibre/iOS runtime validation visible. Do not waive the phase/device gate.
+
+- Owner follow-up: “I have tested it and it is feasable”; explicitly authorized merging Phase0 PRs into development and continuing the plan. This is owner-reported feasibility acceptance, not a measured battery/precision report or iOS validation. Adaptive baseline retained; brief-crossing stays off. Main remains unchanged.
+- Owner selected Gmail SMTP for email and a Cloudflare bucket (R2/S3-compatible adapter) for production media. Credentials will be environment-only; no service provisioning or real-data upload authorized. Development uses Mailpit/private filesystem until their integrations.
+- Owner authorized downloading missing Android test artifacts, then separately authorized Phase1 packages and Docker images. No SDK/tool upgrades or store/deployment actions inferred.

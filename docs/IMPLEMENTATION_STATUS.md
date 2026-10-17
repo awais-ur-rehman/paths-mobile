@@ -1,8 +1,8 @@
 # Implementation status
 
-Current phase: **0, Task 1 — implemented harness; verification gate pending**. API contract: `phase0.v1` (experiment only).
+Current phase: **Phase0 accepted by owner for continued development; Phase1 Task2 next**. API contract: `phase0.v1` (experiment only).
 
-Main is a documentation baseline, not a working release. Feature work cannot merge until required checks and device evidence pass.
+Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
 ## Plan ledger
 
@@ -215,3 +215,11 @@ No production deployments, purchases, personal data uploads, phone operations, e
 All work remains on `feature/phase0-feasibility` from development. Main/development remain at the documentation baseline; no application release or phase merge. Later phase checklist items remain not started because the Phase0 dependency gate is pending. The final docs commit records this report; its SHA is available in git/PR and need not self-reference.
 
 Next action: supply complete local Android test artifact caches or explicitly change the no-download constraint; then run the owner's physical-device checklist. Do not advance Phase1 until Phase0 evidence and policy choice pass.
+
+## Owner acceptance and Android build follow-up
+
+The owner reports the experiment tested and feasible, authorizes merging the Phase0 PRs into development, and asks to continue according to plan. No device model, OS, battery figures, scenario matrix, precision/recall or iOS results were supplied; those checklist details remain pending, not invented. This explicit continuation decision supersedes the earlier hold on Phase1.
+
+Android debug assembly with cached Gradle9.3.1, `--no-daemon -Pandroid.builder.sdkDownload=false :app:assembleDebug`, now **passes** after the authorized missing Android dependency downloads (73 tasks). This proves resource linking/Kotlin/Java/native packaging for the debug APK; it does not prove runtime behavior. Previous offline blocker entries above are historical. No SDK installation or release build performed.
+
+Gmail SMTP and Cloudflare R2 selected for later provider integration. Phase1 dependency/image downloads now separately authorized. Main stays at its documentation baseline.

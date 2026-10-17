@@ -1,6 +1,6 @@
 # Phase 0 physical-device runbook
 
-Status: **not run**. Do not treat these instructions as device evidence. Branch: `feature/phase0-feasibility`; exact handoff commit is recorded in IMPLEMENTATION_STATUS.md and the phase PR. No emulator or phone was operated by the implementer.
+Status: **owner reports tested and feasible; detailed trial evidence not supplied**. Do not treat these instructions as device evidence. Branch: `feature/phase0-feasibility`; exact handoff commit is recorded in IMPLEMENTATION_STATUS.md and the phase PR. No emulator or phone was operated by the implementer.
 
 ## Prerequisites currently blocked
 
@@ -85,3 +85,7 @@ Android cleartext exception exists only in debug and only for loopback. iOS inte
 Use `docs/evidence/phase0-trials.csv`: trial label, device pseudonym/model/OS, duration, mode, scenario, ground-truth positive/negative, app verdict, TP/FP/FN, capture/drop/gap counts, battery baseline/capture, and permission/lifecycle observation. Precision = TP/(TP+FP); recall = TP/(TP+FN); undefined denominators stay blank. Record callback→server ingest→match latency separately if instrumented. Push dispatch/OS delivery are unavailable until test credentials and push integration exist. Never return exact coordinates, routes, token-bearing commands, raw queue files or real personal data.
 
 On failure return: branch/commit, sanitized build error (artifact/version), device model/OS, test name, app status/count, permission setting, battery mode and reproducible steps. Native logs are not configured to print fixes or keys. Inspect any platform crash output before sharing. Phase 0 remains pending until device evidence and blockers are resolved; Phase 1 must not begin through this gate.
+
+## Follow-up
+
+Owner authorized the missing Android dependencies; debug APK assembly now passes without the diagnostic init override. Historical missing-cache list above is resolved for this build. Owner accepts continuation; no additional device operation was performed by Codex.
