@@ -26,3 +26,7 @@
 - Integration tests own a unique temporary database and require CREATEDB; only that created database is removed after tests, preserving development fixtures/volumes.
 - Worker retries retained failed jobs from durable unprocessed outbox rows after30-second cooldown. Unknown kinds remain failures. Shutdown drains DB transactions and leaves unacknowledged jobs for idempotent replay.
 - Existing physical feasibility acceptance permits Phase1 work. Detailed Phase0 battery/accuracy and iOS evidence remain release gates. No new device test is needed for Task2's network/bootstrap-only Flutter addition; Task3 requires device authentication testing.
+
+## Task3 session transport boundary
+
+The refresh component owns volatile coordination only. Auth-repository integration must persist rotations in platform secure storage and apply terminal refresh revocation; it is not connected to the current harness. Authenticated transport pins its origin, disables redirects and rejects generation-mismatched responses as well as retries. Refresh failures never expose the separate refresh request. Streaming requests require explicit retry; multipart bodies use a cloned body. This boundary does not replace backend authorization or logout revocation.
