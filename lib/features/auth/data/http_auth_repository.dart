@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/generated/api_contract.dart';
+import '../../../core/network/authenticated_api.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
@@ -21,7 +22,8 @@ final class HttpAuthRepository
         ProfileSummaryRepository,
         VerificationRepository,
         LocationRepository,
-        EncounterRepository {
+        EncounterRepository,
+        AuthenticatedApi {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -29,6 +31,7 @@ final class HttpAuthRepository
     Dio? publicTransport,
     Dio? authenticatedTransport,
     this._purgeTracking,
+    this._purgeNotifications,
   }) : _public = publicTransport ?? Dio(),
        _private = authenticatedTransport ?? Dio() {
     final uri = Uri.tryParse(origin);
@@ -57,6 +60,7 @@ final class HttpAuthRepository
     );
   }
   final Future<void> Function()? _purgeTracking;
+  final Future<void> Function()? _purgeNotifications;
   final TokenVault _vault;
   final AuthPreferences _preferences;
   final Dio _public, _private;
@@ -100,11 +104,45 @@ final class HttpAuthRepository
     await _preferences.setDeviceId(value);
     return value;
   });
+  @override
+  String? get accountId => currentTrackingAccountId;
+  @override
+  Future<String> installationId() => _deviceId();
+  @override
+  Future<Map<String, dynamic>> request(
+    String method,
+    String path, {
+    Map<String, dynamic>? data,
+    String? idempotencyKey,
+    CancelToken? cancelToken,
+  }) async {
+    if (!path.startsWith('/v1/') ||
+        Uri.parse(path).hasScheme ||
+        path.contains('..')) {
+      throw const AuthFailure('configuration');
+    }
+    final generation = _generation, account = accountId;
+    if (account == null) throw const AuthFailure('SESSION_INVALID');
+    final result = await _request(
+      method,
+      path,
+      data: data,
+      authenticated: true,
+      idempotencyKey: idempotencyKey,
+      cancelToken: cancelToken,
+    );
+    if (generation != _generation || account != accountId) {
+      throw const AuthFailure('cancelled');
+    }
+    return result;
+  }
+
   Future<Map<String, dynamic>> _request(
     String method,
     String path, {
     Map<String, dynamic>? data,
     bool authenticated = false,
+    String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {
     try {
@@ -125,13 +163,15 @@ final class HttpAuthRepository
                       'PUT',
                       'DELETE',
                     ].contains(method))
-                  'Idempotency-Key': List.generate(
-                    16,
-                    (_) => Random.secure()
-                        .nextInt(256)
-                        .toRadixString(16)
-                        .padLeft(2, '0'),
-                  ).join(),
+                  'Idempotency-Key':
+                      idempotencyKey ??
+                      List.generate(
+                        16,
+                        (_) => Random.secure()
+                            .nextInt(256)
+                            .toRadixString(16)
+                            .padLeft(2, '0'),
+                      ).join(),
               },
             ),
           );
@@ -232,7 +272,19 @@ final class HttpAuthRepository
     _session = session;
   }
 
-  Future<void> _purge() async {
+  Future<void> _clearPush() async {
+    try {
+      await _purgeNotifications?.call();
+    } catch (_) {
+      throw const AuthFailure('push_cleanup');
+    }
+  }
+
+  Future<void> _purge({bool notifications = true}) async {
+    await Future.wait([if (notifications) _clearPush(), _clearTracking()]);
+  }
+
+  Future<void> _clearTracking() async {
     try {
       await _purgeTracking?.call();
     } catch (_) {
@@ -335,9 +387,10 @@ final class HttpAuthRepository
       await _invalidate();
       return null;
     }
-    await _purge();
+    await _purge(notifications: false);
     if (!await _stored<bool?>(() => _preferences.flag('paths.auth.installed'))
         .then((value) => value ?? false)) {
+      await _clearPush();
       await _serialize(() async {
         await _vault.clear();
         await _preferences.setFlag('paths.auth.installed', true);
@@ -345,6 +398,7 @@ final class HttpAuthRepository
     }
     if (await _stored<bool?>(() => _preferences.flag('paths.auth.signedOut')) ==
         true) {
+      await _clearPush();
       await _serialize(_vault.clear);
       return null;
     }
@@ -352,7 +406,10 @@ final class HttpAuthRepository
       final raw = await _stored(
         () => _vault.read().timeout(const Duration(seconds: 5)),
       );
-      if (raw == null) return null;
+      if (raw == null) {
+        await _clearPush();
+        return null;
+      }
       try {
         _session = _decode(
           SessionDto.fromJson(jsonDecode(raw) as Map<String, dynamic>),
@@ -503,6 +560,8 @@ final class HttpAuthRepository
             .map(
               (item) => Encounter(
                 encounterId: item.encounterId,
+                isSaved: item.isSaved,
+                requestState: item.requestState,
                 userId: item.userId,
                 username: item.username,
                 displayName: item.displayName,
