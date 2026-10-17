@@ -60,6 +60,12 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
         if (state.error case final error?) {
           PathsToast.show(context, error.message);
         } else if (state.saveRevision > 0) {
+          if (MediaScope.maybeOf(context) != null) {
+            context.go(
+              widget.editing ? '/setup/resume?return=profile' : '/setup/resume',
+            );
+            return;
+          }
           context.go(
             widget.editing
                 ? '/profile?revision=${DateTime.now().microsecondsSinceEpoch}'

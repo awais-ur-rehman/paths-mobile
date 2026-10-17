@@ -1,3 +1,5 @@
+import 'features/setup/domain/setup_progress.dart';
+import 'core/storage/setup_progress.dart';
 import 'features/media/domain/media_repository.dart';
 import 'core/network/authenticated_media_api.dart';
 import 'features/media/data/http_media_repository.dart';
@@ -43,8 +45,10 @@ class PathsApp extends StatefulWidget {
     this.repository,
     this.locationSync,
     this.photoPicker,
+    this.setupProgress,
     super.key,
   });
+  final SetupProgressStore? setupProgress;
   final PhotoPicker? photoPicker;
   final LocationSyncService? locationSync;
   final AuthRepository? repository;
@@ -61,6 +65,7 @@ class _PathsAppState extends State<PathsApp> {
   LocationSyncService? locations;
   AuthFailure? failure;
   HttpMediaRepository? media;
+  SetupProgressStore? setupProgress;
   PhotoPicker? photoPicker;
   PostRepository? posts;
   PushClient? push;
@@ -168,6 +173,7 @@ class _PathsAppState extends State<PathsApp> {
           profiles as AuthenticatedMediaApi,
         );
         photoPicker = widget.photoPicker ?? NativePhotoPicker();
+        setupProgress = widget.setupProgress ?? PlatformSetupProgress();
         posts = PostRepository(profiles as AuthenticatedApi);
       }
       navigation = createAuthRouter(
@@ -176,6 +182,7 @@ class _PathsAppState extends State<PathsApp> {
         profiles as ProfileRepository,
         profiles as ProfileSummaryRepository,
         profiles as VerificationRepository,
+        setupProgress: setupProgress,
         media: media,
         picker: photoPicker,
         posts: posts,

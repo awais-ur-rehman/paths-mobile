@@ -74,7 +74,7 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
               title: const Text('Verification'),
               onTap: () {
                 Navigator.pop(sheet);
-                context.go('/setup/verification');
+                context.go('/setup/verification?return=profile');
               },
             ),
             if (widget.onLocationSetup != null)
