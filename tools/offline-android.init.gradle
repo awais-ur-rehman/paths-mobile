@@ -1,0 +1,13 @@
+// Phase 0 only: align the SDK integration_test plugin with the app's cached AGP.
+// No SDK files are edited; offline mode still rejects missing transitive artifacts.
+gradle.startParameter.offline = true
+gradle.beforeProject { project ->
+    project.buildscript.configurations.configureEach {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'com.android.tools.build' && details.requested.name == 'gradle' && details.requested.version == '8.11.0') {
+                details.useVersion('9.1.0')
+                details.because('Use the same locally cached AGP as the Paths app during the offline experiment')
+            }
+        }
+    }
+}
