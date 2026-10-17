@@ -396,3 +396,12 @@ One fresh read-only whole-branch review identified peer replacement retaining th
 Blocker: unsigned iOS compile fails because MapLibre Native6.28.0 package resolution is absent. Required source: https://github.com/maplibre/maplibre-gl-native-distribution.git at6.28.0. Automatic resolution stayed disabled; download approval was requested and is pending. Do not claim the pre-Task6 iOS build validates this dependency. Signed physical iOS/HTTPS testing remains separate even after resolution.
 
 Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test feature/encounter-discovery; source commits backend80dfda7, mobile198de63, admin17bf501. Later commits only record evidence/handoff. PR links and final branch heads are recorded below after push. Source and generated configuration contain no credentials; preserve ignored local env and existing Docker volumes.
+
+
+### Task6 pushed branches
+
+- paths-backend: [draft PR6](https://github.com/awais-ur-rehman/paths-backend/pull/6), verification/handoff commit `7fe1d38`, branch `feature/encounter-discovery` → `development`.
+- paths-mobile: [draft PR6](https://github.com/awais-ur-rehman/paths-mobile/pull/6), verification/handoff commit `c60a93b`, branch `feature/encounter-discovery` → `development`.
+- paths-admin: [draft PR6](https://github.com/awais-ur-rehman/paths-admin/pull/6), verification/handoff commit `4b696a1`, branch `feature/encounter-discovery` → `development`.
+
+These commits contain final source evidence/handoff; subsequent linkage commits change documentation only. Drafts remain unmerged pending owner runtime results. Main has not changed.
