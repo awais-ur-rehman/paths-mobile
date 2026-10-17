@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase2 Task6 encounter matching and Home; awaiting device evidence**. API contract: `1.5.0`; experiment contract `phase0.v1`.
+Current phase: **Phase3 Task7 relationships and notifications; in progress**. API contract: `1.5.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -432,3 +432,10 @@ Actual final checks: analyzer clean; all163 Flutter tests and7 Python tooling te
 One fresh read-only review found four issues. Failing regressions reproduced each before fixes: header vertically centered by expanded Stack, summary error hiding signout/options, pending review unable to refresh, and backend-only upload readiness. All four regressions pass after correction. Source inspection does not prove physical gestures/OS behavior or real media readiness. A formatter telemetry sandbox warning was resolved by rerunning formatting with required local SDK access; final formatting/analyzer pass.
 
 Source commits: f2ace5f (dropdown),7fc83d5 (one save action),06e2f33 (verification/refresh/readiness),b5e09ac (profile surface/options/routing). Test source b5e09ac or later documentation-only head on feature/encounter-discovery. Existing draft: https://github.com/awais-ur-rehman/paths-mobile/pull/6 . Follow docs/PROFILE_UI_RETEST.md before accepting the changed visuals; Task6's broader physical evidence remains pending.
+
+
+## Task6 approval and Task7 start
+
+Owner tested the current mobile build on a physical Android phone, accepted it and explicitly authorized PR merges and Task7. PR6 merged into development: backend158919e, admin dabf953, mobile2af063d. Main unchanged. Pre-merge verification: backend15unit/13Phase0/52integration, mobile163Flutter, admin2transport/3browser and lint/type/build checks pass; backend/admin hosted CI green. First concurrent backend run timed out creating the isolated test database; isolated rerun passed. This acceptance does not invent case-by-case paired-phone/network/battery or signed iOS results.
+
+Task7 execution: feature/relationships-notifications branched from each merged development head. See task7-relationships-plan.md for every step and dependencies. Push project/APNs setup requested from the owner; no credentials/config files present in source. Continue independent relationships/in-app notification work while genuine provider/device evidence is pending. No service creation or deployment authorized.
