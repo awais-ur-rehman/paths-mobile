@@ -18,6 +18,11 @@ class MainActivity : FlutterActivity() {
     private val tracker by lazy { PathsLocationTracker.get(this) }
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
+        MethodChannel(engine.dartExecutor.binaryMessenger,"paths/media").setMethodCallHandler { call,result ->
+            if(call.method != "cacheDirectory") result.notImplemented()
+            else try { result.success(cacheDir.canonicalPath) }
+            catch (_: Exception) { result.error("media_cleanup","Photo cleanup could not finish.",null) }
+        }
         push=com.paths.mobile.push.PathsPushChannel(this,MethodChannel(engine.dartExecutor.binaryMessenger,"paths/push"))
         val channel=MethodChannel(engine.dartExecutor.binaryMessenger,"paths/location")
         tracker.emit={ event -> channel.invokeMethod("event",event) }

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../auth/domain/auth_models.dart';
@@ -11,8 +12,21 @@ final class NativePhotoPicker implements PhotoPicker {
   NativePhotoPicker({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
   final ImagePicker _picker;
   bool _recovered = false;
+  Future<Directory> _cacheDirectory() async {
+    if (defaultTargetPlatform != TargetPlatform.android) {
+      return Directory.systemTemp;
+    }
+    // Flutter's systemTemp uses code_cache; image_picker uses Context.cacheDir.
+    final path = await const MethodChannel('paths/media')
+        .invokeMethod<String>('cacheDirectory');
+    if (path == null || !Directory(path).isAbsolute) {
+      throw const AuthFailure('media_cleanup');
+    }
+    return Directory(path);
+  }
+
   Future<void> _discard(XFile file) async {
-    final root = await Directory.systemTemp.resolveSymbolicLinks();
+    final root = await (await _cacheDirectory()).resolveSymbolicLinks();
     final candidate = File(file.path);
     if (!await candidate.exists()) return;
     final path = await candidate.resolveSymbolicLinks();
@@ -26,8 +40,8 @@ final class NativePhotoPicker implements PhotoPicker {
   @override
   Future<void> discardLostSelection() async {
     if (_recovered) return;
-    if (Platform.isAndroid) {
-      await discardAndroidCameraFiles(Directory.systemTemp);
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await discardAndroidCameraFiles(await _cacheDirectory());
       final lost = await _picker.retrieveLostData();
       for (final file in lost.files ?? <XFile>[]) {
         await _discard(file);
@@ -38,7 +52,7 @@ final class NativePhotoPicker implements PhotoPicker {
   }
 
   Future<void> _discardIOSFiles() async {
-    if (Platform.isIOS) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       await for (final entity in Directory.systemTemp.list(
         followLinks: false,
       )) {
@@ -54,6 +68,7 @@ final class NativePhotoPicker implements PhotoPicker {
   Future<PickedPhoto?> pick(PhotoSource source) async {
     try {
       await discardLostSelection();
+      PickedPhoto? selected;
       try {
         final file = await _picker.pickImage(
           source: source == PhotoSource.camera
@@ -65,7 +80,6 @@ final class NativePhotoPicker implements PhotoPicker {
           requestFullMetadata: false,
         );
         if (file == null) return null;
-        PickedPhoto? selected;
         try {
           final size = await file.length();
           if (size <= 0 || size > 10 * 1024 * 1024) {
@@ -109,13 +123,21 @@ final class NativePhotoPicker implements PhotoPicker {
           }
         }
       } finally {
-        if (Platform.isAndroid) {
-          await discardAndroidCameraFiles(Directory.systemTemp);
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          try {
+            await discardAndroidCameraFiles(await _cacheDirectory());
+          } catch (_) {
+            selected?.clear();
+            throw const AuthFailure('media_cleanup');
+          }
         }
       }
     } on AuthFailure {
       rethrow;
     } on PlatformException catch (error) {
+      if (error.code == 'media_cleanup') {
+        throw const AuthFailure('media_cleanup');
+      }
       throw AuthFailure(
         error.code.contains('denied') || error.code.contains('restricted')
             ? 'photo_permission'
