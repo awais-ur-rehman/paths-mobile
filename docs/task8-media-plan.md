@@ -60,3 +60,5 @@ Mobile features/media: domain interfaces, picker/data upload + authenticated mem
 Implementation/local checks are verified as recorded in IMPLEMENTATION_STATUS.md. Owner Android results, real R2 and iOS runtime remain pending; the phase is not complete. No Task9 work has started.
 
 Owner initially accepted Task8 on2026-10-17; backend/admin PR8 merged. A subsequent Android photo-cleanup failure reopens the mobile device gate. Fix3535e4c is implemented and tested locally; await the focused phone retest before mobile PR8 merge. No Task9 work or other subsequent tasks begin.
+
+Additional device follow-up: fix8cfb4e3 preserves photo selections/drafts through session refresh.218 Flutter tests and analysis pass. Native builds/integrity and owner photo/Next results are recorded in IMPLEMENTATION_STATUS.md; mobile PR8 remains pending. No later tasks begin.

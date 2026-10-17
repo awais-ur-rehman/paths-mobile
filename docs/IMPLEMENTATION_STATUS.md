@@ -548,3 +548,16 @@ Added tools/check_android_kernel.py and four regression cases: exact match, zero
 Actual final verification: offline Android assembleDebug passes in41s (235 tasks); all4 new integrity tests pass. Verified packaged/staged kernel equals compiler output:74988392 bytes, SHA256 e4ce82ac0514497c0ae57ce41860d95c2a803f6a6d32a94bab2b8ef42b016398. Application code remains the photo-cache fix3535e4c from the215-test/analyzer/native checks; no dependencies were installed or generated outputs committed. This byte check does not prove phone launch.
 
 Owner must launch the already-verified local APK using the runbook's --use-application-binary command, then repeat Gallery/Camera/cancel checks. Mobile PR8 remains draft pending startup and photo retest. Backend/admin are merged; main and all subsequent tasks remain unchanged/on hold.
+
+
+## Task8 profile-photo return after Android resume — 2026-10-17
+
+Owner can now launch and upload, but Use photo returns to a form still labelled Add photo and Next cannot continue. Read-only aggregate diagnostics show ready, pending-review, unattached avatar assets; no user identity or content was read. The server upload is complete, while the form has lost its selected ID.
+
+Reproduction: a real-router/HTTP-repository widget flow succeeds without resume, but a valid Android-style background/resume followed by Use photo loses Change photo before the fix. AuthRouterRefresh previously notified GoRouter on every AuthCubit busy/session-metadata update, disturbing the imperative photo route and its return future. Fix8cfb4e3 refreshes routing only when stage, account ID, restriction, adult-check or signup preference changes. Routine session refresh preserves the pushed route, its returned asset and unsaved form controllers. Authorization-relevant changes still redirect immediately.
+
+Actual verification so far: all218 Flutter tests pass and analyzer has no issues. Eight focused setup-routing cases pass; the new cases verify both ordinary/resume photo return, decoded private image pixels, typed-name preservation, exact saved avatarAssetId, Next reaching Verification, and restriction-on-resume closing the photo screen. The binary-content fixture handles variant query strings and uses an original valid synthetic PNG. Earlier fixture-decoding failures were corrected before the final successful suite; they are not application fixes.
+
+Native checks run sequentially; final Android build/integrity evidence follows below. API remains1.7.0. Mobile PR8 stays draft pending the owner's focused Gallery/Camera/Next test on the new APK. Backend/admin are already merged. Main, live R2/push/iOS-runtime prerequisites and the hold on Task9/later work remain unchanged.
+
+Final native evidence for8cfb4e3: unsigned generic iphoneos Debug compiles with package autoresolution disabled. A sequential fresh Android app output rebuild passes offline in36s (235 tasks). APK/staged kernel exactly matches compiler output:74984256 bytes, SHA256 b721f1c586b3263d5064796d3d4fc646bb710f27e4c98d50d487e25648d6c9de. All4 APK-integrity regression tests pass. The prepared APK embeds the existing local API origin; owner launch uses --use-application-binary to preserve this checked artifact. Physical retest remains pending.

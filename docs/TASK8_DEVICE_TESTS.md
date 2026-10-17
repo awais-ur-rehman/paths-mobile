@@ -1,3 +1,22 @@
+## Current retest: selected photo and Next after app resume
+
+Source fix8cfb4e3 preserves photo-route results across normal session refresh. Stop the old run, then launch the newly verified APK (local API at127.0.0.1:8080):
+
+```sh
+cd /Users/awaisurrehman/Documents/experimental/Paths/paths-mobile
+python3 tools/check_android_kernel.py
+adb reverse tcp:8080 tcp:8080
+flutter --suppress-analytics --no-version-check run --no-pub -d 13111JEC204217 --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk
+```
+
+1. Enter profile details, tap Add photo → Gallery, select a synthetic image and tap Use photo. Expected: the profile form shows that photo and Change photo; the entered details remain.
+2. Tap Next with valid name/username/gender. Expected: the profile/photo saves and Verification opens. Submit or Skip continues to optional location education, then Home.
+3. Repeat selection from Camera while editing, then save. Restart/sign in after setup: the saved profile remains and setup is not repeated.
+
+Return the exact toast if Next fails, and whether the button reads Add photo or Change photo. Use only synthetic images in shared screenshots. Mobile PR8 remains unmerged pending this retest; subsequent tasks stay on hold.
+
+---
+
 ## Android startup recovery — invalid kernel binary
 
 The previous APK's Dart kernel trailer was damaged. The generated Android/compiler outputs were rebuilt offline; the new APK kernel matches its compiler output byte for byte. Run builds sequentially in this checkout, and use this already-verified APK for the current retest:
