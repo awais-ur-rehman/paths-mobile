@@ -12,11 +12,13 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var push:com.paths.mobile.push.PathsPushChannel?=null
     private var permissionResult: MethodChannel.Result? = null
     private fun canAskLocation():Boolean = tracker.permissions()["granted"]==true || !getSharedPreferences("paths_permissions",MODE_PRIVATE).getBoolean("location_asked",false) || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
     private val tracker by lazy { PathsLocationTracker.get(this) }
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
+        push=com.paths.mobile.push.PathsPushChannel(this,MethodChannel(engine.dartExecutor.binaryMessenger,"paths/push"))
         val channel=MethodChannel(engine.dartExecutor.binaryMessenger,"paths/location")
         tracker.emit={ event -> channel.invokeMethod("event",event) }
         channel.setMethodCallHandler { call,result ->
@@ -53,10 +55,12 @@ class MainActivity : FlutterActivity() {
     }
     override fun onRequestPermissionsResult(code: Int, permissions: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code,permissions,results)
+        push?.permissions(code)
         if(code==100) {permissionResult?.success(tracker.permissions()["granted"]==true);permissionResult=null}
         if(code==101) {permissionResult?.success(Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED);permissionResult=null}
     }
+    override fun onNewIntent(intent:Intent){super.onNewIntent(intent);setIntent(intent);push?.intent(intent)}
     override fun onResume() { super.onResume(); tracker.visibility(true) }
     override fun onPause() { tracker.visibility(false); super.onPause() }
-    override fun onDestroy() { tracker.emit=null; permissionResult?.error("cancelled","Activity closed",null); permissionResult=null; super.onDestroy() }
+    override fun onDestroy() { push?.dispose();push=null; tracker.emit=null; permissionResult?.error("cancelled","Activity closed",null); permissionResult=null; super.onDestroy() }
 }

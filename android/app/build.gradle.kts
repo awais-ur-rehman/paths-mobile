@@ -46,4 +46,7 @@ flutter {
     source = "../.."
 }
 
-dependencies { implementation("com.google.android.gms:play-services-location:21.4.0") }
+dependencies {
+ implementation("com.google.android.gms:play-services-location:21.4.0")
+ implementation("com.google.firebase:firebase-messaging:25.1.3")
+}
