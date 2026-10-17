@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase1, Task2 foundation locally verified; Tasks3–4 not started**. API contract: `1.0.0`; isolated experiment contract remains `phase0.v1`.
+Current phase: **Phase1 Task2 verified and merged; Task3 session-refresh component in progress; Task4 not started**. API contract: `1.0.0`; isolated experiment contract remains `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -39,7 +39,7 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 - [ ] Test OTP purpose/expiry/attempts/resend invalidation, replay, under-18 DOB, password reset revocation and refresh-family reuse. — **not started**
 - [ ] Implement signup/login/OTP/recovery with Argon2id and hashed secrets; server guards enforce account status. — **not started**
 - [ ] Implement splash, one onboarding screen, auth forms and guarded setup routes. — **not started**
-- [ ] Implement single-flight Dio refresh; test ten concurrent 401s produce one refresh, one replay each and no loop. — **not started**
+- [ ] Implement single-flight Dio refresh; test ten concurrent 401s produce one refresh, one replay each and no loop. — **in progress — coordinator/interceptor and eleven regressions implemented and locally verified; real auth API and secure-storage wiring pending**
 - [ ] Verify keyboard, paste/autofill, offline/error states and suspended-account support/deletion access. — **not started**
 
 ### Task 4: Design system, profile and optional verification submission
@@ -248,3 +248,13 @@ Foundation implementation commits: backend `d8dab8b`, `446979e`; admin `269b353`
 GitHub follow-up: corrected backend CI run39017845238 and admin CI run39017849088 pass, including lint/types/build/tests/integration (backend) and generated-artifact drift. Mobile analyzer/tests are local evidence; no hosted Flutter SDK download or iOS runtime check was performed. Foundation PRs: https://github.com/awais-ur-rehman/paths-backend/pull/2 ; https://github.com/awais-ur-rehman/paths-admin/pull/2 ; https://github.com/awais-ur-rehman/paths-mobile/pull/2 . Task2 is verified; Phase1 Tasks3–4 remain open.
 
 Final transport review: malformed JSON was initially classified as offline by Dio. A new test failed on that classification; ApiClient now maps wrapped FormatException to invalidResponse. Full Flutter analyzer has no issues and all28 tests pass after the fix. This adds no native behavior and does not replace device validation.
+
+## Phase1 Task3 — first session component (in progress)
+
+Branch `feature/session-refresh`, from development merge8bda1c5. Task2 foundation PR2 merged in all repos (backend6707061, admin7568cdf, mobile8bda1c5). Main is unchanged.
+
+`lib/core/network/refresh_coordinator.dart` implements one shared refresh for concurrent401s, one replay/request, late401 reuse, generation invalidation on sign-in/logout, original-origin restriction, no redirect following, cancellation and non-replayable stream handling. Volatile tokens are intentionally not connected to the current app. A real auth repository must own secure persistence/rotation and terminal revocation before integration; the callback uses a separate bounded HTTP client.
+
+`test/core/refresh_coordinator_test.dart`: eleven tests, including ten concurrent requests (one refresh, exactly20 transport calls), replay401 limit, stale refresh across logout/new sign-in, shared failure, foreign-origin rejection, cancelled request, old401 and successful200 across account changes, and suppression of separate refresh-request secrets. Fixtures contain synthetic tokens only. Full no-resolution Flutter analyzer has no issues; all39 mobile tests pass. Initial missing-component test failure established red; runtime/header-map and race-test failures were diagnosed and corrected before green. Read-only review found stale successful/error response leakage and raw refresh transport errors; both fixed with regression coverage and re-reviewed.
+
+This is an unconnected Task3 component, not a completed authentication flow. Signup/login/OTP/reset, Argon2id, server sessions/status guards, secure persistence, AuthCubit/forms/routes and physical signup/reset checks remain **not started**. No device testing requested for an incomplete flow. Draft PR remains pending the rest of Task3 integration. API export remains1.0.0; no unpublished auth endpoint or generated response is fabricated. Task4 profiles remain not started. No missing dependency is claimed as a blocker for these remaining tasks.
