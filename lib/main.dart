@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import 'app/theme/paths_theme.dart';
-import 'core/platform/location_tracker.dart';
-import 'features/experiment/data/experiment_api.dart';
-import 'features/experiment/presentation/experiment_cubit.dart';
-import 'features/experiment/presentation/experiment_screen.dart';
+import 'app/router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,23 +15,7 @@ class PathsExperimentApp extends StatefulWidget {
 }
 
 class _PathsExperimentAppState extends State<PathsExperimentApp> {
-  late final _router = GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, state) => BlocProvider(
-          create: (_) => ExperimentCubit(
-            PlatformLocationTracker(),
-            ExperimentApi(
-              endpoint: const String.fromEnvironment('PATHS_TEST_ENDPOINT'),
-              token: const String.fromEnvironment('PATHS_TEST_TOKEN'),
-            ),
-          ),
-          child: const ExperimentScreen(),
-        ),
-      ),
-    ],
-  );
+  late final _router = createRouter();
   @override
   void dispose() {
     _router.dispose();
