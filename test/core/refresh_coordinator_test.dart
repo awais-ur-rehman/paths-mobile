@@ -310,4 +310,48 @@ void main() {
       }
     },
   );
+  test(
+    'a POST without an idempotency key is not replayed automatically',
+    () async {
+      var refreshes = 0;
+      final coordinator = RefreshCoordinator((_) async {
+        refreshes++;
+        return rotated;
+      })..replace(original);
+      final adapter = AuthAdapter();
+      final dio = Dio(BaseOptions(baseUrl: 'https://api.example.invalid'))
+        ..httpClientAdapter = adapter;
+      dio.interceptors.add(SessionRefreshInterceptor(dio, coordinator));
+      try {
+        await expectLater(
+          dio.post<Object?>('/private'),
+          throwsA(isA<DioException>()),
+        );
+        expect(adapter.calls, 1);
+        expect(refreshes, 0);
+      } finally {
+        dio.close(force: true);
+      }
+    },
+  );
+  test('a POST replay retains the same idempotency key', () async {
+    final coordinator = RefreshCoordinator((_) async => rotated)
+      ..replace(original);
+    final adapter = AuthAdapter();
+    final dio = Dio(BaseOptions(baseUrl: 'https://api.example.invalid'))
+      ..httpClientAdapter = adapter;
+    dio.interceptors.add(SessionRefreshInterceptor(dio, coordinator));
+    try {
+      final response = await dio.post<Object?>(
+        '/private',
+        data: {'fixture': 'value'},
+        options: Options(headers: {'Idempotency-Key': 'fixture-key'}),
+      );
+      expect(response.statusCode, 200);
+      expect(adapter.calls, 2);
+      expect(response.requestOptions.headers['Idempotency-Key'], 'fixture-key');
+    } finally {
+      dio.close(force: true);
+    }
+  });
 }

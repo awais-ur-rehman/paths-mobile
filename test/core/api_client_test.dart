@@ -29,11 +29,11 @@ void main() {
   test('readiness decodes only the pinned contract', () async {
     final dio = Dio()
       ..httpClientAdapter = ResponseAdapter(
-        '{"status":"ok","contractVersion":"1.0.0"}',
+        '{"status":"ok","contractVersion":"1.1.0"}',
         200,
       );
     final api = ApiClient(origin: '', transport: dio);
-    expect((await api.readiness()).contractVersion, '1.0.0');
+    expect((await api.readiness()).contractVersion, '1.1.0');
     dio.httpClientAdapter = ResponseAdapter(
       '{"status":"ok","contractVersion":"other"}',
       200,

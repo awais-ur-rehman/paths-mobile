@@ -12,6 +12,13 @@ final class SessionUnavailable implements Exception {
   const SessionUnavailable();
 }
 
+enum RefreshFailureKind { offline, timeout, unavailable, storage }
+
+final class RefreshFailure implements Exception {
+  const RefreshFailure(this.kind);
+  final RefreshFailureKind kind;
+}
+
 /// Coordinates volatile credentials. The auth repository owns secure persistence,
 /// server revocation policy and calls replace on every sign-in or sign-out.
 final class RefreshCoordinator {
@@ -129,13 +136,26 @@ final class SessionRefreshInterceptor extends Interceptor {
         authorization is! String ||
         !authorization.startsWith('Bearer ') ||
         request.data is Stream ||
+        (![
+              'GET',
+              'HEAD',
+              'OPTIONS',
+              'PUT',
+              'DELETE',
+            ].contains(request.method.toUpperCase()) &&
+            !request.headers.containsKey('Idempotency-Key')) ||
         request.cancelToken?.isCancelled == true) {
       handler.next(err);
       return;
     }
     try {
       await _sessions.recover(authorization.substring(7));
-    } catch (_) {
+    } catch (failure) {
+      if (failure is RefreshFailure &&
+          request.extra[_generation] == _sessions.generation) {
+        handler.next(DioException(requestOptions: request, error: failure));
+        return;
+      }
       // Never expose the separate refresh request, which contains a refresh secret.
       handler.next(
         _sessions.generation == request.extra[_generation]
