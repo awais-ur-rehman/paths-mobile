@@ -39,7 +39,19 @@ import '../features/auth/presentation/policy_screen.dart';
 
 class AuthRouterRefresh extends ChangeNotifier {
   AuthRouterRefresh(AuthCubit cubit) {
-    _subscription = cubit.stream.listen((_) {
+    Object routeState(AuthState state) => (
+      state.stage,
+      state.account?.id,
+      state.account?.restricted,
+      state.account?.adultChecked,
+      state.signupPreferred,
+    );
+    var previous = routeState(cubit.state);
+    _subscription = cubit.stream.listen((state) {
+      final next = routeState(state);
+      if (next == previous) return;
+      previous = next;
+      // A routine resume/token refresh must preserve pushed routes and their results.
       notifyListeners();
     });
   }

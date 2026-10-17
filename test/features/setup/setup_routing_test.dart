@@ -8,6 +8,9 @@ import 'package:paths_mobile/features/auth/presentation/auth_cubit.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:paths_mobile/features/media/domain/media_repository.dart';
+import 'package:paths_mobile/features/media/presentation/private_image.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -44,7 +47,8 @@ class SetupAdapter extends EncounterAdapter {
         jsonEncode({
           ...profile,
           'avatarAssetId': complete
-              ? '11111111-1111-4111-8111-111111111111'
+              ? profile['avatarAssetId'] ??
+                    '11111111-1111-4111-8111-111111111111'
               : null,
           'profileComplete': complete,
         }),
@@ -68,6 +72,69 @@ class SetupAdapter extends EncounterAdapter {
           'content-type': ['application/json'],
         },
       );
+    }
+    return super.fetch(options, stream, cancel);
+  }
+}
+
+class ProfilePickerFixture extends PhotoPickerFixture {
+  @override
+  Future<PickedPhoto?> pick(PhotoSource source) async => PickedPhoto(
+    Uint8List.fromList(
+      base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNQSpv5HwAD8AIhWOkYZwAAAABJRU5ErkJggg==',
+      ),
+    ),
+    'image/png',
+  );
+}
+
+class PhotoSetupAdapter extends SetupAdapter {
+  static const assetId = '22222222-2222-4222-8222-222222222222';
+  Map<String, dynamic>? saved;
+  bool cancelled = false;
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? stream,
+    Future<void>? cancel,
+  ) async {
+    if (options.path.startsWith('/v1/media/')) {
+      if (options.method == 'DELETE') cancelled = true;
+      if (options.method == 'PUT' && stream != null) {
+        await for (final _ in stream) {}
+      }
+      if (options.uri.path.endsWith('/content')) {
+        final photo = await ProfilePickerFixture().pick(PhotoSource.gallery);
+        return ResponseBody.fromBytes(
+          photo!.bytes,
+          200,
+          headers: {
+            'content-type': ['image/png'],
+          },
+        );
+      }
+      return ResponseBody.fromString(
+        jsonEncode({
+          'id': assetId,
+          'kind': 'avatar',
+          'processingState': options.path.endsWith('/intents')
+              ? 'intent'
+              : 'ready',
+          'safetyState': 'pending',
+          'expiresAt': '2026-10-18T00:00:00Z',
+          'failureCode': null,
+        }),
+        200,
+        headers: {
+          'content-type': ['application/json'],
+        },
+      );
+    }
+    if (options.path == '/v1/me/profile' && options.method == 'PUT') {
+      saved = Map<String, dynamic>.from(options.data as Map);
+      profile = Map<String, Object>.from(saved!);
+      complete = saved!['avatarAssetId'] == assetId;
     }
     return super.fetch(options, stream, cancel);
   }
@@ -115,7 +182,7 @@ start(
     PathsApp(
       repository: repo,
       locationSync: sync,
-      photoPicker: PhotoPickerFixture(),
+      photoPicker: ProfilePickerFixture(),
       setupProgress: progress,
     ),
   );
@@ -147,6 +214,20 @@ start(
     sync: sync,
     tracker: tracker,
   );
+}
+
+Future<void> resumeApp(WidgetTester tester) async {
+  for (final state in [
+    AppLifecycleState.inactive,
+    AppLifecycleState.hidden,
+    AppLifecycleState.paused,
+    AppLifecycleState.hidden,
+    AppLifecycleState.inactive,
+    AppLifecycleState.resumed,
+  ]) {
+    tester.binding.handleAppLifecycleStateChanged(state);
+  }
+  await tester.pumpAndSettle();
 }
 
 Future<void> stop(
@@ -226,6 +307,92 @@ void main() {
       );
       await tap(tester, 'Sign in');
       expect(app.router.routeInformationProvider.value.uri.path, '/home');
+      await stop(tester, app.sync, app.tracker);
+    },
+  );
+  for (final resume in [false, true]) {
+    testWidgets(
+      'Use photo returns the owned asset and Next saves it (resume=$resume)',
+      (tester) async {
+        final adapter = PhotoSetupAdapter()
+          ..complete = false
+          ..offer = false;
+        final app = await start(tester, adapter, Progress());
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Name'),
+          'Draft name',
+        );
+        await tap(tester, 'Add photo');
+        await tap(tester, 'Gallery');
+        if (resume) {
+          await resumeApp(tester);
+        }
+
+        await tap(tester, 'Use photo');
+        expect(find.text('Discard photo?'), findsNothing);
+        expect(
+          app.router.routeInformationProvider.value.uri.path,
+          '/setup/profile',
+        );
+        expect(find.text('Change photo'), findsOneWidget);
+        expect(find.text('Draft name'), findsOneWidget);
+        expect(find.byType(PrivateImage), findsOneWidget);
+        expect(
+          tester.widget<PrivateImage>(find.byType(PrivateImage)).assetId,
+          PhotoSetupAdapter.assetId,
+        );
+        final decoded = find.descendant(
+          of: find.byType(PrivateImage),
+          matching: find.byType(RawImage),
+        );
+        for (
+          var attempt = 0;
+          attempt < 50 && decoded.evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+          await tester.pump();
+        }
+        expect(
+          tester
+              .widget<RawImage>(
+                find.descendant(
+                  of: find.byType(PrivateImage),
+                  matching: find.byType(RawImage),
+                ),
+              )
+              .image,
+          isNotNull,
+        );
+        await tester.ensureVisible(find.text('Next'));
+        await tap(tester, 'Next');
+        expect(adapter.saved?['avatarAssetId'], PhotoSetupAdapter.assetId);
+        expect(
+          app.router.routeInformationProvider.value.uri.path,
+          '/setup/verification',
+        );
+        expect(adapter.cancelled, false);
+        await stop(tester, app.sync, app.tracker);
+      },
+    );
+  }
+  testWidgets(
+    'account restriction discovered on resume still closes the photo route',
+    (tester) async {
+      final adapter = PhotoSetupAdapter()..complete = false;
+      final app = await start(tester, adapter, Progress());
+      await tap(tester, 'Add photo');
+      await tap(tester, 'Gallery');
+      adapter.restricted = true;
+      await resumeApp(tester);
+      expect(
+        app.router.routeInformationProvider.value.uri.path,
+        '/account/restricted',
+      );
+      expect(find.text('Use photo'), findsNothing);
+      expect(adapter.saved, isNull);
       await stop(tester, app.sync, app.tracker);
     },
   );
