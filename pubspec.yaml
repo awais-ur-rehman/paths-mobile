@@ -29,6 +29,8 @@ flutter:
     - assets/brand/paths-symbol.png
     - assets/brand/paths-logo-ink.png
     - assets/onboarding/friends-walking.jpg
+    - assets/fonts/Inter-OFL.txt
+    - assets/fonts/LilitaOne-OFL.txt
   fonts:
     - family: Inter
       fonts:

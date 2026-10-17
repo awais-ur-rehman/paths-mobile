@@ -1,3 +1,5 @@
+import 'app/brand_licenses.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -16,6 +18,7 @@ import 'features/auth/presentation/auth_cubit.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  registerBrandLicenses();
   runApp(const PathsApp());
 }
 

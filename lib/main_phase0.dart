@@ -1,3 +1,5 @@
+import 'app/brand_licenses.dart';
+
 import 'package:flutter/material.dart';
 
 import 'app/theme/paths_theme.dart';
@@ -5,6 +7,7 @@ import 'app/experiment_router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  registerBrandLicenses();
   runApp(const PathsExperimentApp());
 }
 

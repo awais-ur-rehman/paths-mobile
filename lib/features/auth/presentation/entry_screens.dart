@@ -161,11 +161,22 @@ class ImageCredits extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: const Text('Image credit')),
-    body: const SafeArea(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          'Onboarding photo: MART PRODUCTION / Pexels.\n\nThis photograph illustrates friendship. The people shown are not presented as Paths members or endorsers.',
+    body: SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Onboarding photo: MART PRODUCTION / Pexels.\n\nThis photograph illustrates friendship. The people shown are not presented as Paths members or endorsers.',
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () =>
+                  showLicensePage(context: context, applicationName: 'Paths'),
+              child: const Text('Open-source licenses'),
+            ),
+          ],
         ),
       ),
     ),
