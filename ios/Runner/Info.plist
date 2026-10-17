@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo for your profile, post or identity verification when you choose Camera.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select a photo for your profile, post or identity verification.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Opt into best-effort background capture to measure encounters while the phone is locked. Pause stops capture and purges pending samples.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

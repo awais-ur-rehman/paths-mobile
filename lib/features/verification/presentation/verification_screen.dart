@@ -215,8 +215,7 @@ class _DocumentTile extends StatelessWidget {
           !s.loading &&
               !s.busy &&
               s.info?.uploadsAvailable == true &&
-              s.info?.status != 'pending' &&
-              s.info?.status != 'approved',
+              s.info?.status != 'pending',
         ),
         builder: (context, value) {
           final asset = value.$1;

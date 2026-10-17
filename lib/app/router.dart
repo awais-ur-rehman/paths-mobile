@@ -1,3 +1,8 @@
+import '../features/media/data/http_media_repository.dart';
+import '../features/media/domain/media_repository.dart';
+import '../features/media/presentation/photo_screen.dart';
+import '../features/posts/data/post_repository.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -49,6 +54,9 @@ GoRouter createAuthRouter(
   ProfileRepository profiles,
   ProfileSummaryRepository summaries,
   VerificationRepository verification, {
+  HttpMediaRepository? media,
+  PhotoPicker? picker,
+  PostRepository? posts,
   LocationSyncService? locations,
   EncounterRepository? encounters,
   RelationshipRepository? relationships,
@@ -57,7 +65,8 @@ GoRouter createAuthRouter(
 }) {
   final profileRoute = GoRoute(
     path: '/profile',
-    builder: (context, _) => ProfilePreviewScreen(
+    builder: (context, route) => ProfilePreviewScreen(
+      key: ValueKey(route.uri.toString()),
       repository: summaries,
       userId: cubit.state.account!.id,
       onBack: encounters == null ? null : () => context.go('/home'),
@@ -86,6 +95,7 @@ GoRouter createAuthRouter(
                       '/setup/profile',
                       '/setup/verification',
                       '/profile',
+                      if (media != null && path.startsWith('/media/')) path,
                       if (locations != null) '/setup/permissions',
                       if (encounters != null) '/home',
                       if (relationships != null) '/likes',
@@ -111,6 +121,43 @@ GoRouter createAuthRouter(
       return target == path ? null : target;
     },
     routes: [
+      if (media != null && picker != null && posts != null)
+        GoRoute(
+          path: '/media/:kind',
+          builder: (context, route) {
+            final kind = switch (route.pathParameters['kind']) {
+              'avatar' => MediaKind.avatar,
+              'cnic_front' => MediaKind.cnicFront,
+              'cnic_back' => MediaKind.cnicBack,
+              _ => MediaKind.post,
+            };
+            return PhotoScreen(
+              media: media,
+              picker: picker,
+              posts: posts,
+              kind: kind,
+              onCancel: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/profile');
+                }
+              },
+              onReady: (id) {
+                if (kind == MediaKind.post) {
+                  PathsToast.show(
+                    context,
+                    'Post sent for review.',
+                    tone: ToastTone.success,
+                  );
+                  context.go('/profile?post=$id');
+                } else {
+                  context.pop(id);
+                }
+              },
+            );
+          },
+        ),
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(
@@ -140,14 +187,26 @@ GoRouter createAuthRouter(
       ),
       GoRoute(
         path: '/setup/verification',
-        builder: (_, _) => VerificationScreen(repository: verification),
+        builder: (context, _) => VerificationScreen(
+          repository: verification,
+          documents: media == null
+              ? const UnavailableVerificationDocuments()
+              : CallbackVerificationDocuments(
+                  (side) => context.push<String>(
+                    '/media/${side == DocumentSide.front ? 'cnic_front' : 'cnic_back'}',
+                  ),
+                ),
+        ),
       ),
       if (encounters == null)
         profileRoute
       else
         StatefulShellRoute.indexedStack(
-          builder: (_, _, shell) =>
-              DiscoveryShell(shell: shell, hasLikes: relationships != null),
+          builder: (context, _, shell) => DiscoveryShell(
+            shell: shell,
+            hasLikes: relationships != null,
+            onCamera: media == null ? null : () => context.push('/media/post'),
+          ),
           branches: [
             StatefulShellBranch(
               routes: [

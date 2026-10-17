@@ -1,3 +1,7 @@
+import '../../media/presentation/media_scope.dart';
+import '../../media/presentation/private_image.dart';
+import '../../posts/presentation/posts_grid.dart';
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -52,33 +56,43 @@ class ProfileSurface extends StatelessWidget {
                     children: [
                       SizedBox(
                         height: coverHeight,
-                        child: Center(
-                          child: Semantics(
-                            label: 'Profile photo unavailable',
-                            child: ExcludeSemantics(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.person_outline_rounded,
-                                    size: math.min(
-                                      constraints.maxWidth * .64,
-                                      280,
+                        child:
+                            profile.avatarAssetId != null &&
+                                MediaScope.maybeOf(context) != null
+                            ? PrivateImage(
+                                repository: MediaScope.maybeOf(context)!.media,
+                                assetId: profile.avatarAssetId!,
+                                thumbnail: false,
+                              )
+                            : Center(
+                                child: Semantics(
+                                  label: 'Profile photo unavailable',
+                                  child: ExcludeSemantics(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.person_outline_rounded,
+                                          size: math.min(
+                                            constraints.maxWidth * .64,
+                                            280,
+                                          ),
+                                          color: Colors.white.withValues(
+                                            alpha: .24,
+                                          ),
+                                        ),
+                                        const Text(
+                                          'No photo yet',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    color: Colors.white.withValues(alpha: .24),
                                   ),
-                                  const Text(
-                                    'No photo yet',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 36),
@@ -168,6 +182,11 @@ class ProfileSurface extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                            ],
+                            if (MediaScope.maybeOf(context)
+                                case final scope?) ...[
+                              const SizedBox(height: 24),
+                              PostsGrid(scope: scope, owner: profile.userId),
                             ],
                           ],
                         ),

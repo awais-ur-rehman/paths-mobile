@@ -1,3 +1,9 @@
+import 'features/media/domain/media_repository.dart';
+import 'core/network/authenticated_media_api.dart';
+import 'features/media/data/http_media_repository.dart';
+import 'features/media/data/native_photo_picker.dart';
+import 'features/media/presentation/media_scope.dart';
+import 'features/posts/data/post_repository.dart';
 import 'app/brand_licenses.dart';
 
 import 'dart:async';
@@ -33,7 +39,13 @@ void main() {
 }
 
 class PathsApp extends StatefulWidget {
-  const PathsApp({this.repository, this.locationSync, super.key});
+  const PathsApp({
+    this.repository,
+    this.locationSync,
+    this.photoPicker,
+    super.key,
+  });
+  final PhotoPicker? photoPicker;
   final LocationSyncService? locationSync;
   final AuthRepository? repository;
   @override
@@ -48,6 +60,9 @@ class _PathsAppState extends State<PathsApp> {
   PlatformLocationTracker? tracker;
   LocationSyncService? locations;
   AuthFailure? failure;
+  HttpMediaRepository? media;
+  PhotoPicker? photoPicker;
+  PostRepository? posts;
   PushClient? push;
   NotificationRepository? notifications;
   StreamSubscription<AuthState>? pushAuth;
@@ -113,6 +128,10 @@ class _PathsAppState extends State<PathsApp> {
             origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
             vault: PlatformTokenVault(),
             preferences: PlatformAuthPreferences(),
+            purgeMedia: () async {
+              await media?.purge();
+              await photoPicker?.discardLostSelection();
+            },
             purgeNotifications: () => push?.clear() ?? Future.value(),
             purgeTracking: () =>
                 locations?.stopLocalAndMarkPending(forcePending: false) ??
@@ -141,12 +160,25 @@ class _PathsAppState extends State<PathsApp> {
       if (profiles is AuthenticatedApi) {
         notifications = NotificationRepository(profiles as AuthenticatedApi);
       }
+      if (profiles is AuthenticatedApi &&
+          profiles is AuthenticatedMediaApi &&
+          (widget.repository == null || widget.photoPicker != null)) {
+        media = HttpMediaRepository(
+          profiles as AuthenticatedApi,
+          profiles as AuthenticatedMediaApi,
+        );
+        photoPicker = widget.photoPicker ?? NativePhotoPicker();
+        posts = PostRepository(profiles as AuthenticatedApi);
+      }
       navigation = createAuthRouter(
         cubit!,
         refresh!,
         profiles as ProfileRepository,
         profiles as ProfileSummaryRepository,
         profiles as VerificationRepository,
+        media: media,
+        picker: photoPicker,
+        posts: posts,
         notifications: notifications,
         push: push,
         relationships: profiles is AuthenticatedApi
@@ -200,6 +232,8 @@ class _PathsAppState extends State<PathsApp> {
     unawaited(() async {
       await owned?.close();
       if (widget.locationSync == null) await locations?.close();
+      await media?.purge();
+      media?.dispose();
       await data?.close();
       await native?.dispose();
     }());
@@ -261,7 +295,14 @@ class _PathsAppState extends State<PathsApp> {
                   PathsToast.show(context, notice, tone: ToastTone.success);
                 }
               },
-              child: child!,
+              child: media == null
+                  ? child!
+                  : MediaScope(
+                      media: media!,
+                      picker: photoPicker!,
+                      posts: posts!,
+                      child: child!,
+                    ),
             ),
           ),
         ),

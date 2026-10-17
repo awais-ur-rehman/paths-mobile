@@ -122,7 +122,10 @@ class _LikesState extends State<LikesScreen> {
                   for (final item in state.items)
                     ListTile(
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      leading: const PathsAvatar(size: 48),
+                      leading: PathsAvatar(
+                        size: 48,
+                        assetId: item.avatarAssetId,
+                      ),
                       title: Text(
                         item.available
                             ? item.displayName

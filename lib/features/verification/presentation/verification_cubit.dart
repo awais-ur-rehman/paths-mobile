@@ -50,7 +50,6 @@ final class VerificationState {
       !loading &&
       info?.uploadsAvailable == true &&
       info?.status != 'pending' &&
-      info?.status != 'approved' &&
       front?.processed == true &&
       (back == null || back!.processed) &&
       consent;
@@ -129,8 +128,7 @@ class VerificationCubit extends Cubit<VerificationState> {
         state.busy ||
         state.loading ||
         state.info?.uploadsAvailable != true ||
-        state.info?.status == 'pending' ||
-        state.info?.status == 'approved') {
+        state.info?.status == 'pending') {
       return;
     }
     await _run((token) async {

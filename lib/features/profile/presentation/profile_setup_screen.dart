@@ -1,3 +1,6 @@
+import '../../media/presentation/media_scope.dart';
+import '../../media/presentation/private_image.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -57,7 +60,11 @@ class _ProfileOwnerState extends State<_ProfileOwner> {
         if (state.error case final error?) {
           PathsToast.show(context, error.message);
         } else if (state.saveRevision > 0) {
-          context.go(widget.editing ? '/profile' : '/setup/verification');
+          context.go(
+            widget.editing
+                ? '/profile?revision=${DateTime.now().microsecondsSinceEpoch}'
+                : '/setup/verification',
+          );
         }
       },
       child: AuthScaffold(
@@ -123,6 +130,7 @@ class _ProfileFormState extends State<_ProfileForm> {
   late final username = TextEditingController(text: widget.details.username);
   late final bio = TextEditingController(text: widget.details.bio);
   late bool privateProfile = widget.details.visibility == 'private';
+  late String? avatarAssetId = widget.details.avatarAssetId;
   late String? gender = widget.details.gender.isEmpty
       ? null
       : widget.details.gender;
@@ -147,6 +155,10 @@ class _ProfileFormState extends State<_ProfileForm> {
   }
 
   void save() {
+    if (MediaScope.maybeOf(context) != null && avatarAssetId == null) {
+      PathsToast.show(context, 'Add a profile photo.');
+      return;
+    }
     if (form.currentState!.validate()) {
       context.read<ProfileCubit>().save(
         ProfileDetails(
@@ -154,6 +166,7 @@ class _ProfileFormState extends State<_ProfileForm> {
           name: name.text.trim(),
           gender: gender!,
           bio: bio.text,
+          avatarAssetId: avatarAssetId,
           visibility: privateProfile ? 'private' : 'public',
         ),
       );
@@ -161,95 +174,125 @@ class _ProfileFormState extends State<_ProfileForm> {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      BlocSelector<ProfileCubit, ProfileState, bool>(
-        selector: (state) => state.saving,
-        builder: (context, saving) => Form(
-          key: form,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                controller: name,
-                readOnly: saving,
-                decoration: const InputDecoration(labelText: 'Name'),
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null ||
-                        v.trim().runes.length < 2 ||
-                        v.trim().runes.length > 80
-                    ? 'Use 2–80 characters.'
-                    : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: username,
-                readOnly: saving,
-                autocorrect: false,
-                enableSuggestions: false,
-                textCapitalization: TextCapitalization.none,
-                decoration: const InputDecoration(
-                  labelText: 'Username',
-                  prefixText: '@',
-                  helperText: '3–24 letters, numbers or underscores.',
-                ),
-                textInputAction: TextInputAction.next,
-                validator: (v) =>
-                    v == null ||
-                        !RegExp(r'^[a-z0-9_]{3,24}$')
-                            .hasMatch(v.trim().toLowerCase())
-                    ? 'Use 3–24 letters, numbers or underscores.'
-                    : null,
-              ),
-              const SizedBox(height: 20),
-              PathsDropdownField<String>(
-                label: 'Gender',
-                value: gender,
-                enabled: !saving,
-                options: const [
-                  PathsDropdownOption('man', 'Man'),
-                  PathsDropdownOption('woman', 'Woman'),
-                  PathsDropdownOption('another_identity', 'Another identity'),
-                  PathsDropdownOption('prefer_not_to_say', 'Prefer not to say'),
-                ],
-                onChanged: (value) => gender = value,
-                validator: (value) =>
-                    value == null ? 'Choose an option.' : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: bio,
-                readOnly: saving,
-                maxLines: 4,
-                maxLength: 300,
-                decoration: const InputDecoration(
-                  labelText: 'Bio (optional)',
-                  alignLabelWithHint: true,
-                ),
-                validator: (v) => (v?.runes.length ?? 0) > 300
-                    ? 'Use up to 300 characters.'
-                    : null,
-              ),
-              const SizedBox(height: 12),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                value: privateProfile,
-                onChanged: saving
-                    ? null
-                    : (value) => setState(() => privateProfile = value),
-                title: Text(
-                  privateProfile ? 'Private profile' : 'Public profile',
+  Widget build(
+    BuildContext context,
+  ) => BlocSelector<ProfileCubit, ProfileState, bool>(
+    selector: (state) => state.saving,
+    builder: (context, saving) => Form(
+      key: form,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (MediaScope.maybeOf(context) case final media?) ...[
+            Center(
+              child: SizedBox(
+                width: 112,
+                height: 112,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: avatarAssetId == null
+                      ? const ColoredBox(
+                          color: Color(0xFFF3F4F5),
+                          child: Icon(Icons.person_outline, size: 48),
+                        )
+                      : PrivateImage(
+                          repository: media.media,
+                          assetId: avatarAssetId!,
+                        ),
                 ),
               ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: saving ? null : save,
-                child: saving
-                    ? const PathsLoader(size: 28, color: Colors.white)
-                    : Text(widget.editing ? 'Save' : 'Next'),
-              ),
-            ],
+            ),
+            TextButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      final id = await context.push<String>('/media/avatar');
+                      if (mounted && id != null) {
+                        setState(() => avatarAssetId = id);
+                      }
+                    },
+              child: Text(avatarAssetId == null ? 'Add photo' : 'Change photo'),
+            ),
+            const SizedBox(height: 20),
+          ],
+          TextFormField(
+            controller: name,
+            readOnly: saving,
+            decoration: const InputDecoration(labelText: 'Name'),
+            textInputAction: TextInputAction.next,
+            validator: (v) =>
+                v == null ||
+                    v.trim().runes.length < 2 ||
+                    v.trim().runes.length > 80
+                ? 'Use 2–80 characters.'
+                : null,
           ),
-        ),
-      );
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: username,
+            readOnly: saving,
+            autocorrect: false,
+            enableSuggestions: false,
+            textCapitalization: TextCapitalization.none,
+            decoration: const InputDecoration(
+              labelText: 'Username',
+              prefixText: '@',
+              helperText: '3–24 letters, numbers or underscores.',
+            ),
+            textInputAction: TextInputAction.next,
+            validator: (v) =>
+                v == null ||
+                    !RegExp(r'^[a-z0-9_]{3,24}$')
+                        .hasMatch(v.trim().toLowerCase())
+                ? 'Use 3–24 letters, numbers or underscores.'
+                : null,
+          ),
+          const SizedBox(height: 20),
+          PathsDropdownField<String>(
+            label: 'Gender',
+            value: gender,
+            enabled: !saving,
+            options: const [
+              PathsDropdownOption('man', 'Man'),
+              PathsDropdownOption('woman', 'Woman'),
+              PathsDropdownOption('another_identity', 'Another identity'),
+              PathsDropdownOption('prefer_not_to_say', 'Prefer not to say'),
+            ],
+            onChanged: (value) => gender = value,
+            validator: (value) => value == null ? 'Choose an option.' : null,
+          ),
+          const SizedBox(height: 20),
+          TextFormField(
+            controller: bio,
+            readOnly: saving,
+            maxLines: 4,
+            maxLength: 300,
+            decoration: const InputDecoration(
+              labelText: 'Bio (optional)',
+              alignLabelWithHint: true,
+            ),
+            validator: (v) => (v?.runes.length ?? 0) > 300
+                ? 'Use up to 300 characters.'
+                : null,
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            value: privateProfile,
+            onChanged: saving
+                ? null
+                : (value) => setState(() => privateProfile = value),
+            title: Text(privateProfile ? 'Private profile' : 'Public profile'),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: saving ? null : save,
+            child: saving
+                ? const PathsLoader(size: 28, color: Colors.white)
+                : Text(widget.editing ? 'Save' : 'Next'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
