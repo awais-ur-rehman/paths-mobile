@@ -18,7 +18,7 @@ class ScreensApi extends Api {
     String? idempotencyKey,
     CancelToken? cancelToken,
   }) async {
-    if (path.contains('preferences'))
+    if (path.contains('preferences')) {
       return data ??
           {
             'encounters': true,
@@ -26,6 +26,7 @@ class ScreensApi extends Api {
             'messages': true,
             'review': true,
           };
+    }
     return {
       'items': [
         {
@@ -44,7 +45,7 @@ class ScreensApi extends Api {
 }
 
 void main() {
-  for (final width in [320.0, 390.0, 768.0])
+  for (final width in [320.0, 390.0, 768.0]) {
     testWidgets('inbox and preferences fit $width at 200%', (tester) async {
       tester.view.physicalSize = Size(width, 844);
       tester.view.devicePixelRatio = 1;
@@ -84,4 +85,5 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
     });
+  }
 }
