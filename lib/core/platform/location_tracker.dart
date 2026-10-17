@@ -10,6 +10,7 @@ enum TrackingStatus {
   permissionNeeded,
   inaccurate,
   unavailable,
+  offline,
 }
 
 final class TrackingPolicy {
@@ -19,11 +20,15 @@ final class TrackingPolicy {
     this.background = false,
     this.endpoint = '',
     this.testToken = '',
+    this.uploadToken = '',
+    this.uploadMode = 'experiment',
+    this.expiresAtMs = 0,
   });
   final String deviceSessionId;
   final int consentEpoch;
   final bool background;
-  final String endpoint, testToken;
+  final String endpoint, testToken, uploadToken, uploadMode;
+  final int expiresAtMs;
   Map<String, Object> toMap() => {
     'deviceSessionId': deviceSessionId,
     'consentEpoch': consentEpoch,
@@ -31,6 +36,9 @@ final class TrackingPolicy {
     'policyVersion': 'adaptive.v1',
     'endpoint': endpoint,
     'testToken': testToken,
+    'uploadToken': uploadToken,
+    'uploadMode': uploadMode,
+    'expiresAtMs': expiresAtMs,
   };
 }
 
@@ -87,6 +95,21 @@ final class LocationSample {
   };
 }
 
+final class TrackingPermissions {
+  const TrackingPermissions({
+    required this.granted,
+    required this.precise,
+    required this.backgroundAllowed,
+    required this.servicesEnabled,
+    this.canRequestForeground = true,
+  });
+  final bool granted,
+      precise,
+      backgroundAllowed,
+      servicesEnabled,
+      canRequestForeground;
+}
+
 abstract interface class LocationTracker {
   Future<void> start(TrackingPolicy policy);
   Future<void> pause();
@@ -94,6 +117,8 @@ abstract interface class LocationTracker {
   Stream<TrackingStatus> get statusStream;
   Stream<LocationSample> get sampleStream;
   Future<int> queueCount();
+  Future<TrackingPermissions> permissions();
+  Future<void> flushPending();
   Future<TrackingStatus> currentStatus();
   Future<List<LocationSample>> pendingSamples();
   Future<void> acknowledge(List<String> ids);
@@ -111,6 +136,13 @@ final class PlatformLocationTracker implements LocationTracker {
       final event = call.arguments as Map<Object?, Object?>;
       final rawStatus = event['status'];
       if (rawStatus is String) {
+        if ([
+          'stopped',
+          'permissionNeeded',
+          'unavailable',
+        ].contains(rawStatus)) {
+          _policy = null;
+        }
         _statuses.add(
           TrackingStatus.values.firstWhere(
             (s) => s.name == rawStatus,
@@ -145,9 +177,6 @@ final class PlatformLocationTracker implements LocationTracker {
     _policy = null;
     await _channel.invokeMethod<void>('start', policy.toMap());
     _policy = policy;
-    _statuses.add(
-      policy.background ? TrackingStatus.background : TrackingStatus.active,
-    );
   }
 
   @override
@@ -180,6 +209,23 @@ final class PlatformLocationTracker implements LocationTracker {
     return status;
   }
 
+  @override
+  Future<TrackingPermissions> permissions() async {
+    final value = await _channel.invokeMapMethod<String, Object?>(
+      'permissions',
+    );
+    if (value == null) throw StateError('Permission status unavailable');
+    return TrackingPermissions(
+      granted: value['granted'] == true,
+      precise: value['precise'] == true,
+      backgroundAllowed: value['backgroundAllowed'] == true,
+      servicesEnabled: value['servicesEnabled'] == true,
+      canRequestForeground: value['canRequestForeground'] == true,
+    );
+  }
+
+  @override
+  Future<void> flushPending() => _channel.invokeMethod<void>('flushPending');
   @override
   Future<int> queueCount() async =>
       await _channel.invokeMethod<int>('queueCount') ?? 0;
