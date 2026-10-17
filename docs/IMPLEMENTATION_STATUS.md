@@ -537,3 +537,14 @@ Regression evidence: the sibling-cache test reproduced AuthFailure before the fi
 Required retest: fully stop/rebuild the app (native channel changed), select a gallery photo and confirm preview/upload, then test Camera selection and picker cancellation. Mobile PR8 stays unmerged until those phone results arrive. Backend/admin functionality is unchanged by this mobile-only fix. Live R2, iOS runtime, deferred Firebase/APNs and quantitative Phase0 evidence remain separate pending release prerequisites.
 
 Unsigned generic iphoneos Debug build passes with package autoresolution disabled. The first offline Android attempt compiled the change but failed because Gradle could not find output-metadata.json at listing validation; the metadata subsequently exists and the repeated offline assembly passes in15s (235 tasks). This failed attempt is not counted as passed. No application-code or dependency changes were needed for the build recheck.
+
+
+## Task8 Android startup recovery — 2026-10-17
+
+Owner's next launch failed with Invalid kernel binary / Indicated size is invalid and root-isolate creation errors. Inspection found the packaged and staged kernel had the same length as compiler output74982720, but their final64 bytes were zeroed. The compiler's app.dill contained a nonzero trailer; SHA256 differed. This proves a damaged generated bundle, not a successful device launch despite the earlier Gradle exit0. The specific writer/corruption mechanism is not established; avoid simultaneous build writers.
+
+Added tools/check_android_kernel.py and four regression cases: exact match, zero-padded APK, equally corrupt staged/APK bundles, and build-ID traversal. The tool failed on the actual bad artifact before recovery. Removed only project-generated build/app and .dart_tool/flutter_build, preserving package resolution, SDKs, source, credentials and phone data. The first cleanup used Android-relative paths and missed those project directories; the corrected absolute-path cleanup preceded the final build.
+
+Actual final verification: offline Android assembleDebug passes in41s (235 tasks); all4 new integrity tests pass. Verified packaged/staged kernel equals compiler output:74988392 bytes, SHA256 e4ce82ac0514497c0ae57ce41860d95c2a803f6a6d32a94bab2b8ef42b016398. Application code remains the photo-cache fix3535e4c from the215-test/analyzer/native checks; no dependencies were installed or generated outputs committed. This byte check does not prove phone launch.
+
+Owner must launch the already-verified local APK using the runbook's --use-application-binary command, then repeat Gallery/Camera/cancel checks. Mobile PR8 remains draft pending startup and photo retest. Backend/admin are merged; main and all subsequent tasks remain unchanged/on hold.

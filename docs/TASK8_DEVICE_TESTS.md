@@ -1,3 +1,20 @@
+## Android startup recovery — invalid kernel binary
+
+The previous APK's Dart kernel trailer was damaged. The generated Android/compiler outputs were rebuilt offline; the new APK kernel matches its compiler output byte for byte. Run builds sequentially in this checkout, and use this already-verified APK for the current retest:
+
+```sh
+cd /Users/awaisurrehman/Documents/experimental/Paths/paths-mobile
+python3 tools/check_android_kernel.py
+adb reverse tcp:8080 tcp:8080
+flutter --suppress-analytics --no-version-check run --no-pub -d 13111JEC204217 --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk
+```
+
+The APK embeds PATHS_API_ORIGIN=http://127.0.0.1:8080 for the existing private local backend. Expected: Paths opens and the VM no longer reports invalid kernel size/root-isolate failure. Then run the Gallery/Camera/cancel retest below. If launch fails, return the new E/flutter lines; exclude tokens, private content and environment files. This does not require uninstalling Paths or clearing its data.
+
+Future debug builds should pass tools/check_android_kernel.py before installation. It compares both staged and APK bundles with the compiler's app.dill selected by Flutter's last-build ID; two equally damaged copies cannot validate each other. Do not run a second Flutter/native build in the same checkout during this check.
+
+---
+
 > Photo-cleanup fix3535e4c is on feature/protected-media. Backend/admin PR8 merged; mobile PR8 remains draft pending the focused retest below. Main is unchanged.
 
 ## Focused Android photo-cleanup retest
