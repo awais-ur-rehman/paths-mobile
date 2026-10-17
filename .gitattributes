@@ -1,0 +1,4 @@
+# Preserve third-party license notices byte-for-byte, including their original whitespace.
+docs/licenses/*.txt -whitespace
+assets/fonts/*OFL.txt -whitespace
+public/fonts/*OFL.txt -whitespace
