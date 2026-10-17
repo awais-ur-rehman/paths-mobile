@@ -52,3 +52,19 @@ final class UnavailableVerificationDocuments implements VerificationDocuments {
     CancelToken? cancelToken,
   }) async => throw const AuthFailure('media_unavailable');
 }
+
+final class CallbackVerificationDocuments implements VerificationDocuments {
+  const CallbackVerificationDocuments(this.select);
+  final Future<String?> Function(DocumentSide side) select;
+  @override
+  bool get available => true;
+  @override
+  Future<DocumentAsset?> pickAndUpload(
+    DocumentSide side, {
+    CancelToken? cancelToken,
+  }) async {
+    final id = await select(side);
+    if (cancelToken?.isCancelled == true) throw const AuthFailure('cancelled');
+    return id == null ? null : DocumentAsset(id, processed: true);
+  }
+}

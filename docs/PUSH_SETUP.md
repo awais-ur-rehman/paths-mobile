@@ -1,6 +1,6 @@
 # Push setup and verification
 
-Task7 API contract:1.6.0. No Firebase project or APNs setup was available during implementation. The inbox works without push. Provider sends, delivery latency and physical-device behavior remain pending.
+Task7 introduced API contract1.6.0; current contract1.7.0. Firebase Android configuration was completed on2026-10-18; see [current setup evidence and owner tests](FIREBASE_ANDROID_HANDOFF.md). FCM OAuth and validation-only checks pass. Physical-device delivery/latency and iOS APNs setup/runtime remain pending. The inbox also works without push.
 
 ## Private server configuration
 

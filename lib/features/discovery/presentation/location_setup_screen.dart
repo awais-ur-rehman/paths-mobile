@@ -1,3 +1,5 @@
+import '../../auth/domain/auth_models.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -12,14 +14,17 @@ import '../data/location_sync_service.dart';
 import 'location_cubit.dart';
 
 class LocationSetupScreen extends StatelessWidget {
-  const LocationSetupScreen({required this.sync, super.key});
+  const LocationSetupScreen({required this.sync, this.onContinue, super.key});
+  final Future<void> Function()? onContinue;
   final LocationSyncService sync;
   @override
-  Widget build(BuildContext context) => _LocationOwner(sync: sync);
+  Widget build(BuildContext context) =>
+      _LocationOwner(sync: sync, onContinue: onContinue);
 }
 
 class _LocationOwner extends StatefulWidget {
-  const _LocationOwner({required this.sync});
+  const _LocationOwner({required this.sync, this.onContinue});
+  final Future<void> Function()? onContinue;
   final LocationSyncService sync;
   @override
   State<_LocationOwner> createState() => _LocationOwnerState();
@@ -28,6 +33,28 @@ class _LocationOwner extends StatefulWidget {
 class _LocationOwnerState extends State<_LocationOwner> {
   late final cubit = LocationCubit(widget.sync);
   AppLifecycleListener? lifecycle;
+  bool continuing = false;
+  Future<void> _continue() async {
+    if (continuing) return;
+    if (widget.onContinue == null) {
+      context.go('/profile');
+      return;
+    }
+    setState(() => continuing = true);
+    try {
+      await widget.onContinue!();
+    } catch (error) {
+      if (mounted) {
+        PathsToast.show(
+          context,
+          (error is AuthFailure ? error : const AuthFailure('storage')).message,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => continuing = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -54,7 +81,9 @@ class _LocationOwnerState extends State<_LocationOwner> {
       child: AuthScaffold(
         title: 'Cross paths on your terms',
         subtitle: 'Location sharing is optional. You can pause it whenever you like. Enabling on this phone replaces sharing from another device.',
-        onBack: () => context.go('/profile'),
+        onBack: () => context.go(
+          widget.onContinue == null ? '/profile' : '/setup/profile?edit=1',
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -160,8 +189,14 @@ class _LocationOwnerState extends State<_LocationOwner> {
               child: const Text('Open device settings'),
             ),
             TextButton(
-              onPressed: () => context.go('/profile'),
-              child: const Text('Not now — back to profile'),
+              onPressed: continuing ? null : _continue,
+              child: continuing
+                  ? const PathsLoader(size: 24)
+                  : Text(
+                      widget.onContinue == null
+                          ? 'Not now — back to profile'
+                          : 'Continue',
+                    ),
             ),
           ],
         ),

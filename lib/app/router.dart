@@ -1,3 +1,11 @@
+import '../features/setup/domain/setup_progress.dart';
+import '../features/setup/presentation/setup_resume_cubit.dart';
+import '../features/setup/presentation/setup_resume_screen.dart';
+import '../features/media/data/http_media_repository.dart';
+import '../features/media/domain/media_repository.dart';
+import '../features/media/presentation/photo_screen.dart';
+import '../features/posts/data/post_repository.dart';
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -31,7 +39,19 @@ import '../features/auth/presentation/policy_screen.dart';
 
 class AuthRouterRefresh extends ChangeNotifier {
   AuthRouterRefresh(AuthCubit cubit) {
-    _subscription = cubit.stream.listen((_) {
+    Object routeState(AuthState state) => (
+      state.stage,
+      state.account?.id,
+      state.account?.restricted,
+      state.account?.adultChecked,
+      state.signupPreferred,
+    );
+    var previous = routeState(cubit.state);
+    _subscription = cubit.stream.listen((state) {
+      final next = routeState(state);
+      if (next == previous) return;
+      previous = next;
+      // A routine resume/token refresh must preserve pushed routes and their results.
       notifyListeners();
     });
   }
@@ -49,15 +69,30 @@ GoRouter createAuthRouter(
   ProfileRepository profiles,
   ProfileSummaryRepository summaries,
   VerificationRepository verification, {
+  SetupProgressStore? setupProgress,
+  HttpMediaRepository? media,
+  PhotoPicker? picker,
+  PostRepository? posts,
   LocationSyncService? locations,
   EncounterRepository? encounters,
   RelationshipRepository? relationships,
   NotificationRepository? notifications,
   PushClient? push,
 }) {
+  SetupDestination? setupDestination;
+  String? setupAccount, pendingDestination;
+  bool discardOldDestination = false;
+  final hasSetupGate = media != null && setupProgress != null;
+  String setupPath(SetupDestination destination) => switch (destination) {
+    SetupDestination.profile => '/setup/profile',
+    SetupDestination.verification => '/setup/verification',
+    SetupDestination.permissions => '/setup/permissions?onboarding=1',
+    SetupDestination.home => encounters == null ? '/profile' : '/home',
+  };
   final profileRoute = GoRoute(
     path: '/profile',
-    builder: (context, _) => ProfilePreviewScreen(
+    builder: (context, route) => ProfilePreviewScreen(
+      key: ValueKey(route.uri.toString()),
       repository: summaries,
       userId: cubit.state.account!.id,
       onBack: encounters == null ? null : () => context.go('/home'),
@@ -73,6 +108,52 @@ GoRouter createAuthRouter(
       final state = cubit.state;
       final path = route.uri.path;
       if (path == '/policies/terms' || path == '/policies/privacy') return null;
+      final endedAccount =
+          setupAccount != null && setupAccount != state.account?.id;
+      if (endedAccount) {
+        pendingDestination = null;
+        // Router refresh may revisit the old protected URI after the splash.
+        discardOldDestination = true;
+      } else if (path.startsWith('/auth/') || path == '/onboarding') {
+        discardOldDestination = false;
+      }
+      if (setupAccount != state.account?.id) {
+        setupAccount = state.account?.id;
+        setupDestination = null;
+      }
+      if (hasSetupGate &&
+          !discardOldDestination &&
+          setupDestination != SetupDestination.home &&
+          route.uri.scheme.isEmpty &&
+          route.uri.host.isEmpty &&
+          (['/home', '/likes', '/profile', '/notifications'].contains(path) ||
+              path.startsWith('/profiles/'))) {
+        pendingDestination ??= route.uri.toString();
+      }
+      if (hasSetupGate &&
+          state.stage == AuthStage.authenticated &&
+          state.account?.restricted != true &&
+          state.account?.adultChecked == true) {
+        if (setupDestination == null && path != '/setup/resume') {
+          return '/setup/resume';
+        }
+        if (setupDestination != null &&
+            setupDestination != SetupDestination.home &&
+            ![
+              '/setup/resume',
+              '/setup/profile',
+              '/media/avatar',
+              if (setupDestination == SetupDestination.verification)
+                '/media/cnic_front',
+              if (setupDestination == SetupDestination.verification)
+                '/media/cnic_back',
+              Uri.parse(setupPath(setupDestination!)).path,
+              '/policies/terms',
+              '/policies/privacy',
+            ].contains(path)) {
+          return setupPath(setupDestination!);
+        }
+      }
       final target = switch (state.stage) {
         AuthStage.booting || AuthStage.blocked => '/',
         AuthStage.onboarding => '/onboarding',
@@ -84,8 +165,10 @@ GoRouter createAuthRouter(
               : state.account?.adultChecked == true
               ? ([
                       '/setup/profile',
+                      if (hasSetupGate) '/setup/resume',
                       '/setup/verification',
                       '/profile',
+                      if (media != null && path.startsWith('/media/')) path,
                       if (locations != null) '/setup/permissions',
                       if (encounters != null) '/home',
                       if (relationships != null) '/likes',
@@ -111,6 +194,67 @@ GoRouter createAuthRouter(
       return target == path ? null : target;
     },
     routes: [
+      if (hasSetupGate)
+        GoRoute(
+          path: '/setup/resume',
+          builder: (context, route) => SetupResumeScreen(
+            profiles: profiles,
+            verification: verification,
+            progress: setupProgress,
+            owner: cubit.state.account!.id,
+            currentAccount: () => cubit.state.account?.id,
+            requirePermissionEducation: locations != null,
+            onDestination: (destination) {
+              setupDestination = destination;
+              final next = destination == SetupDestination.home
+                  ? (route.uri.queryParameters['return'] == 'profile'
+                        ? '/profile?revision=${DateTime.now().microsecondsSinceEpoch}'
+                        : pendingDestination ?? setupPath(destination))
+                  : setupPath(destination);
+              if (destination == SetupDestination.home) {
+                pendingDestination = null;
+              }
+              context.go(next);
+            },
+          ),
+        ),
+      if (media != null && picker != null && posts != null)
+        GoRoute(
+          path: '/media/:kind',
+          builder: (context, route) {
+            final kind = switch (route.pathParameters['kind']) {
+              'avatar' => MediaKind.avatar,
+              'cnic_front' => MediaKind.cnicFront,
+              'cnic_back' => MediaKind.cnicBack,
+              _ => MediaKind.post,
+            };
+            return PhotoScreen(
+              media: media,
+              picker: picker,
+              posts: posts,
+              kind: kind,
+              onCancel: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/profile');
+                }
+              },
+              onReady: (id) {
+                if (kind == MediaKind.post) {
+                  PathsToast.show(
+                    context,
+                    'Post sent for review.',
+                    tone: ToastTone.success,
+                  );
+                  context.go('/profile?post=$id');
+                } else {
+                  context.pop(id);
+                }
+              },
+            );
+          },
+        ),
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(
@@ -140,14 +284,33 @@ GoRouter createAuthRouter(
       ),
       GoRoute(
         path: '/setup/verification',
-        builder: (_, _) => VerificationScreen(repository: verification),
+        builder: (context, route) => VerificationScreen(
+          repository: verification,
+          onContinue: !hasSetupGate
+              ? null
+              : () => context.go(
+                  route.uri.queryParameters['return'] == 'profile'
+                      ? '/setup/resume?return=profile'
+                      : '/setup/resume',
+                ),
+          documents: media == null
+              ? const UnavailableVerificationDocuments()
+              : CallbackVerificationDocuments(
+                  (side) => context.push<String>(
+                    '/media/${side == DocumentSide.front ? 'cnic_front' : 'cnic_back'}',
+                  ),
+                ),
+        ),
       ),
       if (encounters == null)
         profileRoute
       else
         StatefulShellRoute.indexedStack(
-          builder: (_, _, shell) =>
-              DiscoveryShell(shell: shell, hasLikes: relationships != null),
+          builder: (context, _, shell) => DiscoveryShell(
+            shell: shell,
+            hasLikes: relationships != null,
+            onCamera: media == null ? null : () => context.push('/media/post'),
+          ),
           branches: [
             StatefulShellBranch(
               routes: [
@@ -260,7 +423,21 @@ GoRouter createAuthRouter(
       if (locations != null)
         GoRoute(
           path: '/setup/permissions',
-          builder: (_, _) => LocationSetupScreen(sync: locations),
+          builder: (context, route) => LocationSetupScreen(
+            sync: locations,
+            onContinue:
+                !hasSetupGate ||
+                    (route.uri.queryParameters['onboarding'] != '1' &&
+                        setupDestination != SetupDestination.permissions)
+                ? null
+                : () async {
+                    final owner = cubit.state.account!.id;
+                    await setupProgress.markPermissionSeen(owner);
+                    if (context.mounted && owner == cubit.state.account?.id) {
+                      context.go('/setup/resume');
+                    }
+                  },
+          ),
         ),
       GoRoute(
         path: '/account/restricted',

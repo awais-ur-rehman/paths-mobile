@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase3 Task7 implemented; awaiting device test and push setup**. API contract: `1.6.0`; experiment contract `phase0.v1`.
+Current phase: **Phase4 Task8 protected media; implemented, awaiting Android device evidence**. API contract: `1.7.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -87,12 +87,12 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 8: Protected media and camera publishing
 
-- [ ] Test wrong owner/type/size, decompression abuse, EXIF removal, private viewer denied and pending asset unpublished. — **not started**
-- [ ] Implement private storage adapters, quarantine processing, variants and CNIC record retention; no public CNIC links. — **not started**
-- [ ] Add safety-review state for user-visible images, neutral pending avatar, pending posts and server text filtering; test unreviewed/rejected content never reaches public responses. — **not started**
-- [ ] Connect profile/CNIC screens from Task4 to real uploads; implement camera/gallery/preview/caption/retry/cancel. — **not started**
-- [ ] Test privacy/block/deletion revokes media access; worker must not publish after deletion barrier. — **not started**
-- [ ] Add orphan/multipart cleanup and object inventory for deletion manifest. — **not started**
+- [ ] Test wrong owner/type/size, decompression abuse, EXIF removal, private viewer denied and pending asset unpublished. — **verified locally — real HTTP/PostgreSQL and Sharp tests; device transport/OS evidence pending**
+- [ ] Implement private storage adapters, quarantine processing, variants and CNIC record retention; no public CNIC links. — **implemented and verified locally — encrypted FS and local S3 protocol fixture; real R2 setup/test deferred by owner**
+- [ ] Add safety-review state for user-visible images, neutral pending avatar, pending posts and server text filtering; test unreviewed/rejected content never reaches public responses. — **implemented and verified locally — pending/rejected denial, neutral avatars, reusable limited pilot text policy; real staff review is Task11**
+- [ ] Connect profile/CNIC screens from Task4 to real uploads; implement camera/gallery/preview/caption/retry/cancel. — **implemented and verified locally — camera/gallery/preview/caption/retry/cancel and real profile/CNIC uploads; awaiting Android device test**
+- [ ] Test privacy/block/deletion revokes media access; worker must not publish after deletion barrier. — **verified locally — canonical authorization, worker deletion races and immediate Disconnect UI revalidation; iOS runtime pending**
+- [ ] Add orphan/multipart cleanup and object inventory for deletion manifest. — **implemented and verified locally — bounded cleanup, source retirement, multipart enumeration and durable inventory for Task12**
 
 ### Task 9: Text chat, reconnect and access revocation
 
@@ -467,3 +467,107 @@ Material decisions (confirmed product rules versus implementation defaults):
 Outstanding prerequisites/known limits: owner explicitly reports no Firebase/APNs setup. Real Android foreground/background/locked-phone delivery, token rotation, OS permission changes and taps must be tested after private setup. iOS needs Apple team capability/provisioning and a signed physical iPhone; unsigned build and Android evidence do not validate it. At-least-once provider delivery can duplicate after a provider acceptance/database failure; Android event binding/dedup and collapse IDs reduce repeats, never promise exactly once. Already accepted APNs generic alerts may arrive after logout; server tap resolution still denies former-account access. OS force-stop/power/network behavior is best effort. See PUSH_SETUP.md and mobile TASK7_DEVICE_TESTS.md. No invented battery/accuracy/push outcome, no deployment or cloud-service creation.
 
 Published Task7 drafts (base development, head feature/relationships-notifications): [backend PR7](https://github.com/awais-ur-rehman/paths-backend/pull/7), [admin PR7](https://github.com/awais-ur-rehman/paths-admin/pull/7), [mobile PR7](https://github.com/awais-ur-rehman/paths-mobile/pull/7). All three branches were pushed. Task7 is not merged; real push/device gate is pending. Main unchanged. Owner next action: mobile docs/TASK7_DEVICE_TESTS.md; private push configuration is separately documented in PUSH_SETUP.md.
+
+## Task7 owner approval and Task8 start — 2026-10-17
+
+Owner tested Task7 on their physical Android phone, approves its functionality and authorizes merging PR7 and continuing Task8. Owner explicitly defers Firebase/APNs setup/live delivery; retain that unexecuted Android/iOS runtime check as a release prerequisite, not a passed result. PR7 merged normally into development in all three repositories after clean exact heads, green hosted backend/admin checks and fresh local74 integration,19unit13Phase0,187Flutter,admin2transport+3browser checks. No main promotion. Merge bases: backend4e6278f, admin afb2125, mobile8e85b0a. Task8 branch feature/protected-media; plan docs/task8-media-plan.md. All six specification checklist items are in progress/not started as detailed in the plan; implementation begins with image/storage security tests. API remains1.6 until the real media export. Owner approved required Task8 Sharp/image_picker and required artifacts; caches first. No Firebase/Apple/cloud service creation or real personal upload.
+
+
+## Task8 implementation and local verification — 2026-10-17
+
+Status: **implemented, locally verified, awaiting owner Android test**. Phase4 remains open; Task9 has not started. API1.7.0, SHA256 `9132509ecbef5e833a30e5c6cbec7106f257eba7a109ca736f1ac60b98e3bf54`. All three repositories use feature/protected-media; main unchanged. Source checkpoints: backend e1a5a86 (storage24bd974, upload/posts8615dd2, recovery/access6399af6, quota f46a3ef), mobile55e0110 (transport/native2ae4c8b, screens14dd691, setup6f278ca, camera cleanup14f664d, session routing55e0110), admin67af1e5. Subsequent commits record this evidence and instructions.
+
+| Task8 requirement | Result / evidence |
+| --- | --- |
+| Wrong owner/type/size, decompression, EXIF and unpublished pending assets | verified locally — real PostgreSQL/HTTP integration and constrained Sharp decode tests; encrypted key-context/MIME binding; wrong-side/foreign CNIC denied |
+| Private FS/R2 adapters, quarantine/variants and CNIC lifetime | implemented and verified locally — encrypted source/variants, separate document namespace, source retirement after commit, retained submitted/replaced documents; S3 protocol test is local, real R2 deferred |
+| Safety state, neutral pending avatars/posts and text filtering | implemented and verified locally — rejected and unreviewed media excluded from peer reads, pending owner previews, approved references only, narrow reusable text rules; staff UI remains Task11 |
+| Profile/CNIC and camera/gallery/preview/caption/retry/cancel | implemented and verified locally — Task4 real uploads connected, one Next at creation, modal Camera, pending grid/detail/delete, bounded retries and guarded binary refresh; owner phone evidence pending |
+| Privacy/block/deletion revocation and worker barrier | verified locally — canonical authorization locks, deletion before/during processing, stale account response guards, immediate Disconnect grid/pixel revalidation |
+| Orphan/multipart cleanup and deletion inventory | implemented and verified locally — committed inventory before writes, root-deletion survival, acknowledged deletes, bounded multipart traversal, native temporary-file cleanup; Task12 owns the independent erasure orchestrator |
+
+Actual checks:
+
+- Backend ESLint and TypeScript build/typecheck pass. `npm test`:29 unit and13 retained Phase0 tests pass. Full isolated PostgreSQL/PostGIS/Valkey integration suite:88 tests pass;14 are media-access cases. A fresh test database prevents the development worker consuming fixtures.
+- Real local Compose build/migration/proxy/API/outbox/worker smoke passes. Synthetic authenticated upload becomes metadata-stripped JPEG variants and an owner-only pending post; synthetic account erasure removes its object inventory. Only private local storage was exercised end to end.
+- Mobile analyzer: no issues. Full `flutter test --no-pub`:212 tests pass. Seven Python contract/native-policy/splash tools tests pass. Six photo-preview cases cover320/390/768 at100%/200% text; actual bundled-font preview golden inspected. Existing profile/auth goldens remain passing.
+- Android Debug assembled offline with installed JDK21 and SDK:235 Gradle tasks. Unsigned generic iphoneos Debug compiled with automatic resolution disabled and the existing project-level resolved package file. These prove compilation, not OS/device behavior. Existing Gradle/AGP deprecation warnings remain.
+- Admin ESLint/typecheck/build,2 transport tests and3 installed-Chrome tests pass. Health/version fixtures now use1.7. Real OpenAPI export and both client generators have no drift; the three raw contract copies match exactly. `git diff --check` passes.
+
+Review scope and fixes:
+
+One fresh read-only whole-branch review reported an active-lease redelivery that could strand an image and stale private posts after Disconnect. Both were reproduced as failing regressions and fixed: active leases remain retryable, and relationship changes clear pixels/revalidate posts and detail. Self-review regressions also cover source recovery after transaction failure, symlink confinement before directory creation, ciphertext context substitution, declared MIME mismatch, rejected-content denial, original-file cleanup after native picking, detached-avatar deadlines without changing upload creation dates, and daily quota cancellation/replay behavior. Inspection does not establish real R2 permissions or native OS cleanup/permission behavior; those require the separate runtime checks below.
+
+Earlier development runs exposed outdated profile/FK/version fixtures, a narrow preview control overflow, a PostgreSQL restart during a test run, sandbox socket restrictions and the first Xcode invocation selecting the wrong resolved-file location. Fixtures/layout/commands were corrected and the final checks above were rerun successfully. No failed or unexecuted attempt is counted as passed. Local backend/admin packages and image binaries were resolved under existing approvals; no SDK, emulator, plugin or new service image was installed.
+
+Pending prerequisites and gate:
+
+- Owner physical Android camera/gallery/permissions, interruption/retry/cancel, process-loss and account-switch evidence: see `docs/TASK8_DEVICE_TESTS.md`, with exact commands/checkpoints and original synthetic cards in docs/testing/media. Await results before Task8 completion/PR merge or Task9.
+- Real R2 bucket/keys are not configured; owner explicitly chose private local storage for now. The live R2 check remains pending. Credentials stay in ignored local environment files.
+- iOS physical runtime/signing, Firebase/APNs setup/live delivery and quantitative Phase0 field results remain separate release evidence. Android acceptance does not verify iOS.
+- Actual image/CNIC staff review, appeals and authorization are Tasks10/11. Real uploads remain pending until that workflow exists; no fake approvals or staff-success routes were introduced.
+
+No real personal images/documents, credentials or raw coordinates were committed or uploaded by these checks. No deployment, purchase or app-store submission occurred. Feature PRs remain draft for the device gate; PR links and final docs heads are recorded in the handoff.
+
+
+Task8 handoff links (all draft, base development):
+
+- Backend: https://github.com/awais-ur-rehman/paths-backend/pull/8
+- Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/8
+- Admin: https://github.com/awais-ur-rehman/paths-admin/pull/8
+
+All three feature branches and their verification records are pushed. Source checkpoints remain those recorded above; subsequent changes are documentation only. Mobile has no hosted workflow; its native/static/test checks were run locally. Android owner acceptance remains pending. No PR8 merge or main promotion occurred.
+
+Hosted verification passed for backend777e4b3 ([run39039682108](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39039682108)) and admin e4ba53f ([run39039680971](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39039680971)). Later commits add PR links/documentation only; their current checks remain visible on the draft PRs. No mobile hosted check is configured.
+
+
+Task8 final mobile checks: source55e0110 includes server-authoritative profile/verification resume, per-account device permission education, and cancellation cleanup for the cached Android picker camera-file naming scheme. All212 Flutter tests pass, analyzer has no issues, all7 Python tool tests pass; Android Debug assembles offline (235 tasks) and unsigned generic iphoneos Debug compiles with package autoresolution disabled. Setup regressions cover completed returning accounts, mandatory incomplete setup, optional verification skip, failed education persistence/retry, and protected destinations during signed-out and delayed secure-session restoration. The focused follow-up review identified loss of a cold-start destination; capture now precedes boot/auth redirects and clears on actual account switch/logout. A second regression reproduced the router revisiting its old protected URI during sign-out;55e0110 suppresses that stale destination until login/onboarding, so a later sign-in starts fresh. The real logout/sign-in widget test passes. Camera cleanup tests retain unrelated files and symlinks. These checks do not establish physical OS behavior.
+
+Hosted checks passed at backend32f4997 ([run39039893496](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39039893496)) and admin2e682bf ([run39039891388](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39039891388)). Later handoff updates are documentation only. Draft PR8/device gate remains pending.
+
+
+## Task8 acceptance, photo-cleanup follow-up and work hold — 2026-10-17
+
+The owner initially accepted Task8 on physical Android and authorized PR8 merges, then reported "photo cleanup not completed" while selecting/uploading a photo. Backend PR8 merged into development at4296874 and admin PR8 at97d7db1 after current CI and local tests passed. Mobile PR8 remains draft and unmerged; the reported failure reopens its Android gate. Main is unchanged. No Task9 work begins; subsequent tasks are on hold at the owner's request.
+
+Root cause verified in cached Flutter/image_picker Android source: Flutter PathUtils configures Directory.systemTemp from Context.getCodeCacheDir(), while image_picker stages gallery/camera files in Context.getCacheDir(). The old canonical-path guard rejected valid files in the sibling image cache. Fix3535e4c obtains the actual canonical cache directory over paths/media and uses it for owned-file confinement, lost selections and camera-cancel cleanup. It preserves outside-cache originals and symlink targets; cleanup failure clears selected bytes. No new package, SDK or service is needed. API remains1.7.0.
+
+Regression evidence: the sibling-cache test reproduced AuthFailure before the fix, and the original-file protection test exposed the too-broad host-temp assumption. Both pass after the fix; five focused native-picker tests pass, including a camera file created during a cancelled picker call. Full Flutter suite215 tests passes; analyzer has no issues. Final native build results and the focused retest are recorded below. The interrupted pre-merge full-suite rerun is not counted as passed; the successful215-test run is the post-fix evidence.
+
+Required retest: fully stop/rebuild the app (native channel changed), select a gallery photo and confirm preview/upload, then test Camera selection and picker cancellation. Mobile PR8 stays unmerged until those phone results arrive. Backend/admin functionality is unchanged by this mobile-only fix. Live R2, iOS runtime, deferred Firebase/APNs and quantitative Phase0 evidence remain separate pending release prerequisites.
+
+Unsigned generic iphoneos Debug build passes with package autoresolution disabled. The first offline Android attempt compiled the change but failed because Gradle could not find output-metadata.json at listing validation; the metadata subsequently exists and the repeated offline assembly passes in15s (235 tasks). This failed attempt is not counted as passed. No application-code or dependency changes were needed for the build recheck.
+
+
+## Task8 Android startup recovery — 2026-10-17
+
+Owner's next launch failed with Invalid kernel binary / Indicated size is invalid and root-isolate creation errors. Inspection found the packaged and staged kernel had the same length as compiler output74982720, but their final64 bytes were zeroed. The compiler's app.dill contained a nonzero trailer; SHA256 differed. This proves a damaged generated bundle, not a successful device launch despite the earlier Gradle exit0. The specific writer/corruption mechanism is not established; avoid simultaneous build writers.
+
+Added tools/check_android_kernel.py and four regression cases: exact match, zero-padded APK, equally corrupt staged/APK bundles, and build-ID traversal. The tool failed on the actual bad artifact before recovery. Removed only project-generated build/app and .dart_tool/flutter_build, preserving package resolution, SDKs, source, credentials and phone data. The first cleanup used Android-relative paths and missed those project directories; the corrected absolute-path cleanup preceded the final build.
+
+Actual final verification: offline Android assembleDebug passes in41s (235 tasks); all4 new integrity tests pass. Verified packaged/staged kernel equals compiler output:74988392 bytes, SHA256 e4ce82ac0514497c0ae57ce41860d95c2a803f6a6d32a94bab2b8ef42b016398. Application code remains the photo-cache fix3535e4c from the215-test/analyzer/native checks; no dependencies were installed or generated outputs committed. This byte check does not prove phone launch.
+
+Owner must launch the already-verified local APK using the runbook's --use-application-binary command, then repeat Gallery/Camera/cancel checks. Mobile PR8 remains draft pending startup and photo retest. Backend/admin are merged; main and all subsequent tasks remain unchanged/on hold.
+
+
+## Task8 profile-photo return after Android resume — 2026-10-17
+
+Owner can now launch and upload, but Use photo returns to a form still labelled Add photo and Next cannot continue. Read-only aggregate diagnostics show ready, pending-review, unattached avatar assets; no user identity or content was read. The server upload is complete, while the form has lost its selected ID.
+
+Reproduction: a real-router/HTTP-repository widget flow succeeds without resume, but a valid Android-style background/resume followed by Use photo loses Change photo before the fix. AuthRouterRefresh previously notified GoRouter on every AuthCubit busy/session-metadata update, disturbing the imperative photo route and its return future. Fix8cfb4e3 refreshes routing only when stage, account ID, restriction, adult-check or signup preference changes. Routine session refresh preserves the pushed route, its returned asset and unsaved form controllers. Authorization-relevant changes still redirect immediately.
+
+Actual verification so far: all218 Flutter tests pass and analyzer has no issues. Eight focused setup-routing cases pass; the new cases verify both ordinary/resume photo return, decoded private image pixels, typed-name preservation, exact saved avatarAssetId, Next reaching Verification, and restriction-on-resume closing the photo screen. The binary-content fixture handles variant query strings and uses an original valid synthetic PNG. Earlier fixture-decoding failures were corrected before the final successful suite; they are not application fixes.
+
+Native checks run sequentially; final Android build/integrity evidence follows below. API remains1.7.0. Mobile PR8 stays draft pending the owner's focused Gallery/Camera/Next test on the new APK. Backend/admin are already merged. Main, live R2/push/iOS-runtime prerequisites and the hold on Task9/later work remain unchanged.
+
+Final native evidence for8cfb4e3: unsigned generic iphoneos Debug compiles with package autoresolution disabled. A sequential fresh Android app output rebuild passes offline in36s (235 tasks). APK/staged kernel exactly matches compiler output:74984256 bytes, SHA256 b721f1c586b3263d5064796d3d4fc646bb710f27e4c98d50d487e25648d6c9de. All4 APK-integrity regression tests pass. The prepared APK embeds the existing local API origin; owner launch uses --use-application-binary to preserve this checked artifact. Physical retest remains pending.
+
+
+## Firebase Android configuration — 2026-10-18
+
+Owner authorized project creation and notification setup on Spark without billing. Created paths-awais and Android com.paths.mobile, enabled FCM, and configured a dedicated sending service account in ignored local files. Cloud Billing reports disabled/no account linked. Backend build,4 push unit tests, real OAuth and FCM validation-only checks pass. Worker is healthy with a read-only secret mount; APNs remains unconfigured. Offline Android235-task build and exact APK kernel/options checks pass. Runtime delivery/permission/tap/account-switch tests await the owner; no live delivery is claimed. R2 credentials pass read-only bucket access, with no storage switch or migration. No app source changed; main and later-task hold remain unchanged. See [Firebase Android handoff](FIREBASE_ANDROID_HANDOFF.md) for evidence, setup and numbered owner tests.
+
+
+## Owner image acceptance and Task9 authorization — 2026-10-18
+
+Owner confirms images work on their physical Android phone and authorizes pending PR merges and Task9. Fresh218 Flutter tests pass. This acceptance covers image functionality; physical FCM/APNs delivery, iOS runtime and quantitative field checks remain separate evidence. Main stays unchanged. Task9 starts after development integration, with owner approval for required Socket.IO dependencies.

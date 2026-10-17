@@ -1,3 +1,5 @@
+import '../../media/presentation/media_scope.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -59,9 +61,16 @@ class _ControlsState extends State<RelationshipControls> {
     BuildContext context,
   ) => BlocConsumer<RelationshipCubit, RelationshipState>(
     bloc: cubit,
-    listenWhen: (a, b) => b.error != null && a.error != b.error,
-    listener: (context, state) =>
-        PathsToast.show(context, state.error!.message),
+    listenWhen: (a, b) =>
+        (b.error != null && a.error != b.error) ||
+        (a.busy && a.value != null && !b.busy && b.error == null),
+    listener: (context, state) {
+      if (state.error case final error?) {
+        PathsToast.show(context, error.message);
+      } else {
+        unawaited(MediaScope.maybeOf(context)?.media.purge());
+      }
+    },
     builder: (context, state) {
       final value = state.value;
       if (value == null) {

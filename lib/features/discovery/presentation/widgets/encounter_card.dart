@@ -35,7 +35,7 @@ class EncounterCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const PathsAvatar(size: 60),
+              PathsAvatar(size: 60, assetId: encounter.avatarAssetId),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

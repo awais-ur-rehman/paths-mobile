@@ -68,3 +68,21 @@ Owner-supplied portrait profile screenshot guides cover proportions, centered id
 ## Task7 relationship and notification screens
 
 No new remote visual assets. Saved/Incoming/Sent, inbox, notification settings and peer actions reuse the bundled Inter font, Material outlined icons, Paths avatar, loader and toast. Editable sources are lib/features/relationships/presentation and lib/features/notifications/presentation. Android notification small icon reuses the existing monochrome res/drawable/paths_symbol.xml; it is not a stretched launcher bitmap. Existing Paths/Flutter/Material licensing and attribution remain applicable. Responsive Likes render was inspected locally at390px/200% using synthetic test-only identities; no fixture image/person ships in production.
+
+
+## Task8 media
+
+No new production stock photos, fonts or icon packages. Camera/gallery/post controls use the existing Material icon family supplied by Flutter (SDK notices retained by Flutter's license registry). The original Paths symbol, white surfaces and existing font bundles remain in use. Private images use authenticated in-memory pixels; no hotlinks or fake users.
+
+`test/features/media/goldens/photo-preview.png` is an original widget-test render with bundled Inter and Material icons; test-only single-pixel PNG input is isolated in `photo_screen_test.dart`. Editable source is the widget/test code. `docs/licenses/` retains image_picker1.2.4 and crypto3.0.7 BSD notices; Flutter's generated application notices include plugin/transitive package licenses. Synthetic manual-test cards and their SVG sources live in paths-backend/docs/testing/media; these are development fixtures, never seeded as member content.
+
+
+## Task8 synthetic media fixtures
+
+| Asset | Purpose | Source / method | License / attribution | Outputs |
+| --- | --- | --- | --- | --- |
+| Profile, front and back test cards | Owner gallery/camera/upload testing, isolated from production seeds | Original Paths crossing symbol and text; editable SVG, PNG exported by existing Sharp via paths-backend/scripts/create-media-fixtures.ts | Original project artwork; no third-party image attribution | docs/testing/media/{profile,cnic-front,cnic-back}.{svg,png} |
+
+Cards contain no people, identity numbers, real accounts or testimonials. SVG is editable source; upload the generated PNG. Exports are600×800, inspected locally, below10MB, and generated without downloading fonts/assets or a new dependency. Production app branding/fonts remain the existing locally bundled assets.
+
+Profile handoff regression image: original1×1 RGBA PNG generated with Python standard-library PNG chunks/zlib and encoded inline in test/features/setup/setup_routing_test.dart (ProfilePickerFixture). Test-only decoder/route fixture, project-owned, no attribution or external asset dependency; no production asset/export or personal image is involved.

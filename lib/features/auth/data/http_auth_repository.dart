@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import '../../../core/network/authenticated_media_api.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
@@ -23,7 +25,8 @@ final class HttpAuthRepository
         VerificationRepository,
         LocationRepository,
         EncounterRepository,
-        AuthenticatedApi {
+        AuthenticatedApi,
+        AuthenticatedMediaApi {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -32,6 +35,7 @@ final class HttpAuthRepository
     Dio? authenticatedTransport,
     this._purgeTracking,
     this._purgeNotifications,
+    this.purgeMedia,
   }) : _public = publicTransport ?? Dio(),
        _private = authenticatedTransport ?? Dio() {
     final uri = Uri.tryParse(origin);
@@ -59,6 +63,7 @@ final class HttpAuthRepository
       SessionRefreshInterceptor(_private, _coordinator),
     );
   }
+  final Future<void> Function()? purgeMedia;
   final Future<void> Function()? _purgeTracking;
   final Future<void> Function()? _purgeNotifications;
   final TokenVault _vault;
@@ -215,6 +220,108 @@ final class HttpAuthRepository
     }
   }
 
+  void _mediaId(String id) {
+    if (!RegExp(
+      r'^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$',
+    ).hasMatch(id)) {
+      throw const AuthFailure('configuration');
+    }
+  }
+
+  Future<Response<T>> _binary<T>(
+    String id, {
+    Uint8List? bytes,
+    bool thumbnail = true,
+    CancelToken? cancelToken,
+    ProgressCallback? onProgress,
+  }) async {
+    _mediaId(id);
+    if (bytes != null && (bytes.isEmpty || bytes.length > 10 * 1024 * 1024)) {
+      throw const AuthFailure('image_size');
+    }
+    final generation = _generation, account = accountId;
+    if (account == null) throw const AuthFailure('SESSION_INVALID');
+    try {
+      final response = await _private.request<T>(
+        '/v1/media/$id/${bytes == null ? 'content?variant=${thumbnail ? 'thumbnail' : 'display'}' : 'source'}',
+        data: bytes,
+        cancelToken: cancelToken,
+        onSendProgress: onProgress,
+        options: Options(
+          method: bytes == null ? 'GET' : 'PUT',
+          responseType: bytes == null ? ResponseType.bytes : ResponseType.json,
+          contentType: bytes == null ? null : 'application/octet-stream',
+          sendTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 20),
+          headers: {'X-Device-Id': await _deviceId()},
+          receiveDataWhenStatusError: false,
+        ),
+        onReceiveProgress: (received, total) {
+          if (received > 10 * 1024 * 1024) cancelToken?.cancel();
+        },
+      );
+      if (generation != _generation || account != accountId) {
+        throw const AuthFailure('cancelled');
+      }
+      return response;
+    } on DioException catch (error) {
+      if (error.error is RefreshFailure) {
+        throw AuthFailure((error.error! as RefreshFailure).kind.name);
+      }
+      if (error.type == DioExceptionType.cancel) {
+        throw const AuthFailure('cancelled');
+      }
+      if ([
+        DioExceptionType.connectionTimeout,
+        DioExceptionType.receiveTimeout,
+        DioExceptionType.sendTimeout,
+      ].contains(error.type)) {
+        throw const AuthFailure('timeout');
+      }
+      throw AuthFailure(
+        error.response == null
+            ? 'offline'
+            : error.response!.statusCode == 404
+            ? 'media_unavailable'
+            : 'unavailable',
+      );
+    }
+  }
+
+  @override
+  Future<void> uploadImage(
+    String assetId,
+    Uint8List bytes, {
+    CancelToken? cancelToken,
+    ProgressCallback? onProgress,
+  }) async {
+    await _binary<Object?>(
+      assetId,
+      bytes: bytes,
+      cancelToken: cancelToken,
+      onProgress: onProgress,
+    );
+  }
+
+  @override
+  Future<Uint8List> imageBytes(
+    String assetId, {
+    bool thumbnail = true,
+    CancelToken? cancelToken,
+  }) async {
+    final token = cancelToken ?? CancelToken();
+    final response = await _binary<List<int>>(
+      assetId,
+      thumbnail: thumbnail,
+      cancelToken: token,
+    );
+    final bytes = response.data;
+    if (bytes == null || bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
+      throw const AuthFailure('invalid_response');
+    }
+    return Uint8List.fromList(bytes);
+  }
+
   AuthAccount _account(AccountDto dto) => AuthAccount(
     id: dto.userId,
     email: dto.email,
@@ -281,7 +388,11 @@ final class HttpAuthRepository
   }
 
   Future<void> _purge({bool notifications = true}) async {
-    await Future.wait([if (notifications) _clearPush(), _clearTracking()]);
+    await Future.wait([
+      if (notifications) _clearPush(),
+      _clearTracking(),
+      if (purgeMedia != null) purgeMedia!(),
+    ]);
   }
 
   Future<void> _clearTracking() async {
@@ -465,6 +576,8 @@ final class HttpAuthRepository
     gender: dto.gender,
     bio: dto.bio,
     visibility: dto.visibility,
+    avatarAssetId: dto.avatarAssetId,
+    profileComplete: dto.profileComplete,
   );
   @override
   Future<ProfileDetails> loadProfile({CancelToken? cancelToken}) async =>
@@ -495,6 +608,7 @@ final class HttpAuthRepository
           gender: profile.gender,
           bio: profile.bio,
           visibility: profile.visibility,
+          avatarAssetId: profile.avatarAssetId,
         ).toJson(),
       ),
     ),
@@ -522,6 +636,8 @@ final class HttpAuthRepository
       bio: dto.bio,
       visibility: dto.visibility,
       verificationStatus: dto.verificationStatus,
+      avatarAssetId: dto.avatarAssetId,
+      photoState: dto.photoState,
     );
   }
 
@@ -560,6 +676,7 @@ final class HttpAuthRepository
             .map(
               (item) => Encounter(
                 encounterId: item.encounterId,
+                avatarAssetId: item.avatarAssetId,
                 isSaved: item.isSaved,
                 requestState: item.requestState,
                 userId: item.userId,

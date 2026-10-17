@@ -14,18 +14,28 @@ import 'verification_cubit.dart';
 class VerificationScreen extends StatelessWidget {
   const VerificationScreen({
     required this.repository,
+    this.onContinue,
     this.documents = const UnavailableVerificationDocuments(),
     super.key,
   });
   final VerificationRepository repository;
+  final VoidCallback? onContinue;
   final VerificationDocuments documents;
   @override
-  Widget build(BuildContext context) =>
-      _VerificationOwner(repository: repository, documents: documents);
+  Widget build(BuildContext context) => _VerificationOwner(
+    repository: repository,
+    documents: documents,
+    onContinue: onContinue,
+  );
 }
 
 class _VerificationOwner extends StatefulWidget {
-  const _VerificationOwner({required this.repository, required this.documents});
+  const _VerificationOwner({
+    required this.repository,
+    required this.documents,
+    this.onContinue,
+  });
+  final VoidCallback? onContinue;
   final VerificationRepository repository;
   final VerificationDocuments documents;
   @override
@@ -58,13 +68,18 @@ class _VerificationOwnerState extends State<_VerificationOwner> {
         if (state.error case final error?) {
           PathsToast.show(context, error.message);
         } else if (state.skipRevision > 0) {
-          context.go('/profile');
+          if (widget.onContinue != null) {
+            widget.onContinue!();
+          } else {
+            context.go('/profile');
+          }
         } else if (state.submitRevision > 0) {
           PathsToast.show(
             context,
             'Your document is pending review.',
             tone: ToastTone.success,
           );
+          widget.onContinue?.call();
         }
       },
       child: AuthScaffold(
@@ -215,8 +230,7 @@ class _DocumentTile extends StatelessWidget {
           !s.loading &&
               !s.busy &&
               s.info?.uploadsAvailable == true &&
-              s.info?.status != 'pending' &&
-              s.info?.status != 'approved',
+              s.info?.status != 'pending',
         ),
         builder: (context, value) {
           final asset = value.$1;
