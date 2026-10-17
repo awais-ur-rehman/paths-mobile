@@ -14,10 +14,10 @@ The owner authorized Android test dependencies and Phase1 project packages/Docke
 
 See [implementation status](docs/IMPLEMENTATION_STATUS.md) for every phase checkbox, executed checks, exact blockers and commit references. The private harness runbook is [DEVICE_TESTS.md](docs/DEVICE_TESTS.md). Use `--no-pub` for local Flutter checks; installed dependencies are already locked.
 
-Task3 email authentication is implemented on a feature branch and awaits owner Android testing. The default Flutter entry is auth; use `-t lib/main_phase0.dart` for the isolated experiment. See [auth device tests](docs/AUTH_DEVICE_TESTS.md).
+Task3 email authentication is accepted and integrated into development. The default Flutter entry is auth; use `-t lib/main_phase0.dart` for the isolated experiment. See [auth device tests](docs/AUTH_DEVICE_TESTS.md).
 
 Device-feedback fixes and the requested profile-details entry are tracked in [focused Android retest](docs/DEVICE_UI_RETEST.md). Full profile photo/verification completion remains separate plan work.
 
 Profile/privacy and optional review retest: [docs/TASK4_DEVICE_TESTS.md](docs/TASK4_DEVICE_TESTS.md). Real photo/CNIC uploads remain Task8; this build never reports a complete profile from details alone.
 
-Task5 ingestion uses API1.4.0. See docs/IMPLEMENTATION_STATUS.md for verification and pending device checks; matching/Home remain Task6.
+Task5 ingestion is accepted and merged into development. Task6 matching and concise Home use API1.5.0 on feature/encounter-discovery. See [Task6 device tests](docs/TASK6_DEVICE_TESTS.md) and implementation status for evidence and remaining runtime gates. Main remains unchanged.

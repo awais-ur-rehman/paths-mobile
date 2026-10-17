@@ -49,3 +49,11 @@ Task4 adds no external assets or downloads. PathsAvatar uses the already bundled
 ## Task5 permission fixture
 
 No new production visual asset or font. Location education reuses the original Paths vector symbol, loader/toast, bundled Inter and existing Material outline family under their recorded licenses. `test/features/discovery/goldens/location-permissions.png` is a locally rendered Flutter test fixture, not a production image or fabricated member. Editable source: `lib/features/discovery/presentation/location_setup_screen.dart`; inspected at390px, responsive fixtures cover320/390/768 and200% text.
+
+
+## Task6 Home and maps
+
+- Home test render: test/features/discovery/goldens/home-encounters.png, generated locally from editable Flutter Home/card/filter components. Clearly synthetic fixture profiles; no production fake users or stock portraits. Existing Paths vectors, neutral avatars, Material line icons, Inter, loader and toast reused.
+- MapLibre GL0.27.1 and platform/web0.27.1 resolved from existing cache; their original license texts are retained in docs/licenses/maplibre_gl*.txt. New transitive archive4.5.1/image4.12.0/posix6.5.2 licenses retained alongside them. These are SDK dependencies, not new production visual assets.
+- Editable map style URL: PATHS_MAP_STYLE_URL, example config/development.example.json. Example uses the provider-hosted OpenFreeMap Liberty style, documented for MapLibre Native at https://openfreemap.org/quick_start/ . The provider explicitly permits commercial use and requires attribution: https://openfreemap.org/ . MapLibre attribution remains enabled; retain OpenMapTiles/OpenStreetMap attribution in replacement styles. No tile database, remote app font, image or style snapshot was downloaded/bundled by the implementer. Runtime map labels/tiles are provider data; app typography remains locally bundled. No offline map-area downloader is implemented.
+- Native map receives only server-quantized encounter area centers; its precise user-location layer is disabled. Provider requests can reveal the viewed coarse region and client network information; no account token, peer identity, exact fixes or private documents are given to the map provider. Release provider/privacy/operational choices remain Task15. Actual style/attribution rendering requires owner device evidence.

@@ -59,3 +59,10 @@ Native artifact/transitive license review and final compatibility pinning remain
 ## Task3 additions and native build evidence
 
 Real pub resolution pinned flutter_secure_storage11.2.0, shared_preferences2.5.6 and url_launcher6.3.3 with their platform implementations; pubspec.lock records exact versions/checksums. Flutter's generated license collection includes package licenses; custom bundled font notices are registered separately. These packages were fetched under owner authorization for Phase1 dependencies, not by upgrading Flutter or Dart. Android debug and unsigned iOS native builds now pass with installed tooling. Native distribution/legal review and signed physical iOS validation remain separate release work; historical missing-cache statements above are not current build blockers.
+
+
+## Task6 cached map integration
+
+MapLibre GL0.27.1/platform0.27.1/web0.27.1 plus archive4.5.1/image4.12.0/posix6.5.2 were resolved with pub get --offline from local cache. Exact checksums are in the real generated pubspec.lock; original license notices are in docs/licenses. Android debug assembles offline with installed JDK21 at /opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home; Java17 fails the plugin's Java21 source target. No JDK/SDK upgrade or package fetch was performed for this integration.
+
+iOS now requires missing MapLibre Native6.28.0 Swift package resolution. The unsigned generic device build fails with automatic resolution disabled; download approval is pending. Earlier successful iOS builds predate this dependency and do not verify Task6. Native runtime/attribution and distribution review remain separate owner/release checks. Runtime style requests are configurable; see ASSETS.md.

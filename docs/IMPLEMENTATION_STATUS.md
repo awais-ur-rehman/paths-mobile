@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase2 Task6 encounter matching and Home; in progress**. API contract: `1.4.0`; experiment contract `phase0.v1`.
+Current phase: **Phase2 Task6 encounter matching and Home; awaiting device evidence**. API contract: `1.5.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -58,17 +58,17 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 - [x] Test max50 batch, invalid coordinate, future>30sec, stale>15min, duplicate ID, old device lease and paused/deleting account rejection. — **verified — real PostGIS location-ingest cases and policy boundary tests**
 - [x] Implement transactionally stored sample/outbox records and 24h retention worker. — **verified — migration0005, atomic rollback/dedup, bounded sample/orphan intent retention and deletion cases pass**
-- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **implemented; awaiting device test — native uploader and disclosure integrated; offline Android/unsigned iOS compilation and Flutter control tests pass; OS behavior pending**
-- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **verified in automated models/API; awaiting device test — stale generation, account switch, late stop, queued purge/retry regressions pass; native runtime requires owner evidence**
+- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **owner functional acceptance; integrated in development — native uploader/disclosure and local checks pass; unreported detailed OS/iOS evidence remains separate**
+- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **verified in automated models/API and owner functional acceptance recorded — stale generation/account switch/purge/retry regressions pass; detailed native runtime observations remain separate**
 
 ### Task 6: Encounter matcher and privacy-safe Home
 
-- [ ] Write boundary tests for <=50m/<=60sec and accuracy rules; two evidence pairs 20–120sec apart; reject invented stationary dwell. — **not started**
-- [ ] Test concurrent inverse ingestion creates one session and two notification intents; retry does not inflate encounter count. — **not started**
-- [ ] Test spatial neighbors across arbitrary grid edges, adjacent venue false positives and delayed historical batches without live push. — **not started**
-- [ ] Implement PostGIS query, pair lock/session dedup and coarse-area/time serialization; exclude blocked/paused/deleting users. — **not started**
-- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **not started**
-- [ ] Verify API responses and network captures contain no peer coordinates, exact distances or exact timestamps. — **not started**
+- [x] Write boundary tests for <=50m/<=60sec and accuracy rules; two evidence pairs 20–120sec apart; reject invented stationary dwell. — **verified locally — 15 unit tests and 13 Phase0 regressions; conservative inclusive limits and independent advancing observations**
+- [x] Test concurrent inverse ingestion creates one session and two notification intents; retry does not inflate encounter count. — **verified locally — real PostGIS concurrency, retry, ordered late jobs, notification rollback/replay and session-gap cases**
+- [x] Test spatial neighbors across arbitrary grid edges, adjacent venue false positives and delayed historical batches without live push. — **verified locally — cross-cell exact spatial query, uncertainty rejection and historical-no-live-intent regressions; field accuracy remains separate**
+- [x] Implement PostGIS query, pair lock/session dedup and coarse-area/time serialization; exclude blocked/paused/deleting users. — **verified locally — migration0006, ordered user/pair locks, durable proof and per-session intents, authorized API1.5.0 and retention/erasure tests**
+- [ ] Build map/list Home with Recent/Nearby, radius filters and permission/offline/map-failure states. — **implemented and locally verified; awaiting device test — 153 Flutter tests, inspected Home golden and offline Android build; native map/attribution/physical behavior pending; iOS compile blocked**
+- [ ] Verify API responses and network captures contain no peer coordinates, exact distances or exact timestamps. — **API serialization verified locally — live HTTP and DTO allowlist tests expose only coarse areas/date buckets; owner runtime network inspection pending**
 
 ## Phase 3 — saves, requests and push
 
@@ -377,3 +377,22 @@ Task5 draft PRs into development: [backend#5](https://github.com/awais-ur-rehman
 Owner reports functionality working and asks to continue; Task5 PR5 merged into development (backend535dd86, admin086a234, mobile76e68e5). Main unchanged. Pre-merge rerun: backend9 unit/13 experiment/38 integration, mobile133 Flutter and admin2 tests pass; backend/admin CI green. Specific native OS case outcomes and iOS/quantitative evidence are not invented. User requests less UI copy/fewer competing actions going forward and defers full redesign.
 
 Current branch feature/encounter-discovery. Plan: docs/task6-encounter-plan.md. All six Task6 checklist items in progress, with policy/migration tests first. New API target1.5.0; current exported contract remains1.4.0 until implemented. See the plan for controls, exact thresholds, dependencies and review focus.
+
+## Task6 evidence and handoff — 2026-10-17
+
+Status: **implemented, locally verified, awaiting physical Android evidence; iOS native build blocked**. Task6 is not complete and Task7 is gated. API contract is1.5.0. Task5 PR5 was merged into development after owner functional acceptance; this does not supply unreported Phase0 battery/accuracy or iOS results. Main remains the documentation baseline.
+
+Changes: exact PostGIS neighbor search and conservative two-pair corroboration; canonical locks, retry-safe proof/session/notification intents and bounded retention; authorized coarse Recent/Nearby cards and peer summaries; concise Home, contextual filters, map/list fallback and persistent Home/Profile navigation. No push is sent until Task7 and no fake photo/profile completion is claimed before Task8. Existing permission-screen redesign is deferred to the owner's later screen-by-screen pass.
+
+Actual checks after source fixes:
+- Backend: lint/typecheck/build pass;15 unit,13 Phase0 and52 isolated PostgreSQL/PostGIS integration tests pass, including13 encounter cases. Migrations retain bounded DDL timeouts separately from application requests.
+- Real existing Compose stack: build/health/migration0006 pass with --pull never. auth:verify passes API/worker/Mailpit/signup/profile/location/pause/reset. encounters:verify passes real API/worker synthetic matching, deduplication, coarse listing/peer access and pause hiding. No Gmail, R2 or real user data is used.
+- Mobile: analyzer clean;153 Flutter tests and7 Python generator tests pass. Home golden inspected and responsive320/390/768 widths at100%/200% text pass. Android debug APK assembled offline using installed JDK21; compilation does not establish native map rendering or encounter accuracy.
+- Admin: generation/lint/typecheck/build pass;2 transport tests and3 Chromium tests pass. No new admin workflow in this task.
+- Contract: actual Nest export is byte-identical across all repositories; regenerated Dart and admin types have no drift. git diff --check passes.
+
+One fresh read-only whole-branch review identified peer replacement retaining the previous cubit, append pagination moving the map center, and retention erasing active-session intent deduplication. Each was reproduced by a failing regression and fixed; relevant full suites reran green. Author checks also fixed implausible device movement, private pending/declined badge leakage, Recent following a new own location, Swagger's inferred Object schema and migration DDL budgets. Inspection cannot prove OS scheduling, native SDK rendering, real encounter precision/recall, battery or signed iOS behavior.
+
+Blocker: unsigned iOS compile fails because MapLibre Native6.28.0 package resolution is absent. Required source: https://github.com/maplibre/maplibre-gl-native-distribution.git at6.28.0. Automatic resolution stayed disabled; download approval was requested and is pending. Do not claim the pre-Task6 iOS build validates this dependency. Signed physical iOS/HTTPS testing remains separate even after resolution.
+
+Physical test instructions: paths-mobile/docs/TASK6_DEVICE_TESTS.md. Test feature/encounter-discovery; source commits backend80dfda7, mobile198de63, admin17bf501. Later commits only record evidence/handoff. PR links and final branch heads are recorded below after push. Source and generated configuration contain no credentials; preserve ignored local env and existing Docker volumes.

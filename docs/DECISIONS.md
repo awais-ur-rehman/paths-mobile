@@ -75,3 +75,13 @@ Foreground permission is requested first; background is a separate choice with b
 ## Owner feedback and Task6 start
 
 Owner reports Task5 functionality working smoothly and authorizes continuing according to the plan; UI is too text-heavy. Record this as functional acceptance of the slice, not fabricated case-by-case background/iOS/quantitative evidence. Task5 PR5 is merged into development; main unchanged. New screens use concise copy, one primary action and contextual secondary controls. Full screen-by-screen redesign is deferred at the owner's request. Installed frontend-design guides composition; existing Paths branding/fonts take precedence over generic skill defaults. No new skill/plugin installation is needed.
+
+
+Task6 map setup: existing MapLibre GL0.27.1 packages and transitive dependencies resolved with pub get --offline, with source licenses retained. Android requires the already installed Homebrew JDK21 (the system Java registry lists17 only). No JDK was downloaded. Map style remains configurable via PATHS_MAP_STYLE_URL; config/development.example.json supplies the official OpenFreeMap Liberty style for owner testing, without an account/key or a paid resource. Blank/unreachable style retains the authorized list. See ASSETS.md for provider source/attribution and runtime data boundaries. iOS needs missing MapLibre Native6.28.0 package resolution; permission was requested and automatic fetching remains disabled while pending.
+
+
+## Task6 encounter contract and gates
+
+Conservative standard matching follows documented50m/60s/25m/70m and two independent advancing20–120s observation pairs; proposed defensive travel bound100m/s also rejects implausible paired movement. Live evidence age120s, admission15min, evidence10min, session gap30min and history30days. Approximately500m fixed display areas are serialization only; exact PostGIS candidates cross those boundaries. Actor/filter-bound opaque cursors contain no timestamps. Recent uses historical areas; Nearby24h uses a fresh own server coarse center with0.5/1/3/5km presets. Peer summaries require current eligibility and expose approved verification only.
+
+Notification intents are durable per-session records retained with active sessions; Task7 owns delivery/cooldowns. Full photos/profile completion remain Task8. Home shows only working Home/Profile destinations. Mobile reuses original branding, neutral avatars and concise states; full existing-screen redesign is deferred per owner. Auth private errors/logging and exact coordinates remain protected. API1.5.0 is copied/generated in all three repos. Main is not promoted.
