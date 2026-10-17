@@ -40,3 +40,11 @@ The refresh component owns volatile coordination only. Auth-repository integrati
 - Restricted accounts can view their own status, sign out, and contact support about deletion. Automated account erasure remains Task12; support mail handoff does not claim a completed deletion.
 - Owner supplied temporary Gmail/support address; configure SUPPORT_EMAIL/SMTP_USER/SMTP_FROM server-side only. TERMS_URL and PRIVACY_URL are editable HTTPS environment values. Blank values display development testing notices pending published policies; they are not final legal documents.
 - Actual Gmail delivery requires an app password supplied privately. Mailpit verifies local SMTP/outbox behavior. R2 integration remains Task8; no storage credentials belong in clients.
+
+## Owner device feedback overrides (2026-10-17)
+
+- New user instructions override earlier onboarding footer/signup defaults: one full-bleed photo-led page, centered copy and single Get started CTA, white lower/auth backgrounds, animated arrow before login. Policies/credits stay on reachable auth policy routes.
+- Native Android12 splash uses a separately scaled vector inside its circular safe area; launcher foreground art is retained. Older Android/iOS and Flutter splash sizes are bounded explicitly. Physical masking remains an owner retest.
+- Branded loader is drawn from original Paths Bezier vectors with a disposed Flutter ticker and reduced-motion still state; editable SVG source retained. Toasts enter at top right, replace prior notices, allow swipe-right/manual dismissal and remain persistent for accessible navigation.
+- User explicitly requested an actual profile form after age confirmation. Add only the needed private details slice now, preserving pending Task3 retest and not completing all Task4/Task8 work. Routine username default:3–24 lowercase ASCII letters/digits/underscore; server canonicalizes trim/case and the database arbitrates unique claims. Bio limit300 and gender choices follow confirmed scope.
+- Saving profile details is idempotent and does not grant profile completion, image moderation or verification entitlements. DOB remains separate/private. No extra package, tool, SDK, emulator or phone operation is required.

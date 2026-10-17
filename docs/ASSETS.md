@@ -35,3 +35,11 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
 
 Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained tools/render_logo.swift. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
+
+## Device-feedback loader and splash
+
+- assets/brand/paths-loader.svg: original Paths Bezier artwork with moving travellers; project-owned source, no third-party attribution. Runtime equivalent: lib/shared/widgets/paths_loader.dart (Flutter vector painter, no SVG/animation dependency). Curve/stroke/color source retained for editing. Reduced motion uses a static vector state.
+- android/app/src/main/res/drawable/paths_splash.xml: original symbol scaled about its center to fit Android12's circular safe area. Native background is white; older Android uses96dp bounds. iOS launch storyboard uses96pt bounds and aspect fit; Flutter bootstrap uses72px bounds/contain. No stretched source or replacement reference-app logo.
+- Existing licensed onboarding photo/font sources are unchanged. Onboarding uses a full-bleed top crop; photo/font notices moved to reachable policy credits rather than adding footer copy. Updated phone goldens: test/features/auth/goldens/{auth-onboarding,auth-login,age-check,profile-details}.png. Native masking still requires device retest.
+
+In-app Paths wordmark/symbol now render synchronously from the original SVG geometry via lib/shared/widgets/paths_brand.dart; loader uses the same curve builder. Existing SVG/raster exports remain editable handoff assets. This preserves aspect ratios and avoids raster decoder timing when changing routes; no new asset package is installed.
