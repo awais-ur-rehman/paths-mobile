@@ -55,10 +55,10 @@ void main() {
             uploadsAvailable: false,
           );
         await mount(tester, repo, width: width, scale: scale);
-        await tester.ensureVisible(find.text('Skip for now'));
+        await tester.ensureVisible(find.text('Skip'));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        expect(find.text('Skip for now'), findsOneWidget);
+        expect(find.text('Skip'), findsOneWidget);
         expect(
           tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
           isNull,
@@ -68,6 +68,57 @@ void main() {
       });
     }
   }
+  testWidgets(
+    'server availability cannot enable a missing local document adapter',
+    (tester) async {
+      final repo = FixtureVerification();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          home: VerificationScreen(repository: repo),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final tile = find
+          .ancestor(of: find.text('CNIC front'), matching: find.byType(InkWell))
+          .first;
+      expect(tester.widget<InkWell>(tile).onTap, isNull);
+      expect(find.byType(CheckboxListTile), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    },
+  );
+  testWidgets(
+    'pull refresh updates pending review without adding another button',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repo = FixtureVerification()
+        ..info = const VerificationInfo(
+          status: 'pending',
+          offerSeen: true,
+          uploadsAvailable: false,
+        );
+      await mount(tester, repo);
+      expect(find.text('Review pending'), findsOneWidget);
+      expect(find.byType(RefreshIndicator), findsOneWidget);
+      repo.info = const VerificationInfo(
+        status: 'approved',
+        offerSeen: true,
+        uploadsAvailable: false,
+      );
+      await tester.drag(
+        find.byType(SingleChildScrollView),
+        const Offset(0, 350),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Document reviewed'), findsOneWidget);
+      expect(find.text('Refresh status'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+    },
+  );
+
   testWidgets(
     'pending processing cannot submit; declined note and retry remain visible',
     (tester) async {
@@ -82,10 +133,10 @@ void main() {
         );
       await mount(tester, repo);
       expect(find.text('Review note: Front is unreadable'), findsOneWidget);
-      await tester.ensureVisible(find.text('Choose document').first);
-      await tester.tap(find.text('Choose document').first);
+      await tester.ensureVisible(find.text('CNIC front'));
+      await tester.tap(find.text('CNIC front'));
       await tester.pumpAndSettle();
-      expect(find.text('Processing — not ready to submit'), findsOneWidget);
+      expect(find.text('Processing'), findsOneWidget);
       final badgeBefore = tester.widget<VerificationBadge>(
         find.byType(VerificationBadge),
       );

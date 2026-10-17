@@ -68,16 +68,13 @@ class _VerificationOwnerState extends State<_VerificationOwner> {
         }
       },
       child: AuthScaffold(
-        title: 'A little more reassurance',
-        subtitle: 'Document review is optional. Skip now and return whenever you like.',
+        title: 'Verification',
+        onRefresh: cubit.refresh,
+        subtitle: 'Upload your CNIC to get verified.',
         onBack: () => context.go('/setup/profile'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Paths can manually review your CNIC. It is not a government check or a safety guarantee. Skipping, waiting for a review or a declined review never removes your normal account access.',
-            ),
-            const SizedBox(height: 20),
             BlocSelector<VerificationCubit, VerificationState, String?>(
               selector: (s) => s.info?.status,
               builder: (_, status) =>
@@ -117,39 +114,66 @@ class _VerificationOwnerState extends State<_VerificationOwner> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text('Review note: $reason'),
                       ),
-                    if (state.info?.uploadsAvailable != true)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          'Document uploads are not available in this build. No CNIC is collected. You can skip this step.',
-                        ),
-                      ),
                   ],
                 );
               },
             ),
             const SizedBox(height: 16),
-            const _DocumentTile(side: DocumentSide.front),
-            const SizedBox(height: 12),
-            const _DocumentTile(side: DocumentSide.back),
-            const SizedBox(height: 20),
-            const Text(
-              'If you submit later, the front is required and the back is optional. Paths retains submitted images, including replaced or declined versions, while your account exists. Only authorized reviewers can access them; account deletion removes them.',
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: _DocumentTile(side: DocumentSide.front)),
+                SizedBox(width: 12),
+                Expanded(child: _DocumentTile(side: DocumentSide.back)),
+              ],
             ),
-            const SizedBox(height: 12),
-            BlocSelector<VerificationCubit, VerificationState, (bool, bool)>(
-              selector: (s) => (s.consent, s.busy),
-              builder: (context, value) => CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                controlAffinity: ListTileControlAffinity.leading,
-                value: value.$1,
-                onChanged: value.$2
-                    ? null
-                    : (v) => cubit.setConsent(v ?? false),
-                title: const Text(
-                  'I consent to this document review and retention.',
-                ),
-              ),
+            BlocSelector<VerificationCubit, VerificationState, bool>(
+              selector: (s) => s.info?.uploadsAvailable == true,
+              builder: (context, available) => available
+                  ? Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        TextButton(
+                          onPressed: () => showDialog<void>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Document review'),
+                              content: const SingleChildScrollView(
+                                child: Text(
+                                  'Review is optional and is not a government check or a safety guarantee. The front is required; the back is optional. Submitted images, including replaced or declined versions, are retained while your account exists. Only authorized reviewers can access them. Account deletion removes them.',
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          child: const Text('Review details'),
+                        ),
+                        BlocSelector<
+                          VerificationCubit,
+                          VerificationState,
+                          (bool, bool)
+                        >(
+                          selector: (s) => (s.consent, s.busy),
+                          builder: (context, value) => CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            value: value.$1,
+                            onChanged: value.$2
+                                ? null
+                                : (v) => cubit.setConsent(v ?? false),
+                            title: const Text(
+                              'I agree to document review and retention.',
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
             const SizedBox(height: 20),
             BlocSelector<VerificationCubit, VerificationState, (bool, bool)>(
@@ -163,17 +187,10 @@ class _VerificationOwnerState extends State<_VerificationOwner> {
             ),
             const SizedBox(height: 8),
             BlocSelector<VerificationCubit, VerificationState, bool>(
-              selector: (s) => s.busy || s.loading,
-              builder: (context, busy) => TextButton(
-                onPressed: busy ? null : cubit.load,
-                child: const Text('Refresh status'),
-              ),
-            ),
-            BlocSelector<VerificationCubit, VerificationState, bool>(
               selector: (s) => s.busy && !s.uploading,
               builder: (context, busy) => TextButton(
                 onPressed: busy ? null : cubit.skip,
-                child: const Text('Skip for now'),
+                child: const Text('Skip'),
               ),
             ),
           ],
@@ -203,41 +220,75 @@ class _DocumentTile extends StatelessWidget {
         ),
         builder: (context, value) {
           final asset = value.$1;
-          final label = side == DocumentSide.front
-              ? 'CNIC front'
-              : 'CNIC back (optional)';
-          final status = asset == null
-              ? 'Not selected'
-              : asset.processed
-              ? 'Processed and ready'
-              : 'Processing — not ready to submit';
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFD8E4EC)),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(label, style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Text(status),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: value.$2
-                        ? () => context.read<VerificationCubit>().pick(side)
-                        : null,
-                    icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: Text(
-                      asset == null ? 'Choose document' : 'Replace document',
+          final label = side == DocumentSide.front ? 'CNIC front' : 'CNIC back';
+          return Semantics(
+            button: true,
+            enabled: value.$2,
+            label: '$label${value.$2 ? '' : ', uploads unavailable'}',
+            child: CustomPaint(
+              painter: const _DottedBorder(),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: value.$2
+                    ? () => context.read<VerificationCubit>().pick(side)
+                    : null,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 30,
+                  ),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          asset == null
+                              ? Icons.badge_outlined
+                              : Icons.description_outlined,
+                          size: 30,
+                          color: value.$2
+                              ? const Color(0xFF147DCE)
+                              : const Color(0xFF8D99A4),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(label, textAlign: TextAlign.center),
+                        if (asset != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            asset.processed ? 'Ready' : 'Processing',
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           );
         },
       );
+}
+
+class _DottedBorder extends CustomPainter {
+  const _DottedBorder();
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(16)),
+      );
+    final paint = Paint()
+      ..color = const Color(0xFFADB8C1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    for (final metric in path.computeMetrics()) {
+      for (double offset = 0; offset < metric.length; offset += 9) {
+        canvas.drawPath(metric.extractPath(offset, offset + 4), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DottedBorder oldDelegate) => false;
 }

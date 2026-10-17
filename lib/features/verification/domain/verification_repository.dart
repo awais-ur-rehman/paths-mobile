@@ -34,6 +34,7 @@ abstract interface class VerificationRepository {
 }
 
 abstract interface class VerificationDocuments {
+  bool get available;
   Future<DocumentAsset?> pickAndUpload(
     DocumentSide side, {
     CancelToken? cancelToken,
@@ -43,6 +44,8 @@ abstract interface class VerificationDocuments {
 // Task8 must supply a protected picker/upload implementation before collecting any CNIC.
 final class UnavailableVerificationDocuments implements VerificationDocuments {
   const UnavailableVerificationDocuments();
+  @override
+  bool get available => false;
   @override
   Future<DocumentAsset?> pickAndUpload(
     DocumentSide side, {
