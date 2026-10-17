@@ -228,17 +228,24 @@ final class HttpAuthRepository implements AuthRepository {
   }
 
   Future<void> _invalidate() async {
-    _generation++;
+    final generation = ++_generation;
     _session = null;
     _coordinator.replace(null);
-    _changes.add(null);
-    await Future.wait([
-      _serialize(() async {
-        await _preferences.setFlag('paths.auth.signedOut', true);
-        await _vault.clear();
-      }),
-      _purge(),
-    ]);
+    try {
+      await Future.wait([
+        _serialize(() async {
+          await _preferences.setFlag('paths.auth.signedOut', true);
+          await _vault.clear();
+        }),
+        _purge(),
+      ]);
+    } on AuthFailure catch (error) {
+      if (generation == _generation && _changes.hasListener) {
+        _changes.addError(error);
+      }
+      rethrow;
+    }
+    if (generation == _generation) _changes.add(null);
   }
 
   Future<AuthSession> _accept(SessionDto dto, int generation) async {
@@ -273,7 +280,15 @@ final class HttpAuthRepository implements AuthRepository {
           ].contains(error.code)) {
         await _invalidate();
       }
-      if (error.offline || error.code == 'unavailable') {
+      if (generation != _generation) throw const AuthFailure('cancelled');
+      if (error.offline ||
+          [
+            'unavailable',
+            'RATE_LIMITED',
+            'INTERNAL_ERROR',
+            'DEPENDENCY_UNAVAILABLE',
+            'invalid_response',
+          ].contains(error.code)) {
         throw RefreshFailure(
           error.code == 'timeout'
               ? RefreshFailureKind.timeout
@@ -288,8 +303,9 @@ final class HttpAuthRepository implements AuthRepository {
       }
       rethrow;
     } on FormatException {
-      await _invalidate();
-      throw const AuthFailure('invalid_response');
+      if (generation != _generation) throw const AuthFailure('cancelled');
+      // A malformed server response does not establish credential revocation.
+      throw const RefreshFailure(RefreshFailureKind.unavailable);
     }
   }
 

@@ -60,21 +60,34 @@ final class AuthState {
 final class AuthCubit extends Cubit<AuthState> {
   AuthCubit(this._repository)
     : super(const AuthState(stage: AuthStage.booting)) {
-    _subscription = _repository.changes.listen((account) {
-      if (isClosed || _signingOut) return;
-      if (account == null) {
+    _subscription = _repository.changes.listen(
+      (account) {
+        if (isClosed || _signingOut) return;
+        if (account == null) {
+          _cancel();
+          emit(
+            AuthState(
+              stage: AuthStage.signedOut,
+              notice: 'Your session ended. Sign in again.',
+              policies: _policies,
+            ),
+          );
+        } else if (state.stage == AuthStage.authenticated) {
+          emit(state.update(account: account));
+        }
+      },
+      onError: (Object error) {
+        if (isClosed || _signingOut) return;
         _cancel();
         emit(
           AuthState(
-            stage: AuthStage.signedOut,
-            notice: 'Your session ended. Sign in again.',
+            stage: AuthStage.blocked,
+            error: error is AuthFailure ? error : const AuthFailure('storage'),
             policies: _policies,
           ),
         );
-      } else if (state.stage == AuthStage.authenticated) {
-        emit(state.update(account: account));
-      }
-    });
+      },
+    );
   }
   final AuthRepository _repository;
   late final StreamSubscription<AuthAccount?> _subscription;

@@ -10,12 +10,15 @@ import 'package:paths_mobile/features/auth/data/http_auth_repository.dart';
 
 class MemoryVault implements TokenVault {
   String? value;
-  Completer<void>? pause;
+  Completer<void>? pause, writeStarted;
+  bool failWrite = false;
   @override
   Future<String?> read() async => value;
   @override
   Future<void> write(String next) async {
+    writeStarted?.complete();
     await pause?.future;
+    if (failWrite) throw StateError('fixture secure storage failure');
     value = next;
   }
 
@@ -46,6 +49,10 @@ class MemoryPreferences implements AuthPreferences {
 class ApiAdapter implements HttpClientAdapter {
   int refreshes = 0;
   bool revoked = false;
+  int? refreshStatus;
+  String? refreshCode;
+  Completer<void>? refreshStarted, refreshRelease;
+  bool malformedRefresh = false;
   bool offline = false;
   bool restricted = false;
   final requests = <RequestOptions>[];
@@ -120,6 +127,26 @@ class ApiAdapter implements HttpClientAdapter {
       body = session('old-access', 'old-refresh');
     } else if (options.path == '/v1/auth/refresh') {
       refreshes++;
+      refreshStarted?.complete();
+      await refreshRelease?.future;
+      if (malformedRefresh) {
+        return ResponseBody.fromString(
+          '{}',
+          200,
+          headers: {
+            Headers.contentTypeHeader: ['application/json'],
+          },
+        );
+      }
+      if (refreshStatus != null) {
+        return ResponseBody.fromString(
+          jsonEncode({'code': refreshCode}),
+          refreshStatus!,
+          headers: {
+            Headers.contentTypeHeader: ['application/json'],
+          },
+        );
+      }
       if (offline) {
         throw DioException(
           requestOptions: options,
@@ -152,6 +179,88 @@ class ApiAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test('a failed stale refresh write cannot invalidate a new login', () async {
+    final vault = MemoryVault(), adapter = ApiAdapter();
+    final repo = HttpAuthRepository(
+      origin: 'https://api.example.invalid',
+      vault: vault,
+      preferences: MemoryPreferences(),
+      publicTransport: Dio()..httpClientAdapter = adapter,
+      authenticatedTransport: Dio()..httpClientAdapter = adapter,
+    );
+    await repo.login('fixture@example.invalid', 'a long fixture password');
+    vault.pause = Completer<void>();
+    vault.writeStarted = Completer<void>();
+    vault.failWrite = true;
+    final restore = repo.restore();
+    final rejected = expectLater(restore, throwsA(isA<AuthFailure>()));
+    await vault.writeStarted!.future;
+    final logout = repo.logout();
+    vault.pause!.complete();
+    await rejected;
+    await logout;
+    vault.pause = null;
+    vault.writeStarted = null;
+    vault.failWrite = false;
+    await repo.login('fixture@example.invalid', 'a long fixture password');
+    expect(vault.value, contains('old-refresh'));
+    expect(await repo.restore(), isNotNull);
+    await repo.close();
+  });
+
+  for (final failure in {
+    429: 'RATE_LIMITED',
+    500: 'INTERNAL_ERROR',
+    503: 'DEPENDENCY_UNAVAILABLE',
+  }.entries) {
+    test('refresh ${failure.key} preserves credentials for retry', () async {
+      final vault = MemoryVault(), adapter = ApiAdapter();
+      final repo = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: vault,
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+      );
+      await repo.login('fixture@example.invalid', 'a long fixture password');
+      adapter.refreshStatus = failure.key;
+      adapter.refreshCode = failure.value;
+      await expectLater(
+        repo.restore(),
+        throwsA(
+          isA<AuthFailure>().having((e) => e.code, 'code', 'unavailable'),
+        ),
+      );
+      expect(vault.value, contains('old-refresh'));
+      adapter.refreshStatus = null;
+      expect(await repo.restore(), isNotNull);
+      await repo.close();
+    });
+  }
+  test('stale malformed refresh cannot clear a newer login', () async {
+    final vault = MemoryVault(), adapter = ApiAdapter();
+    final repo = HttpAuthRepository(
+      origin: 'https://api.example.invalid',
+      vault: vault,
+      preferences: MemoryPreferences(),
+      publicTransport: Dio()..httpClientAdapter = adapter,
+      authenticatedTransport: Dio()..httpClientAdapter = adapter,
+    );
+    await repo.login('fixture@example.invalid', 'a long fixture password');
+    adapter.refreshStarted = Completer<void>();
+    adapter.refreshRelease = Completer<void>();
+    final restore = repo.restore();
+    final rejected = expectLater(restore, throwsA(isA<AuthFailure>()));
+    await adapter.refreshStarted!.future;
+    await repo.logout();
+    await repo.login('fixture@example.invalid', 'a long fixture password');
+    adapter.malformedRefresh = true;
+    adapter.refreshRelease!.complete();
+    await rejected;
+    expect(vault.value, contains('old-refresh'));
+    await repo.close();
+  });
+
   test(
     'a rotated refresh secret is persisted before authorized replay completes',
     () async {
@@ -208,12 +317,13 @@ void main() {
       authenticatedTransport: Dio()..httpClientAdapter = adapter,
     );
     vault.pause = Completer<void>();
+    vault.writeStarted = Completer<void>();
     final login = repo.login(
       'fixture@example.invalid',
       'a long fixture password',
     );
     final assertion = expectLater(login, throwsA(isA<AuthFailure>()));
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+    await vault.writeStarted!.future;
     final logout = repo.logout();
     vault.pause!.complete();
     await assertion;

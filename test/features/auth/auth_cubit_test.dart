@@ -9,6 +9,38 @@ import 'auth_repository_test.dart'
     show MemoryVault, MemoryPreferences, ApiAdapter;
 
 void main() {
+  test(
+    'refresh invalidation cleanup failure blocks sign-in until retry',
+    () async {
+      final adapter = ApiAdapter(), vault = MemoryVault();
+      var purges = 0;
+      var cleanupFails = true;
+      final repo = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: vault,
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+        purgeTracking: () async {
+          purges++;
+          if (purges > 1 && cleanupFails) throw StateError('fixture cleanup');
+        },
+      );
+      await repo.login('fixture@example.invalid', 'a long fixture password');
+      adapter.revoked = true;
+      final cubit = AuthCubit(repo);
+      await cubit.initialize();
+      expect(cubit.state.stage, AuthStage.blocked);
+      expect(cubit.state.error?.code, 'tracking_cleanup');
+      expect(vault.value, null);
+      cleanupFails = false;
+      await cubit.initialize();
+      expect(cubit.state.stage, AuthStage.onboarding);
+      await cubit.close();
+      await repo.close();
+    },
+  );
+
   test('duplicate login submissions produce one request and one authenticated transition', () async {
     final adapter = ApiAdapter();
     final repo = HttpAuthRepository(
@@ -33,6 +65,7 @@ void main() {
     () async {
       final adapter = ApiAdapter(), vault = MemoryVault();
       vault.pause = Completer<void>();
+      vault.writeStarted = Completer<void>();
       final repo = HttpAuthRepository(
         origin: 'https://api.example.invalid',
         vault: vault,
@@ -45,7 +78,7 @@ void main() {
         'fixture@example.invalid',
         'a long fixture password',
       );
-      await Future<void>.delayed(const Duration(milliseconds: 20));
+      await vault.writeStarted!.future;
       final cancel = cubit.cancelFlow();
       vault.pause!.complete();
       await login;
