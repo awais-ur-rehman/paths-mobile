@@ -328,3 +328,18 @@ Executed: backend lint/typecheck/build,8 unit +13 retained Phase0 +31 real PostG
 Fresh read-only branch review found one Important missing-profile navigation dead end. Reproduced an adult/no-details→review→skip→summary404 journey, added explicit Back to profile setup recovery, and reran the full suite. Generator review also caught Swagger boolean-enum emission as number; an API contract regression now protects boolean consent. A raw database DATE parser mismatch was fixed by selecting explicit calendar text. Skip during fixture upload cancels and ignores late completion; duplicate pending submissions and profile saves are guarded.
 
 Current handoff: mobile docs/TASK4_DEVICE_TESTS.md. Task4 is not marked complete: owner phone retest remains pending; required photo and live CNIC uploads are explicitly blocked until Task8 media processing/private storage/ownership FKs. Full profileComplete remains false, no fake Home/post grid or approved badge is invented. Test-only processed/pending assets establish workflow behavior without collecting images. Task6 eligibility and Task11 reviewer decisions remain separate plan dependencies. iOS runtime, earlier quantitative Phase0 evidence and actual Gmail delivery remain distinct release checks. No Task4 PR merge or main promotion is implied by local checks.
+
+
+## Task4 approval and Task5 start (2026-10-17)
+
+Owner tested Task4 on physical Android, accepted it and explicitly authorized merge/Task5. PR4 merged into development: backend e3ff075, admin87edbda, mobile0dc6772. Main unchanged. Pre-merge rerun: backend8 unit +13 Phase0 +31 integration tests, mobile115 Flutter tests and admin2 tests pass; backend/admin CI green. This does not invent iOS runtime or quantitative background/battery evidence. Task8 photo/CNIC integration remains pending as planned.
+
+Current phase: Phase2 Task5, feature/location-ingestion. Plan: docs/task5-location-plan.md.
+
+| Task5 checklist | Status | Evidence / dependency |
+|---|---|---|
+| Max50/coordinates/time/dedup/lease/pause/deletion tests | in progress | Write real PostGIS integration cases first |
+| Transactional samples/outbox and24h retention worker | not started | Matching handler remains Task6; no fake matching result |
+| Disclosure/staged permissions/encrypted native queue | in progress | Existing native encrypted200/15min queue; production integration next |
+| Offline pause/logout epoch ordering | not started | Native cancellation plus persisted pending control and expected-epoch server guard |
+| Physical permission/kill cases | awaiting device test | Owner operates phone after final local checks |
