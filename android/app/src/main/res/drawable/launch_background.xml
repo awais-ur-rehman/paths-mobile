@@ -1,1 +1,1 @@
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:drawable="@color/paths_background"/><item android:gravity="center" android:width="128dp" android:height="128dp" android:drawable="@drawable/paths_symbol"/></layer-list>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item android:drawable="@color/paths_background"/><item android:gravity="center" android:width="96dp" android:height="96dp" android:drawable="@drawable/paths_splash"/></layer-list>
