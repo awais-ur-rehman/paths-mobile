@@ -21,32 +21,34 @@ Spec: docs/specification/{01_SCOPE,02_PRD,03_TRD,04_APP_FLOW,05_SYSTEM_UI_DESIGN
 ## Steps
 
 ### 1. Relationship policy and schema
-- [ ] RED real PostGIS relationships.spec.ts for ineligible/stranger denial, private saves/durable eligibility/unsave, inverse races, sender-accept denial, duplicate retries,14d expiry/7d cooldown, status/block/deletion and rollback.
-- [ ] Add migration0007/schema for directed saves, requests with partial unique active pair, connections, actor/route/body-bound idempotency and needed FK/delete indexes.
-- [ ] Implement repository/policy/service and canonical user-first locks; update authorized peer eligibility, query bounded actor-bound pages and real relationship state on Home.
-- [ ] GREEN focused/full backend checks; coherent commits.
+- [x] Add real PostGIS relationships.spec.ts for ineligible/stranger denial, private saves/durable eligibility/unsave, inverse races, sender-accept denial, duplicate retries,14d expiry/7d cooldown, status/block/deletion and rollback.
+- [x] Add migration0007/schema for directed saves, requests with partial unique active pair, connections, actor/route/body-bound idempotency and needed FK/delete indexes.
+- [x] Implement repository/policy/service and canonical user-first locks; update authorized peer eligibility, query bounded actor-bound pages and real relationship state on Home.
+- [x] Verify focused/full backend checks; coherent commits.
 
 ### 2. Notification persistence and dispatch
-- [ ] RED provider-isolated DB tests for atomic relationship fanout, in-app history/ownership, opt-out, token rotation/revocation/encryption, six-hour/day caps, historical/no-live, block/deletion before send, provider retry/invalid token and rollback.
-- [ ] Add migration0008/schema for preferences, encrypted device registrations/session binding, generic notifications/intents, per-device receipts and budget/cooldown records; cascade all participant references.
-- [ ] Implement FCM HTTPv1 service-account OAuth and APNs HTTP2 token-auth adapters with bounded timeouts and safe error classification. No successful unavailable provider responses.
-- [ ] Wire source-event ingestion, transactional fanout, push job retries, retention/session cleanup and authoritative notification resolution/read. Recheck eligibility at send; log no payloads/tokens.
-- [ ] GREEN tests and local synthetic API/worker smoke; real push recorded separately when credentials/device available.
+- [x] Add provider-isolated DB tests for atomic relationship fanout, in-app history/ownership, opt-out, token rotation/revocation/encryption, six-hour/day caps, historical/no-live, block/deletion before send, provider retry/invalid token and rollback.
+- [x] Add migration0008/schema for preferences, encrypted device registrations/session binding, generic notifications/intents, per-device receipts and budget/cooldown records; cascade all participant references.
+- [x] Implement FCM HTTPv1 service-account OAuth and APNs HTTP2 token-auth adapters with bounded timeouts and safe error classification. No successful unavailable provider responses.
+- [x] Wire source-event ingestion, transactional fanout, push job retries, retention/session cleanup and authoritative notification resolution/read. Recheck eligibility at send; log no payloads/tokens.
+- [x] Verify tests and local synthetic API/worker smoke; real push recorded separately when credentials/device available.
 
 ### 3. Contract and consumers
-- [ ] Export API1.6.0 including likes, requests/transitions, disconnect, devices/preferences/notifications/resolution/read and typed relationship status; rate-limit mutations/listing.
-- [ ] Copy real export to mobile/admin, regenerate and verify drift; generator additions only if a real contract shape requires them and covered RED/GREEN.
-- [ ] Update consumer readiness versions; retain strict schema/error handling; admin has no new workflow until Task11.
+- [x] Export API1.6.0 including likes, requests/transitions, disconnect, devices/preferences/notifications/resolution/read and typed relationship status; rate-limit mutations/listing.
+- [x] Copy real export to mobile/admin, regenerate and verify drift; generator additions only if a real contract shape requires them and covered RED/GREEN.
+- [x] Update consumer readiness versions; retain strict schema/error handling; admin has no new workflow until Task11.
 
 ### 4. Mobile relationship and inbox flow
-- [ ] RED repository/Cubit tests for optimistic save rollback, idempotency/cancellation, stale responses/account change, state transitions/offline/unavailable and selective rebuilds.
-- [ ] Implement Likes Saved/Incoming/Sent lists and profile actions, request confirmation/accept/decline/cancel/disconnect. Add working Likes navigation only; preserve Home/Profile state and no fake future destinations.
-- [ ] Implement notification center/preferences and authorized tap resolution after auth; mark read only on successful open/explicit action. Missing/deleted resource shows generic unavailable.
-- [ ] Add lifecycle-owned native push channel: explicit permission request, Android token refresh/data notification and iOS APNs registration/tap, logout clear and bounded event dedup. Credentials never enter source; public Firebase app options come from ignored local config.
-- [ ] GREEN full Flutter/tooling checks,320/390/768 at200% text, inspected goldens and cached Android/unsigned iOS builds. Track missing artifacts precisely without implicit installation.
+- [x] Add repository/Cubit tests for optimistic save rollback, idempotency/cancellation, stale responses/account change, state transitions/offline/unavailable and selective rebuilds.
+- [x] Implement Likes Saved/Incoming/Sent lists and profile actions, request confirmation/accept/decline/cancel/disconnect. Add working Likes navigation only; preserve Home/Profile state and no fake future destinations.
+- [x] Implement notification center/preferences and authorized tap resolution after auth; mark read only on successful open/explicit action. Missing/deleted resource shows generic unavailable.
+- [x] Add lifecycle-owned native push channel: explicit permission request, Android token refresh/data notification and iOS APNs registration/tap, logout clear and bounded event dedup. Credentials never enter source; public Firebase app options come from ignored local config.
+- [x] Verify full Flutter/tooling checks,320/390/768 at200% text, inspected goldens and cached Android/unsigned iOS builds. Track missing artifacts precisely without implicit installation.
 
 ### 5. Review and handoff
-- [ ] Run all available backend/admin/mobile checks, real Compose synthetic smoke and contract drift. Fix discovered code-level issues and rerun affected suites.
-- [ ] One fresh read-only whole-branch review; reproduce Important/Critical findings RED→GREEN; preserve runtime exclusions explicitly.
-- [ ] Update every applicable Task7 checklist/status, decisions/licenses/API evidence and exact commits/prerequisites. Push changed repos and open draft PRs into development; main unchanged.
+- [x] Run all available backend/admin/mobile checks, real Compose synthetic smoke and contract drift. Fix discovered code-level issues and rerun affected suites.
+- [x] One fresh read-only whole-branch review; reproduce Important/Critical findings RED→GREEN; preserve runtime exclusions explicitly.
+- [x] Update every applicable Task7 checklist/status, decisions/licenses/API evidence and exact commits/prerequisites. Push changed repos and open draft PRs into development; main unchanged.
 - [ ] Give exact Android/iOS push/device test instructions and await owner results before closing Task7 or dependent Task8 gate. Missing access blocks only provider/device evidence, not independent implementation.
+
+Execution status: local implementation and checks completed; provider/device evidence remains pending as recorded in IMPLEMENTATION_STATUS.md. Real push setup is unavailable; all native compilation claims exclude runtime delivery. No Task8 gate bypass.

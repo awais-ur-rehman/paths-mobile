@@ -58,3 +58,10 @@ coverage/
 *.local
 
 /android/.kotlin/
+
+# Owner-only push setup files.
+/paths.push.local.json
+.secrets/
+**/google-services.json
+**/GoogleService-Info.plist
+*.p8
