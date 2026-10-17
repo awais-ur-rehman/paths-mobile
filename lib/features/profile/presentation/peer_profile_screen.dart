@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/widgets/paths_loader.dart';
 import 'profile_surface.dart';
+import '../../relationships/data/relationship_repository.dart';
+import '../../relationships/presentation/relationship_controls.dart';
 import '../domain/profile_repository.dart';
 import 'profile_preview_cubit.dart';
 
@@ -13,11 +15,15 @@ class PeerProfileScreen extends StatelessWidget {
     required this.repository,
     required this.userId,
     required this.onBack,
+    this.relationships,
+    this.onOpened,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
   final VoidCallback onBack;
+  final RelationshipRepository? relationships;
+  final VoidCallback? onOpened;
   @override
   Widget build(BuildContext context) =>
       _PeerOwner(key: ValueKey(userId), configuration: this);
@@ -66,32 +72,48 @@ class _PeerOwnerState extends State<_PeerOwner> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: Colors.white,
-    body: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
+    body: BlocListener<ProfilePreviewCubit, ProfilePreviewState>(
       bloc: cubit,
-      builder: (context, state) {
-        if (state.loading) return _withBack(const PathsLoader());
-        final profile = state.profile;
-        if (profile == null) {
-          return _withBack(
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  state.error?.offline == true
-                      ? 'You’re offline'
-                      : 'Profile unavailable',
-                ),
-                if (state.error?.offline == true)
-                  TextButton(onPressed: cubit.load, child: const Text('Retry')),
-              ],
-            ),
+      listenWhen: (before, after) =>
+          before.profile == null && after.profile != null,
+      listener: (_, _) => widget.configuration.onOpened?.call(),
+      child: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
+        bloc: cubit,
+        builder: (context, state) {
+          if (state.loading) return _withBack(const PathsLoader());
+          final profile = state.profile;
+          if (profile == null) {
+            return _withBack(
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    state.error?.offline == true
+                        ? 'You’re offline'
+                        : 'Profile unavailable',
+                  ),
+                  if (state.error?.offline == true)
+                    TextButton(
+                      onPressed: cubit.load,
+                      child: const Text('Retry'),
+                    ),
+                ],
+              ),
+            );
+          }
+          return ProfileSurface(
+            profile: profile,
+            action: widget.configuration.relationships == null
+                ? null
+                : RelationshipControls(
+                    key: ValueKey(widget.configuration.userId),
+                    repository: widget.configuration.relationships!,
+                    target: widget.configuration.userId,
+                  ),
+            onBack: widget.configuration.onBack,
           );
-        }
-        return ProfileSurface(
-          profile: profile,
-          onBack: widget.configuration.onBack,
-        );
-      },
+        },
+      ),
     ),
   );
 }
