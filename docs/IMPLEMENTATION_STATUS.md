@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase3 Task7 implemented; awaiting device test and push setup**. API contract: `1.6.0`; experiment contract `phase0.v1`.
+Current phase: **Phase4 Task8 protected media; in progress**. API contract: `1.6.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -467,3 +467,7 @@ Material decisions (confirmed product rules versus implementation defaults):
 Outstanding prerequisites/known limits: owner explicitly reports no Firebase/APNs setup. Real Android foreground/background/locked-phone delivery, token rotation, OS permission changes and taps must be tested after private setup. iOS needs Apple team capability/provisioning and a signed physical iPhone; unsigned build and Android evidence do not validate it. At-least-once provider delivery can duplicate after a provider acceptance/database failure; Android event binding/dedup and collapse IDs reduce repeats, never promise exactly once. Already accepted APNs generic alerts may arrive after logout; server tap resolution still denies former-account access. OS force-stop/power/network behavior is best effort. See PUSH_SETUP.md and mobile TASK7_DEVICE_TESTS.md. No invented battery/accuracy/push outcome, no deployment or cloud-service creation.
 
 Published Task7 drafts (base development, head feature/relationships-notifications): [backend PR7](https://github.com/awais-ur-rehman/paths-backend/pull/7), [admin PR7](https://github.com/awais-ur-rehman/paths-admin/pull/7), [mobile PR7](https://github.com/awais-ur-rehman/paths-mobile/pull/7). All three branches were pushed. Task7 is not merged; real push/device gate is pending. Main unchanged. Owner next action: mobile docs/TASK7_DEVICE_TESTS.md; private push configuration is separately documented in PUSH_SETUP.md.
+
+## Task7 owner approval and Task8 start — 2026-10-17
+
+Owner tested Task7 on their physical Android phone, approves its functionality and authorizes merging PR7 and continuing Task8. Owner explicitly defers Firebase/APNs setup/live delivery; retain that unexecuted Android/iOS runtime check as a release prerequisite, not a passed result. PR7 merged normally into development in all three repositories after clean exact heads, green hosted backend/admin checks and fresh local74 integration,19unit13Phase0,187Flutter,admin2transport+3browser checks. No main promotion. Merge bases: backend4e6278f, admin afb2125, mobile8e85b0a. Task8 branch feature/protected-media; plan docs/task8-media-plan.md. All six specification checklist items are in progress/not started as detailed in the plan; implementation begins with image/storage security tests. API remains1.6 until the real media export. Owner approved required Task8 Sharp/image_picker and required artifacts; caches first. No Firebase/Apple/cloud service creation or real personal upload.
