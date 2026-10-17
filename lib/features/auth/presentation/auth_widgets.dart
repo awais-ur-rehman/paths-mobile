@@ -2,18 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../domain/auth_models.dart';
+import '../../../shared/widgets/paths_loader.dart';
+import '../../../shared/widgets/paths_brand.dart';
+import '../../../shared/widgets/paths_toast.dart';
 import 'auth_cubit.dart';
 
 class AuthBrand extends StatelessWidget {
   const AuthBrand({super.key});
   @override
-  Widget build(BuildContext context) => Image.asset(
-    'assets/brand/paths-logo-ink.png',
-    width: 140,
-    height: 44,
-    semanticLabel: 'Paths',
-  );
+  Widget build(BuildContext context) => const PathsWordmark();
 }
 
 class AuthScaffold extends StatelessWidget {
@@ -30,14 +27,8 @@ class AuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     body: SizedBox.expand(
-      child: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFDDF4FF), Color(0xFFF5FBFF), Colors.white],
-          ),
-        ),
+      child: Material(
+        color: Colors.white,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
@@ -79,7 +70,6 @@ class AuthScaffold extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 28),
-                      const AuthFeedback(),
                       child,
                     ],
                   ),
@@ -91,54 +81,6 @@ class AuthScaffold extends StatelessWidget {
       ),
     ),
   );
-}
-
-class AuthFeedback extends StatelessWidget {
-  const AuthFeedback({super.key});
-  @override
-  Widget build(BuildContext context) =>
-      BlocSelector<AuthCubit, AuthState, (AuthFailure?, String?)>(
-        selector: (state) => (state.error, state.notice),
-        builder: (context, value) {
-          final (failure, notice) = value;
-          if (failure == null && notice == null) return const SizedBox.shrink();
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: Semantics(
-              liveRegion: true,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: failure != null
-                      ? const Color(0xFFFFF0EC)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (notice != null)
-                      Text(notice, style: const TextStyle(height: 1.5)),
-                    if (failure != null)
-                      Text(
-                        failure.message,
-                        style: const TextStyle(
-                          color: Color(0xFF8C251B),
-                          height: 1.5,
-                        ),
-                      ),
-                    if (failure?.requestId case final String id)
-                      SelectableText(
-                        'Reference: $id',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
 }
 
 class AuthSubmit extends StatelessWidget {
@@ -156,9 +98,9 @@ class AuthSubmit extends StatelessWidget {
             children: [
               if (busy) ...[
                 const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  width: 24,
+                  height: 24,
+                  child: PathsLoader(size: 24, color: Colors.white),
                 ),
                 const SizedBox(width: 12),
               ],
@@ -233,12 +175,9 @@ Future<void> openExternal(BuildContext context, Uri uri) async {
     /* A missing external handler is shown explicitly below. */
   }
   if (context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'This link could not be opened. Check your browser or email app.',
-        ),
-      ),
+    PathsToast.show(
+      context,
+      'This link could not be opened. Check your browser or email app.',
     );
   }
 }

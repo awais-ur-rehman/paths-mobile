@@ -29,6 +29,10 @@ class _PathsExperimentAppState extends State<PathsExperimentApp> {
   Widget build(BuildContext context) => MaterialApp.router(
     title: 'Paths · Private experiment',
     theme: PathsTheme.light.copyWith(
+      scaffoldBackgroundColor: const Color(0xFFF5FBFF),
+      colorScheme: PathsTheme.light.colorScheme.copyWith(
+        surface: const Color(0xFFF5FBFF),
+      ),
       textButtonTheme: const TextButtonThemeData(),
     ),
     routerConfig: _router,

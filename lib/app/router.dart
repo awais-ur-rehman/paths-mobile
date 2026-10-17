@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/auth_cubit.dart';
+import '../features/profile/domain/profile_repository.dart';
+import '../features/profile/presentation/profile_setup_screen.dart';
 import '../features/auth/presentation/entry_screens.dart';
 import '../features/auth/presentation/credential_screens.dart';
 import '../features/auth/presentation/otp_screen.dart';
@@ -28,6 +30,7 @@ class AuthRouterRefresh extends ChangeNotifier {
 GoRouter createAuthRouter(
   AuthCubit cubit,
   AuthRouterRefresh refresh,
+  ProfileRepository profiles,
 ) => GoRouter(
   initialLocation: '/',
   refreshListenable: refresh,
@@ -43,7 +46,9 @@ GoRouter createAuthRouter(
       AuthStage.authenticated =>
         state.account?.restricted == true
             ? '/account/restricted'
-            : '/setup/profile',
+            : state.account?.adultChecked == true
+            ? '/setup/profile'
+            : '/setup/age',
       AuthStage.signedOut =>
         ['/auth/login', '/auth/signup', '/auth/forgot-password'].contains(path)
             ? path
@@ -73,9 +78,10 @@ GoRouter createAuthRouter(
       path: '/auth/reset-password',
       builder: (_, _) => const ResetPasswordScreen(),
     ),
+    GoRoute(path: '/setup/age', builder: (_, _) => const AgeCheckScreen()),
     GoRoute(
       path: '/setup/profile',
-      builder: (_, _) => const ProfileEntryScreen(),
+      builder: (_, _) => ProfileSetupScreen(repository: profiles),
     ),
     GoRoute(
       path: '/account/restricted',

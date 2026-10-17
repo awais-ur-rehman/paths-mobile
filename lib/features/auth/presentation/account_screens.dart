@@ -1,64 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../domain/auth_models.dart';
 import 'auth_cubit.dart';
 import 'auth_widgets.dart';
 
-class ProfileEntryScreen extends StatelessWidget {
-  const ProfileEntryScreen({super.key});
+class AgeCheckScreen extends StatelessWidget {
+  const AgeCheckScreen({super.key});
   @override
-  Widget build(
-    BuildContext context,
-  ) => BlocSelector<AuthCubit, AuthState, AuthAccount?>(
-    selector: (state) => state.account,
-    builder: (context, account) => AuthScaffold(
-      title:
-          'Welcome${account?.name.isNotEmpty == true ? ', ${account!.name}' : ''}',
-      subtitle:
-          'Your email is verified. Your next step is to set up your profile.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (account?.adultChecked == true)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline_rounded,
-                    color: Color(0xFF176B4D),
-                    size: 32,
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Age confirmed',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'You’re ready to complete your profile.',
-                    style: TextStyle(height: 1.5),
-                  ),
-                ],
-              ),
-            )
-          else
-            const _AdultForm(),
-          const SizedBox(height: 24),
-          const SupportActions(),
-          TextButton(
-            onPressed: () => context.read<AuthCubit>().logout(),
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
-    ),
+  Widget build(BuildContext context) => const AuthScaffold(
+    title: 'Confirm you’re 18 or over',
+    subtitle: 'Your full date of birth stays private.',
+    child: _AdultForm(),
   );
 }
 
@@ -83,16 +35,6 @@ class _AdultFormState extends State<_AdultForm> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Confirm you’re 18 or over',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Your full date of birth stays private. Confirmed dates can only be corrected through support.',
-          style: TextStyle(height: 1.5),
-        ),
-        const SizedBox(height: 20),
         TextFormField(
           controller: dob,
           decoration: InputDecoration(

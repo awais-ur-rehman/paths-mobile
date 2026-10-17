@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'auth_cubit.dart';
+import 'entry_screens.dart';
 import 'auth_widgets.dart';
 
 class PolicyScreen extends StatelessWidget {
@@ -56,6 +57,15 @@ class PolicyScreen extends StatelessWidget {
                     if (policies.supportEmail.isNotEmpty)
                       SelectableText('Support: ${policies.supportEmail}'),
                   ],
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ImageCredits(),
+                      ),
+                    ),
+                    child: const Text('Image and font credits'),
+                  ),
                 ],
               ),
             ),

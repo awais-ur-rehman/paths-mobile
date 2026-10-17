@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 abstract final class PathsTheme {
-  static const background = Color(0xFFF5FBFF),
+  static const background = Colors.white,
       ink = Color(0xFF101418),
       blue = Color(0xFF147DCE),
       aqua = Color(0xFFC4F2F3);

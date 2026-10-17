@@ -15,6 +15,8 @@ import 'features/auth/data/http_auth_repository.dart';
 import 'features/auth/domain/auth_models.dart';
 import 'features/auth/domain/auth_repository.dart';
 import 'features/auth/presentation/auth_cubit.dart';
+import 'shared/widgets/paths_toast.dart';
+import 'features/profile/domain/profile_repository.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -52,7 +54,15 @@ class _PathsAppState extends State<PathsApp> {
           );
       cubit = AuthCubit(repository!);
       refresh = AuthRouterRefresh(cubit!);
-      navigation = createAuthRouter(cubit!, refresh!);
+      final profiles = repository;
+      if (profiles is! ProfileRepository) {
+        throw const AuthFailure('configuration');
+      }
+      navigation = createAuthRouter(
+        cubit!,
+        refresh!,
+        profiles as ProfileRepository,
+      );
       unawaited(cubit!.initialize());
       lifecycle = AppLifecycleListener(
         onResume: () {
@@ -107,8 +117,10 @@ class _PathsAppState extends State<PathsApp> {
             before.busy &&
             !after.busy &&
             after.error == null &&
-            before.stage != after.stage,
+            (before.stage != after.stage ||
+                before.account?.adultChecked != after.account?.adultChecked),
         listener: (_, state) {
+          FocusManager.instance.primaryFocus?.unfocus();
           if (state.stage == AuthStage.authenticated ||
               state.stage == AuthStage.otp ||
               (state.stage == AuthStage.signedOut && state.notice != null)) {
@@ -120,6 +132,24 @@ class _PathsAppState extends State<PathsApp> {
           title: 'Paths',
           theme: PathsTheme.light,
           routerConfig: navigation,
+          builder: (context, child) => PathsToastHost(
+            child: BlocListener<AuthCubit, AuthState>(
+              listenWhen: (before, after) =>
+                  (after.error != null && before.error != after.error) ||
+                  (after.notice != null && before.notice != after.notice),
+              listener: (context, state) {
+                if (state.error case final error?) {
+                  PathsToast.show(
+                    context,
+                    '${error.message}${error.requestId == null ? '' : '\nReference: ${error.requestId}'}',
+                  );
+                } else if (state.notice case final notice?) {
+                  PathsToast.show(context, notice, tone: ToastTone.success);
+                }
+              },
+              child: child!,
+            ),
+          ),
         ),
       ),
     );
