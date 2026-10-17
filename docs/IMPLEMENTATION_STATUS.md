@@ -300,3 +300,20 @@ Profile setup retains the existing secure sign-out action after the age-only pag
 Mobile source commits: b917642 (profile API), a7afe47 (shared vector branding, loader, toast and arrow), 9e6bc9e (screens/routes/native splash), 561896f (profile sign-out), 15c025e (navigation handoff and regression tests). Final Flutter analyzer reports no issues; all88 Flutter tests pass, including successful arrow handoff, retry and reduced-motion cases. All3 Python generator/splash geometry tests pass. Final offline Android Debug assembly succeeds (177 tasks); final unsigned generic iphoneos Debug build succeeds with automatic package resolution disabled. These are compile checks, not Android/iOS runtime proof. Four golden renders were inspected; no phone or emulator was operated.
 
 Review corrections include preventing a false saved toast while retrying after an earlier successful save, retaining secure sign-out after the age-only page, and keeping the arrow at the right endpoint until navigation replaces onboarding. API copies remain1.2.0. Backend source/status c563f2f and admin1066f39 are pushed; GitHub CI passed those heads (runs39024766234 and39024770130). Mobile CI follows the final push. Focused owner retest: docs/DEVICE_UI_RETEST.md. Task3 remains awaiting device test; no draft PR merge or release promotion is authorized by these automated results alone.
+
+
+## Task3 integration and Task4 start (2026-10-17)
+
+Owner reports the corrected Android build looks good and explicitly authorizes merge and continuation. PR3 merged into development: backend4c6f11d, admin019a8a9, mobilec156ab2. Main unchanged. Pre-merge rerun: backend5 unit +13 Phase0 +25 PostGIS/Valkey tests; admin2 tests; mobile88 Flutter tests pass. Prior backend/admin CI heads passed. This records owner approval without inventing individual OS/autofill/battery cases or iOS runtime evidence; those release checks remain tracked.
+
+Current: Phase1 Task4, feature/profile-verification branched from merged development. Plan: docs/task4-profile-plan.md.
+
+| Task4 checklist | Status | Evidence / dependency |
+|---|---|---|
+| Tokens/components and reference substitutions | in progress | Existing approved white theme, black pills and shared vector feedback; extend only reused profile pieces |
+| Username/adult/DOB/public-private/CNIC skip tests | in progress | Existing profile tests; expand profile-access suite |
+| Profile setup/edit and optional submit/status | in progress | Details slice exists; Task8 blocks real uploads and complete profile |
+| Selective badge/save/status rebuilds and disposal | not started | Add widget/Cubit regressions |
+| 320/390/768,200% layouts and goldens | not started | Include profile and verification |
+
+Task4 may use test-only pending media fixtures per plan. Production must refuse unavailable uploads; no real CNIC collection, fake successful submission or completed photo setup. Gmail SMTP and Cloudflare R2 remain intended providers; no new service purchase, deployment or credential request is needed for this task.
