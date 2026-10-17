@@ -67,4 +67,25 @@ void main() {
       api.close();
     },
   );
+  test(
+    'malformed JSON is a contract failure rather than an offline result',
+    () async {
+      final dio = Dio()..httpClientAdapter = ResponseAdapter('{invalid', 200);
+      final api = ApiClient(origin: '', transport: dio);
+      try {
+        await expectLater(
+          api.readiness(),
+          throwsA(
+            isA<ApiFailure>().having(
+              (e) => e.kind,
+              'kind',
+              ApiFailureKind.invalidResponse,
+            ),
+          ),
+        );
+      } finally {
+        api.close();
+      }
+    },
+  );
 }

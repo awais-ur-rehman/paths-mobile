@@ -41,6 +41,9 @@ final class ApiClient {
       }
       return HealthDto.fromJson(data);
     } on DioException catch (error) {
+      if (error.error is FormatException) {
+        throw const ApiFailure(ApiFailureKind.invalidResponse);
+      }
       if (CancelToken.isCancel(error)) {
         throw const ApiFailure(ApiFailureKind.cancelled);
       }
