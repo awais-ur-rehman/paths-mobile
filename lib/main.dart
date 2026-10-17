@@ -19,6 +19,7 @@ import 'shared/widgets/paths_toast.dart';
 import 'features/profile/domain/profile_repository.dart';
 import 'features/verification/domain/verification_repository.dart';
 import 'features/discovery/domain/location_repository.dart';
+import 'features/discovery/domain/encounter_repository.dart';
 import 'features/discovery/data/location_sync_service.dart';
 
 void main() {
@@ -86,6 +87,9 @@ class _PathsAppState extends State<PathsApp> {
         profiles as ProfileSummaryRepository,
         profiles as VerificationRepository,
         locations: locations,
+        encounters: locations != null && profiles is EncounterRepository
+            ? profiles as EncounterRepository
+            : null,
       );
       unawaited(cubit!.initialize());
       lifecycle = AppLifecycleListener(
