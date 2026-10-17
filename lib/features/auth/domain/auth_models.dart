@@ -56,6 +56,7 @@ final class AuthFailure implements Exception {
   final String? requestId;
   bool get offline => code == 'offline' || code == 'timeout';
   String get message => switch (code) {
+    'USERNAME_TAKEN' => 'That username is already taken. Choose another.',
     'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
     'OTP_INVALID' =>
       'The code is invalid or no longer available. Request a new code.',

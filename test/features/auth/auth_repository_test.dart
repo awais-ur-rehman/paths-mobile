@@ -52,6 +52,14 @@ class MemoryPreferences implements AuthPreferences {
 
 class ApiAdapter implements HttpClientAdapter {
   int refreshes = 0;
+  bool profileConflict = false;
+  Completer<void>? profileSaveStarted, profileSaveRelease;
+  Map<String, Object> profile = {
+    'username': '',
+    'name': 'Fixture User',
+    'gender': '',
+    'bio': '',
+  };
   bool revoked = false;
   int? refreshStatus;
   String? refreshCode;
@@ -59,13 +67,14 @@ class ApiAdapter implements HttpClientAdapter {
   bool malformedRefresh = false;
   bool offline = false;
   bool restricted = false;
+  bool adultChecked = false;
   final requests = <RequestOptions>[];
   Map<String, Object> session(String access, String refresh) => {
     'userId': '11111111-1111-4111-8111-111111111111',
     'email': 'fixture@example.invalid',
     'name': 'Fixture User',
     'accountStatus': restricted ? 'deactivated' : 'active',
-    'setupStage': 'adult',
+    'setupStage': adultChecked ? 'profile' : 'adult',
     'accessToken': access,
     'refreshToken': refresh,
     'accessExpiresAt': DateTime.now()
@@ -86,7 +95,21 @@ class ApiAdapter implements HttpClientAdapter {
     requests.add(options);
     var status = 200;
     Object body = {};
-    if (options.path == '/v1/auth/config') {
+    if (options.path == '/v1/me/profile') {
+      if (options.method == 'PUT') {
+        profileSaveStarted?.complete();
+        await profileSaveRelease?.future;
+      }
+      if (options.method == 'PUT' && profileConflict) {
+        status = 409;
+        body = {'code': 'USERNAME_TAKEN'};
+      } else {
+        if (options.method == 'PUT') {
+          profile = Map<String, Object>.from(options.data as Map);
+        }
+        body = {...profile, 'profileComplete': false};
+      }
+    } else if (options.path == '/v1/auth/config') {
       body = {
         'supportEmail': 'support@example.invalid',
         'termsUrl': '',
@@ -126,6 +149,7 @@ class ApiAdapter implements HttpClientAdapter {
         body = session('new-access', 'new-refresh');
       }
     } else if (options.path == '/v1/me/adult-check') {
+      adultChecked = true;
       body = {...session('new-access', 'new-refresh'), 'setupStage': 'profile'};
     } else if (options.path == '/v1/auth/login') {
       body = session('old-access', 'old-refresh');

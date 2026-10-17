@@ -8,9 +8,10 @@ import 'package:flutter/foundation.dart';
 import '../../../core/network/generated/api_contract.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
+import '../../profile/domain/profile_repository.dart';
 import '../domain/auth_repository.dart';
 
-final class HttpAuthRepository implements AuthRepository {
+final class HttpAuthRepository implements AuthRepository, ProfileRepository {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -390,6 +391,45 @@ final class HttpAuthRepository implements AuthRepository {
       throw const AuthFailure('invalid_response');
     }
   }
+
+  ProfileDetails _profile(ProfileDetailsDto dto) => ProfileDetails(
+    username: dto.username,
+    name: dto.name,
+    gender: dto.gender,
+    bio: dto.bio,
+  );
+  @override
+  Future<ProfileDetails> loadProfile({CancelToken? cancelToken}) async =>
+      _profile(
+        ProfileDetailsDto.fromJson(
+          await _request(
+            'GET',
+            '/v1/me/profile',
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        ),
+      );
+  @override
+  Future<ProfileDetails> saveProfile(
+    ProfileDetails profile, {
+    CancelToken? cancelToken,
+  }) async => _profile(
+    ProfileDetailsDto.fromJson(
+      await _request(
+        'PUT',
+        '/v1/me/profile',
+        authenticated: true,
+        cancelToken: cancelToken,
+        data: ProfileDetailsInput(
+          username: profile.username,
+          name: profile.name,
+          gender: profile.gender,
+          bio: profile.bio,
+        ).toJson(),
+      ),
+    ),
+  );
 
   @override
   Future<bool> onboardingSeen() async =>
