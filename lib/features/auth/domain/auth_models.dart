@@ -62,8 +62,7 @@ final class AuthFailure implements Exception {
     'LOCATION_LEASE_INVALID' => 'Location access ended. Enable sharing again.',
     'LOCATION_PAUSED' => 'Location sharing is paused.',
     'media_unavailable' => 'Document uploads are not available in this build. You can skip this step.',
-    'CONFLICT' =>
-      'Your review status changed. Refresh before submitting again.',
+    'CONFLICT' => 'Things changed. Refresh and try again.',
     'USERNAME_TAKEN' => 'That username is already taken. Choose another.',
     'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
     'OTP_INVALID' =>
@@ -79,6 +78,8 @@ final class AuthFailure implements Exception {
       'Your reset authorization expired. Start password recovery again.',
     'ADULT_REQUIRED' => 'Paths is available only to adults aged 18 or older.',
     'DOB_LOCKED' => 'Contact support to correct a confirmed date of birth.',
+    'push_cleanup' =>
+      'Notification cleanup could not finish. Retry before continuing.',
     'tracking_cleanup' =>
       'Location cleanup could not finish. Retry before continuing.',
     'storage' => 'Secure storage is unavailable. Unlock your phone and retry.',

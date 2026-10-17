@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase2 Task6 encounter matching and Home; awaiting device evidence**. API contract: `1.5.0`; experiment contract `phase0.v1`.
+Current phase: **Phase3 Task7 implemented; awaiting device test and push setup**. API contract: `1.6.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -75,12 +75,12 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 7: Relationship policy and notifications
 
-- [ ] Test ineligible target denied, private save invisible to subject, saved eligibility survives history expiry. — **not started**
-- [ ] Test inverse request race, sender accepting own request, duplicate accept, expired request and seven-day cooldown. — **not started**
-- [ ] Implement atomic pair transitions and unique constraints; no implicit connection from reciprocal request. — **not started**
-- [ ] Implement Saved/Incoming/Sent screens with status, cancel/accept/decline and unavailable states. — **not started**
-- [ ] Implement FCM/APNs device registration and transactional notification fan-out; generic payloads, pair six-hour cooldown, user cap default ten encounter alerts/day with in-app history unaffected. — **not started**
-- [ ] Test notification worker retry, invalid token cleanup, opt-out, delayed historical match, block/deletion between enqueue and send. — **not started**
+- [x] Test ineligible target denied, private save invisible to subject, saved eligibility survives history expiry. — **verified — private/directed/durable/unsave API tests**
+- [x] Test inverse request race, sender accepting own request, duplicate accept, expired request and seven-day cooldown. — **verified — canonical concurrency, idempotency, expiry/cooldown tests**
+- [x] Implement atomic pair transitions and unique constraints; no implicit connection from reciprocal request. — **verified — migration0007, pair locks, rollback and inverse-race tests**
+- [ ] Implement Saved/Incoming/Sent screens with status, cancel/accept/decline and unavailable states. — **implemented and locally verified; awaiting device test — mobile Likes/profile controls, responsive/state tests**
+- [ ] Implement FCM/APNs device registration and transactional notification fan-out; generic payloads, pair six-hour cooldown, user cap default ten encounter alerts/day with in-app history unaffected. — **implemented and locally verified; real delivery blocked — no Firebase/APNs setup; native compile/provider fixtures are not device evidence**
+- [x] Test notification worker retry, invalid token cleanup, opt-out, delayed historical match, block/deletion between enqueue and send. — **verified locally —14 notification integration cases and provider fixtures; real provider/device tests pending**
 
 ## Phase 4 — media and messaging
 
@@ -432,3 +432,38 @@ Actual final checks: analyzer clean; all163 Flutter tests and7 Python tooling te
 One fresh read-only review found four issues. Failing regressions reproduced each before fixes: header vertically centered by expanded Stack, summary error hiding signout/options, pending review unable to refresh, and backend-only upload readiness. All four regressions pass after correction. Source inspection does not prove physical gestures/OS behavior or real media readiness. A formatter telemetry sandbox warning was resolved by rerunning formatting with required local SDK access; final formatting/analyzer pass.
 
 Source commits: f2ace5f (dropdown),7fc83d5 (one save action),06e2f33 (verification/refresh/readiness),b5e09ac (profile surface/options/routing). Test source b5e09ac or later documentation-only head on feature/encounter-discovery. Existing draft: https://github.com/awais-ur-rehman/paths-mobile/pull/6 . Follow docs/PROFILE_UI_RETEST.md before accepting the changed visuals; Task6's broader physical evidence remains pending.
+
+
+## Task6 approval and Task7 start
+
+Owner tested the current mobile build on a physical Android phone, accepted it and explicitly authorized PR merges and Task7. PR6 merged into development: backend158919e, admin dabf953, mobile2af063d. Main unchanged. Pre-merge verification: backend15unit/13Phase0/52integration, mobile163Flutter, admin2transport/3browser and lint/type/build checks pass; backend/admin hosted CI green. First concurrent backend run timed out creating the isolated test database; isolated rerun passed. This acceptance does not invent case-by-case paired-phone/network/battery or signed iOS results.
+
+Task7 execution: feature/relationships-notifications branched from each merged development head. See task7-relationships-plan.md for every step and dependencies. Push project/APNs setup requested from the owner; no credentials/config files present in source. Continue independent relationships/in-app notification work while genuine provider/device evidence is pending. No service creation or deployment authorized.
+
+## Task7 implementation and local evidence — 2026-10-17
+
+Status: **implemented, locally verified, awaiting device test; real push blocked on owner setup**. API1.6.0. Branch `feature/relationships-notifications` in all three repositories. Task8 is not started through the pending Task7 device gate; main remains unchanged. Backend source584812f, mobile8ee055f, admin4df3afd; subsequent commits record checks/instructions only.
+
+Coverage/files: backend migrations0007–0009 and modules/relationships, modules/notifications, outbox/dispatcher and worker implement private directed saves, canonical pair/request transactions, idempotency,14-day expiry, seven-day cooldown, status pages, encrypted session/install-bound tokens, inbox/preferences/resolution/read, durable fanout and FCM/APNs adapters. Mobile features/relationships and features/notifications, shared authenticated transport, native Android push/PathsPush.kt and iOS/PathsPushNotifications.swift implement Likes Saved/Incoming/Sent, profile actions/confirmation, working Home/Likes/Profile navigation, inbox/preferences, opt-in OS permission/token/tap handling and logout cleanup. Admin consumes the real1.6 export/readiness version; its business portal remains scheduled for Task11.
+
+Checks actually executed:
+- Backend lint, TypeScript build/typecheck: passed. `npm test`:19 unit +13 Phase0 passed. Full `npm run test:integration`:74 passed, including8 relationship and14 notification cases. Real PostgreSQL/PostGIS/Valkey used; push transport fixtures isolated from live providers.
+- Compose rebuilt with existing images and `--pull never`; migration0009 and service health passed. `stack:verify`: restart persistence, recovered worker probe, nonroot and clean shutdown passed. `auth:verify`, `encounters:verify`, and `node --env-file=.env.local dist/scripts/verify-relationships.js`: synthetic real HTTP/worker checks passed. No real provider send occurred.
+- Mobile `analyze --no-pub`: passed with no issues. Full Flutter suite187 passed; explicit request confirmation, save rollback, intent retry keys, cancellation/account-switch races, tab/return refresh, preferences and inbox320/390/768px at200% included. Likes render inspected with bundled fonts/icons. Seven Python/native policy/generator tests passed with cache access. All three OpenAPI artifacts match byte for byte; Dart/TypeScript consumers regenerated from the real export.
+- Native Android Debug assembly passed after owner-approved Firebase common/installations artifact downloads; a later strict offline assembly passed. Unsigned generic iOS Debug compiled the APNs bridge with automatic package resolution disabled/resolved-file-only mode. These are compile checks, not device delivery evidence.
+- Admin lint/build/types,2 transport tests and3 local Chromium checks passed with API1.6 readiness fixtures.
+
+Review corrections and observed failures:
+- One fresh whole-branch read-only review found three issues: a failed push clear could skip tracking cleanup; cross-screen saves could leave stale Home/Likes state; cooldown pair metadata never expired. Independent cleanup attempts, route/tab refresh and bounded indexed six-hour cooldown deletion now cover these. A separate reproduced regression showed restore clearing push opt-in on every refresh; restore now preserves valid-session opt-in and logout still clears it. Tests cover the failure paths. Expired cooldown retention and restore tests were observed failing before their fixes.
+- Active encounter dedup parents must outlive30-day inbox cards; the notification retention regression was reproduced and fixed without deleting active encounter intents.
+- Full integration initially failed because two relationship tests counted unrelated request fixtures globally; assertions now scope their own participants and full74 rerun passed. Initial admin browser fixtures still advertised1.5; updated to1.6 and all3 passed. A screenshot fixture required runAsync for actual file writes; fixed and rerendered. Initial sandbox native-policy probe lacked Swift cache access; authorized rerun passed. One overlapping stack-check run stopped the worker under another check; isolated rerun passed, without changing service/database budgets. Idle PostgreSQL disconnect during the intentional restart emits the existing safe database_connection_failed event.
+- Initial offline Android build identified firebase-common22.0.1 and firebase-installations19.1.1; owner then authorized only required Android push/transitive dependencies. No other SDK/tool/package/image was installed for this task. Existing Gradle deprecation warnings remain; no speculative AGP migration.
+
+Material decisions (confirmed product rules versus implementation defaults):
+- Confirmed: private saves do not notify subjects; no reciprocal auto-accept;14-day requests, seven-day cooldown; generic push; per-recipient/pair6h and ten encounter alerts/UTCday; current authorization always rechecked. Directed save eligibility and pause preserving established saved/request/connected eligibility follow optional location/durable save rules. Cost if a stricter pause policy is chosen later: tighten that eligibility predicate; no extra location retention was introduced.
+- Proposed defensive defaults:60/account-hour relationship mutations with IP/install buckets; max5 push registrations/account; monotonic persisted install generation; encounter push staleness120sec/request24h; inbox30days; closed request minimal IDs retained without arbitrary new TTL. Wrong defaults can be changed centrally, but require policy/data-migration review where retention changes. No values are represented as measured field results.
+- Native Android cached Firebase Messaging25.1.3 plus system APNs avoids an extra Flutter/Firebase iOS SDK dependency. Cost: maintain the small native bridges and validate each signed device platform separately.
+
+Outstanding prerequisites/known limits: owner explicitly reports no Firebase/APNs setup. Real Android foreground/background/locked-phone delivery, token rotation, OS permission changes and taps must be tested after private setup. iOS needs Apple team capability/provisioning and a signed physical iPhone; unsigned build and Android evidence do not validate it. At-least-once provider delivery can duplicate after a provider acceptance/database failure; Android event binding/dedup and collapse IDs reduce repeats, never promise exactly once. Already accepted APNs generic alerts may arrive after logout; server tap resolution still denies former-account access. OS force-stop/power/network behavior is best effort. See PUSH_SETUP.md and mobile TASK7_DEVICE_TESTS.md. No invented battery/accuracy/push outcome, no deployment or cloud-service creation.
+
+Published Task7 drafts (base development, head feature/relationships-notifications): [backend PR7](https://github.com/awais-ur-rehman/paths-backend/pull/7), [admin PR7](https://github.com/awais-ur-rehman/paths-admin/pull/7), [mobile PR7](https://github.com/awais-ur-rehman/paths-mobile/pull/7). All three branches were pushed. Task7 is not merged; real push/device gate is pending. Main unchanged. Owner next action: mobile docs/TASK7_DEVICE_TESTS.md; private push configuration is separately documented in PUSH_SETUP.md.

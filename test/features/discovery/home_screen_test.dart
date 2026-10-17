@@ -55,6 +55,34 @@ Widget app(
   ),
 );
 void main() {
+  testWidgets('returning from a peer refreshes Home relationship metadata', (
+    tester,
+  ) async {
+    final repo = HomeFixture();
+    final returned = Completer<void>();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        home: HomeScreen(
+          repository: repo,
+          onProfile: (_) => returned.future,
+          onLocationSetup: () {},
+          mapStyleUrl: '',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final before = repo.modes.length;
+    await tester.tap(find.byType(EncounterCard).first);
+    await tester.pump();
+    expect(repo.modes.length, before);
+    returned.complete();
+    await tester.pumpAndSettle();
+    expect(repo.modes.length, before + 1);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
     'an in-flight refresh does not rebuild unchanged encounter cards',
     (tester) async {

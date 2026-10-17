@@ -15,6 +15,13 @@ import '../features/discovery/domain/encounter_repository.dart';
 import '../features/discovery/presentation/home_screen.dart';
 import '../features/profile/presentation/peer_profile_screen.dart';
 import 'discovery_shell.dart';
+import '../core/platform/push_client.dart';
+import '../features/notifications/data/notification_repository.dart';
+import '../features/notifications/presentation/notification_screen.dart';
+import '../features/notifications/presentation/notification_settings.dart';
+import '../shared/widgets/paths_toast.dart';
+import '../features/relationships/data/relationship_repository.dart';
+import '../features/relationships/presentation/likes_screen.dart';
 import '../features/auth/presentation/entry_screens.dart';
 import '../features/auth/presentation/credential_screens.dart';
 import '../features/auth/presentation/otp_screen.dart';
@@ -44,6 +51,9 @@ GoRouter createAuthRouter(
   VerificationRepository verification, {
   LocationSyncService? locations,
   EncounterRepository? encounters,
+  RelationshipRepository? relationships,
+  NotificationRepository? notifications,
+  PushClient? push,
 }) {
   final profileRoute = GoRoute(
     path: '/profile',
@@ -78,6 +88,9 @@ GoRouter createAuthRouter(
                       '/profile',
                       if (locations != null) '/setup/permissions',
                       if (encounters != null) '/home',
+                      if (relationships != null) '/likes',
+                      if (notifications != null) '/notifications',
+                      if (notifications != null) '/settings/notifications',
                       if (encounters != null && path.startsWith('/profiles/'))
                         path,
                     ].contains(path)
@@ -133,7 +146,8 @@ GoRouter createAuthRouter(
         profileRoute
       else
         StatefulShellRoute.indexedStack(
-          builder: (_, _, shell) => DiscoveryShell(shell: shell),
+          builder: (_, _, shell) =>
+              DiscoveryShell(shell: shell, hasLikes: relationships != null),
           branches: [
             StatefulShellBranch(
               routes: [
@@ -141,9 +155,16 @@ GoRouter createAuthRouter(
                   path: '/home',
                   builder: (context, _) => HomeScreen(
                     repository: encounters,
+                    relationships: relationships,
                     locations: locations,
-                    onProfile: (id) =>
-                        context.push('/profiles/${Uri.encodeComponent(id)}'),
+                    onProfile: (id) async {
+                      await context.push(
+                        '/profiles/${Uri.encodeComponent(id)}',
+                      );
+                    },
+                    onNotifications: notifications == null
+                        ? null
+                        : () => context.push('/notifications'),
                     onLocationSetup: () => context.go(
                       locations == null ? '/profile' : '/setup/permissions',
                     ),
@@ -151,6 +172,22 @@ GoRouter createAuthRouter(
                 ),
               ],
             ),
+            if (relationships != null)
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/likes',
+                    builder: (context, _) => LikesScreen(
+                      repository: relationships,
+                      onProfile: (id) async {
+                        await context.push(
+                          '/profiles/${Uri.encodeComponent(id)}',
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             StatefulShellBranch(routes: [profileRoute]),
           ],
         ),
@@ -159,6 +196,25 @@ GoRouter createAuthRouter(
           path: '/profiles/:id',
           builder: (context, route) => PeerProfileScreen(
             repository: summaries,
+            relationships: relationships,
+            onOpened:
+                notifications == null ||
+                    route.uri.queryParameters['notification'] == null
+                ? null
+                : () async {
+                    try {
+                      await notifications.read(
+                        route.uri.queryParameters['notification']!,
+                      );
+                    } catch (_) {
+                      if (context.mounted) {
+                        PathsToast.show(
+                          context,
+                          'Opened. Could not mark as read.',
+                        );
+                      }
+                    }
+                  },
             userId: route.pathParameters['id']!,
             onBack: () {
               if (context.canPop()) {
@@ -168,6 +224,38 @@ GoRouter createAuthRouter(
               }
             },
           ),
+        ),
+      if (notifications != null)
+        GoRoute(
+          path: '/notifications',
+          builder: (context, _) => NotificationScreen(
+            repository: notifications,
+            onSettings: () => context.push('/settings/notifications'),
+            onOpen: (id) async {
+              final account = notifications.accountId;
+              final destination = await notifications.resolve(id);
+              if (!context.mounted || account != notifications.accountId) {
+                return;
+              }
+              if (destination.destination == 'profile' &&
+                  destination.targetId != null) {
+                await context.push(
+                  '/profiles/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
+                );
+              } else {
+                PathsToast.show(
+                  context,
+                  'This notification is no longer available.',
+                );
+              }
+            },
+          ),
+        ),
+      if (notifications != null)
+        GoRoute(
+          path: '/settings/notifications',
+          builder: (_, _) =>
+              NotificationSettings(repository: notifications, push: push),
         ),
       if (locations != null)
         GoRoute(

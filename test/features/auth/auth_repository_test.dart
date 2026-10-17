@@ -258,6 +258,61 @@ class ApiAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test(
+    'push cleanup failure still clears tracking and local credentials',
+    () async {
+      final adapter = ApiAdapter(), vault = MemoryVault();
+      bool stopped = false;
+      final repo = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: vault,
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+        purgeNotifications: () async {
+          throw StateError('fixture push failure');
+        },
+        purgeTracking: () async {
+          stopped = true;
+        },
+      );
+      await repo.login('fixture@example.invalid', 'a long fixture password');
+      await expectLater(
+        repo.logout(),
+        throwsA(
+          isA<AuthFailure>().having((e) => e.code, 'code', 'push_cleanup'),
+        ),
+      );
+      expect(stopped, true);
+      expect(vault.value, isNull);
+      await repo.close();
+    },
+  );
+
+  test(
+    'refresh preserves push opt-in while logout clears the native binding',
+    () async {
+      final adapter = ApiAdapter();
+      int clears = 0;
+      final repo = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: MemoryVault(),
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+        purgeNotifications: () async {
+          clears++;
+        },
+      );
+      await repo.login('fixture@example.invalid', 'a long fixture password');
+      await repo.restore();
+      expect(clears, 0);
+      await repo.logout();
+      expect(clears, 1);
+      await repo.close();
+    },
+  );
+
   test('failed sign-out tombstone still clears vault and retries cleanup before restore', () async {
     final vault = MemoryVault(),
         preferences = MemoryPreferences(),

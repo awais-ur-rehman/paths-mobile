@@ -40,6 +40,7 @@ class EncounterAdapter extends ApiAdapter {
             'encounterDate': '2026-10-17',
             'encounterCount': 2,
             'requestState': 'none',
+            'isSaved': true,
             'eligibilityExpiresAt': '2026-11-16',
           },
         ],
@@ -74,6 +75,7 @@ void main() {
     );
     expect(page.items.single.userId, 'peer-a');
     expect(page.items.single.encounterCount, 2);
+    expect(page.items.single.isSaved, true);
     expect(page.items.single.timeLabel, 'Recently');
     expect(adapter.discovery!.headers['Authorization'], 'Bearer old-access');
     expect(adapter.discovery!.uri.queryParameters, {

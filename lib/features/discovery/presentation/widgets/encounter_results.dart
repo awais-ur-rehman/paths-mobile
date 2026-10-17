@@ -6,16 +6,19 @@ import '../../../../shared/widgets/paths_loader.dart';
 import '../../domain/encounter_repository.dart';
 import '../encounter_bloc.dart';
 import 'encounter_card.dart';
+import '../../../relationships/data/relationship_repository.dart';
 
 class EncounterResults extends StatelessWidget {
   const EncounterResults({
     required this.gutter,
+    this.relationships,
     required this.mapFailed,
     required this.onProfile,
     required this.onLocationSetup,
     super.key,
   });
   final double gutter;
+  final RelationshipRepository? relationships;
   final bool mapFailed;
   final ValueChanged<String> onProfile;
   final VoidCallback onLocationSetup;
@@ -110,6 +113,7 @@ class EncounterResults extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: EncounterCard(
                       encounter: item,
+                      relationships: relationships,
                       onTap: () => onProfile(item.userId),
                     ),
                   ),

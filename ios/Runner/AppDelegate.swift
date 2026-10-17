@@ -3,6 +3,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private let push = PathsPushNotifications()
   private let tracker = PathsLocationTracker()
   private var channel: FlutterMethodChannel?
   override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
@@ -10,9 +11,12 @@ import UIKit
     NotificationCenter.default.addObserver(forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main) { [weak self] _ in self?.tracker.visibility(false) }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+  override func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) { push.registered(deviceToken); super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken) }
+  override func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) { push.failRegistration(); super.application(application, didFailToRegisterForRemoteNotificationsWithError: error) }
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PathsLocation") else { return }
+    push.attach(registrar.messenger())
     let channel = FlutterMethodChannel(name: "paths/location", binaryMessenger: registrar.messenger())
     self.channel = channel
     tracker.emit = { [weak channel] event in channel?.invokeMethod("event", arguments:event) }

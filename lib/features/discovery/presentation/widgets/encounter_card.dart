@@ -3,15 +3,19 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/paths_avatar.dart';
 import '../../../../app/theme/paths_tokens.dart';
 import '../../domain/encounter_repository.dart';
+import '../../../relationships/data/relationship_repository.dart';
+import '../../../relationships/presentation/save_button.dart';
 
 class EncounterCard extends StatelessWidget {
   const EncounterCard({
     required this.encounter,
     required this.onTap,
+    this.relationships,
     super.key,
   });
   final Encounter encounter;
   final VoidCallback onTap;
+  final RelationshipRepository? relationships;
   @override
   Widget build(BuildContext context) {
     final muted = Theme.of(context).extension<PathsTokens>()!.muted;
@@ -68,6 +72,13 @@ class EncounterCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (relationships != null)
+                SaveButton(
+                  key: ValueKey(encounter.userId),
+                  repository: relationships!,
+                  target: encounter.userId,
+                  saved: encounter.isSaved,
+                ),
             ],
           ),
         ),

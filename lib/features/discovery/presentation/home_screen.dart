@@ -14,6 +14,7 @@ import 'encounter_bloc.dart';
 import 'location_cubit.dart';
 import 'widgets/encounter_card.dart';
 import 'widgets/encounter_map.dart';
+import '../../relationships/data/relationship_repository.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -21,12 +22,16 @@ class HomeScreen extends StatelessWidget {
     required this.onProfile,
     required this.onLocationSetup,
     this.locations,
+    this.relationships,
+    this.onNotifications,
     this.mapStyleUrl = const String.fromEnvironment('PATHS_MAP_STYLE_URL'),
     super.key,
   });
   final EncounterRepository repository;
-  final ValueChanged<String> onProfile;
+  final RelationshipRepository? relationships;
+  final FutureOr<void> Function(String) onProfile;
   final VoidCallback onLocationSetup;
+  final VoidCallback? onNotifications;
   final LocationSyncService? locations;
   final String mapStyleUrl;
   @override
@@ -46,6 +51,20 @@ class _HomeOwnerState extends State<_HomeOwner> {
   AppLifecycleListener? _lifecycle;
   late bool _showMap = validMapStyle(widget.configuration.mapStyleUrl);
   bool _mapFailed = false;
+  bool _active = true;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final active = TickerMode.valuesOf(context).enabled;
+    if (active && !_active) bloc.add(const RefreshEncounters());
+    _active = active;
+  }
+
+  Future<void> _openProfile(String id) async {
+    await widget.configuration.onProfile(id);
+    if (mounted) bloc.add(const RefreshEncounters());
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,9 +108,10 @@ class _HomeOwnerState extends State<_HomeOwner> {
                 padding: const EdgeInsets.only(bottom: 12),
                 child: EncounterCard(
                   encounter: item,
+                  relationships: widget.configuration.relationships,
                   onTap: () {
                     Navigator.pop(context);
-                    widget.configuration.onProfile(item.userId);
+                    unawaited(_openProfile(item.userId));
                   },
                 ),
               ),
@@ -162,6 +182,16 @@ class _HomeOwnerState extends State<_HomeOwner> {
                                 children: [
                                   const PathsWordmark(width: 116),
                                   const Spacer(),
+                                  if (widget.configuration.onNotifications !=
+                                      null)
+                                    IconButton(
+                                      tooltip: "Notifications",
+                                      onPressed:
+                                          widget.configuration.onNotifications,
+                                      icon: const Icon(
+                                        Icons.notifications_outlined,
+                                      ),
+                                    ),
                                   _locationButton(),
                                 ],
                               ),
@@ -238,9 +268,10 @@ class _HomeOwnerState extends State<_HomeOwner> {
                           },
                         ),
                       EncounterResults(
+                        relationships: widget.configuration.relationships,
                         gutter: gutter,
                         mapFailed: _mapFailed,
-                        onProfile: widget.configuration.onProfile,
+                        onProfile: (id) => unawaited(_openProfile(id)),
                         onLocationSetup: widget.configuration.onLocationSetup,
                       ),
                     ],

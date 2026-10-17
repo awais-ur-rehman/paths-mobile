@@ -7,6 +7,8 @@ const encounterRadii = [.5, 1.0, 3.0, 5.0];
 final class Encounter {
   const Encounter({
     required this.encounterId,
+    this.isSaved = false,
+    this.requestState = "none",
     required this.userId,
     required this.username,
     required this.displayName,
@@ -34,6 +36,8 @@ final class Encounter {
       encounterDate,
       eligibilityExpiresAt;
   final int age, encounterCount;
+  final bool isSaved;
+  final String requestState;
   final double areaLatitude, areaLongitude;
   String get timeLabel => switch (timeBucket) {
     'recently' => 'Recently',
