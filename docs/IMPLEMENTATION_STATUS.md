@@ -566,3 +566,8 @@ Final native evidence for8cfb4e3: unsigned generic iphoneos Debug compiles with 
 ## Firebase Android configuration — 2026-10-18
 
 Owner authorized project creation and notification setup on Spark without billing. Created paths-awais and Android com.paths.mobile, enabled FCM, and configured a dedicated sending service account in ignored local files. Cloud Billing reports disabled/no account linked. Backend build,4 push unit tests, real OAuth and FCM validation-only checks pass. Worker is healthy with a read-only secret mount; APNs remains unconfigured. Offline Android235-task build and exact APK kernel/options checks pass. Runtime delivery/permission/tap/account-switch tests await the owner; no live delivery is claimed. R2 credentials pass read-only bucket access, with no storage switch or migration. No app source changed; main and later-task hold remain unchanged. See [Firebase Android handoff](FIREBASE_ANDROID_HANDOFF.md) for evidence, setup and numbered owner tests.
+
+
+## Owner image acceptance and Task9 authorization — 2026-10-18
+
+Owner confirms images work on their physical Android phone and authorizes pending PR merges and Task9. Fresh218 Flutter tests pass. This acceptance covers image functionality; physical FCM/APNs delivery, iOS runtime and quantitative field checks remain separate evidence. Main stays unchanged. Task9 starts after development integration, with owner approval for required Socket.IO dependencies.
