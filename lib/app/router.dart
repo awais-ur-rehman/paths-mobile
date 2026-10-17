@@ -50,6 +50,7 @@ GoRouter createAuthRouter(
     builder: (context, _) => ProfilePreviewScreen(
       repository: summaries,
       userId: cubit.state.account!.id,
+      onBack: encounters == null ? null : () => context.go('/home'),
       onLocationSetup: locations == null
           ? null
           : () => context.go('/setup/permissions'),

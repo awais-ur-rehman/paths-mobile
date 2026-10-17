@@ -63,6 +63,8 @@ void main() {
       await tap(tester, 'Home');
       expect(adapter.discovery!.uri.queryParameters['mode'], 'nearby');
       await tap(tester, 'Profile');
+      await tester.tap(find.byTooltip('Profile options'));
+      await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
       expect(find.text('Good to see you'), findsOneWidget);
       router.go('/home');
