@@ -1,6 +1,6 @@
-# API contract1.2.0
+# API contract1.4.0
 
-Pinned openapi/paths.v1.json is byte-identical to the real backend Nest export. Run `python3 tools/generate_api_contract.py`, then `dart format lib/core/network/generated/api_contract.dart`. The tested generator supports required strings/booleans/enums and fails explicitly for unsupported optional/nested shapes. Generated DTOs carry the source SHA256; never edit them manually.
+Pinned openapi/paths.v1.json is byte-identical to the real backend Nest export. Run `python3 tools/generate_api_contract.py`, then `dart format lib/core/network/generated/api_contract.dart`. The tested generator supports required scalar arrays and arrays of known schema references, strings/booleans/numbers/enums and nullable/optional scalars. It rejects unsupported inline/optional nested shapes. Generated DTOs carry the source SHA256; never edit them manually.
 
 HttpAuthRepository uses separate public and authenticated Dio transports, bounded timeouts and typed safe failures. PlatformTokenVault owns secure session persistence; SharedPreferences holds only install/onboarding/tombstone/device markers. Bootstrap explicitly restores against server metadata. AuthCubit and router guard onboarding/OTP/reset/setup/restriction states. The old private location experiment is isolated at lib/main_phase0.dart.
 
@@ -11,3 +11,5 @@ Public config provides supportEmail/termsUrl/privacyUrl only; SMTP/R2/auth secre
 API1.2.0 added authenticated adult-only GET/PUT /v1/me/profile for private editable details. Input has username/name/gender/bio only. Response excludes DOB and explicitly does not complete setup.
 
 API1.3.0 adds optional visibility to profile writes and required visibility to details; GET /v1/profiles/:id returns an allowlisted own basic summary including calendar age. Peer eligibility is denied until Task6. GET/POST /v1/me/verification and POST /v1/me/verification/skip return typed status/offerSeen/availability/private decline reason. Submit requires explicit true consent and processed owned front/back assets; live adapter is unavailable until Task8. Nullable required reason and optional back/visibility fields are generated with precise scalar guards; optional null inputs are omitted. No DOB, raw documents or private object URL is exposed.
+
+API1.4.0 adds full-session GET /v1/me/location, POST /v1/me/location/pause and /lease with expectedConsentEpoch. The native location-only capability authorizes only POST /v1/locations/batch and /stop. Batch receipts contain accepted/duplicate/rejected/acknowledged IDs without coordinates. The generated DTOs parse immutable typed arrays and validate per-item/rejection enums; repository adapters keep transport objects out of presentation. No new admin workflow is introduced.

@@ -30,6 +30,8 @@ import UIKit
         case "pause", "stopAndPurge": self.tracker.stop(); result(nil)
         case "pendingSamples": result(try self.tracker.pending())
         case "status": result(self.tracker.status())
+        case "permissions": result(self.tracker.permissions())
+        case "flushPending": self.tracker.flush(); result(nil)
         case "queueCount": result(try self.tracker.pending().count)
         case "acknowledge": try self.tracker.acknowledge(call.arguments as? [String] ?? []); result(nil)
         case "requestForegroundPermission": self.tracker.requestForeground { granted in result(granted) }

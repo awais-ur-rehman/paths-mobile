@@ -9,6 +9,7 @@ import '../../../core/network/generated/api_contract.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
+import '../../discovery/domain/location_repository.dart';
 import '../../verification/domain/verification_repository.dart';
 import '../domain/auth_repository.dart';
 
@@ -17,7 +18,8 @@ final class HttpAuthRepository
         AuthRepository,
         ProfileRepository,
         ProfileSummaryRepository,
-        VerificationRepository {
+        VerificationRepository,
+        LocationRepository {
   HttpAuthRepository({
     required String origin,
     required this._vault,
@@ -515,6 +517,71 @@ final class HttpAuthRepository
       ),
     ),
   );
+
+  @override
+  String? get currentTrackingAccountId => _session?.account.id;
+  TrackingControl _trackingControl(TrackingControlDto dto) =>
+      TrackingControl(dto.consentEpoch, dto.paused);
+  @override
+  Future<TrackingControl> trackingState({CancelToken? cancelToken}) async =>
+      _trackingControl(
+        TrackingControlDto.fromJson(
+          await _request(
+            'GET',
+            '/v1/me/location',
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        ),
+      );
+  @override
+  Future<TrackingControl> pauseTracking(
+    int expectedConsentEpoch, {
+    CancelToken? cancelToken,
+  }) async => _trackingControl(
+    TrackingControlDto.fromJson(
+      await _request(
+        'POST',
+        '/v1/me/location/pause',
+        authenticated: true,
+        cancelToken: cancelToken,
+        data: TrackingControlInput(expectedConsentEpoch: expectedConsentEpoch)
+            .toJson(),
+      ),
+    ),
+  );
+  @override
+  Future<LocationLease> createTrackingLease(
+    int expectedConsentEpoch, {
+    CancelToken? cancelToken,
+  }) async {
+    final id = List.generate(
+      16,
+      (_) => Random.secure().nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+    final dto = TrackingLeaseDto.fromJson(
+      await _request(
+        'POST',
+        '/v1/me/location/lease',
+        authenticated: true,
+        cancelToken: cancelToken,
+        data: TrackingLeaseInput(
+          expectedConsentEpoch: expectedConsentEpoch,
+          requestId: id,
+          clientTimeMs: DateTime.now().millisecondsSinceEpoch,
+          disclosureVersion: 'location.v1',
+          consentAccepted: true,
+        ).toJson(),
+      ),
+    );
+    return LocationLease(
+      dto.deviceSessionId,
+      dto.consentEpoch,
+      dto.uploadToken,
+      DateTime.parse(dto.expiresAt),
+      dto.serverTimeMs,
+    );
+  }
 
   @override
   Future<bool> onboardingSeen() async =>

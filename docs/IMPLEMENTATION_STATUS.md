@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase1 Task4 profile/privacy and optional verification; awaiting Task4 device test, real media deferred to Task8**. API contract: `1.3.0`; experiment contract `phase0.v1`.
+Current phase: **Phase2 Task5 consent-aware ingestion; implemented, awaiting physical-device tests**. API contract: `1.4.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -47,19 +47,19 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 - [x] Build tokens/components from UI doc; record reference-to-product substitutions. — **verified locally — PathsTokens, shared neutral avatar/badge, original vector feedback; approved white auth surfaces retained**
 - [x] Test username uniqueness, private DOB exclusion, adult gate, public/private response fields and CNIC skip entitlement. — **verified — real profile-access suite and private/public allowlist tests; strangers denied until Task6**
-- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **implemented; awaiting device test — details/privacy/edit/preview and real status/skip persist; test-only media exercises submit; real uploads/profile completion blocked by Task8 as specified**
+- [ ] Implement profile setup/edit and verification submit/status against upload contracts from Task8 (use mocked pending asset until then). — **implemented and accepted by owner on Android — details/privacy/edit/preview and real status/skip persist; PR4 merged; real uploads/profile completion blocked by Task8 as specified**
 - [x] Add selective rebuild checks for badge/save/status and controller disposal tests where relevant. — **verified locally — unchanged badge instance on consent change; single-flight save; cancellation, late-success and upload-skip regressions**
-- [x] Verify layouts at 320/390/768 widths and 200% text; add meaningful golden tests with approved assets. — **verified locally — profile/edit/review scroll and keyboard fixtures; own-profile and review goldens inspected; physical rendering awaits owner**
+- [x] Verify layouts at 320/390/768 widths and 200% text; add meaningful golden tests with approved assets. — **verified locally and accepted by owner on Android — responsive/keyboard fixtures and inspected profile/review goldens; iOS runtime remains separate**
 
 ## Phase 2 — location ingestion, matching and discovery
 
 
 ### Task 5: Consent-aware ingestion
 
-- [ ] Test max50 batch, invalid coordinate, future>30sec, stale>15min, duplicate ID, old device lease and paused/deleting account rejection. — **not started**
-- [ ] Implement transactionally stored sample/outbox records and 24h retention worker. — **not started**
-- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **not started**
-- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **not started**
+- [x] Test max50 batch, invalid coordinate, future>30sec, stale>15min, duplicate ID, old device lease and paused/deleting account rejection. — **verified — real PostGIS location-ingest cases and policy boundary tests**
+- [x] Implement transactionally stored sample/outbox records and 24h retention worker. — **verified — migration0005, atomic rollback/dedup, bounded sample/orphan intent retention and deletion cases pass**
+- [ ] Integrate disclosure, staged native permissions and bounded encrypted queue; never upload after local pause. — **implemented; awaiting device test — native uploader and disclosure integrated; offline Android/unsigned iOS compilation and Flutter control tests pass; OS behavior pending**
+- [ ] Test offline control ordering: pause/logout clears queued fixes and invalidates prior epochs before any resume batch. — **verified in automated models/API; awaiting device test — stale generation, account switch, late stop, queued purge/retry regressions pass; native runtime requires owner evidence**
 
 ### Task 6: Encounter matcher and privacy-safe Home
 
@@ -328,3 +328,45 @@ Executed: backend lint/typecheck/build,8 unit +13 retained Phase0 +31 real PostG
 Fresh read-only branch review found one Important missing-profile navigation dead end. Reproduced an adult/no-details→review→skip→summary404 journey, added explicit Back to profile setup recovery, and reran the full suite. Generator review also caught Swagger boolean-enum emission as number; an API contract regression now protects boolean consent. A raw database DATE parser mismatch was fixed by selecting explicit calendar text. Skip during fixture upload cancels and ignores late completion; duplicate pending submissions and profile saves are guarded.
 
 Current handoff: mobile docs/TASK4_DEVICE_TESTS.md. Task4 is not marked complete: owner phone retest remains pending; required photo and live CNIC uploads are explicitly blocked until Task8 media processing/private storage/ownership FKs. Full profileComplete remains false, no fake Home/post grid or approved badge is invented. Test-only processed/pending assets establish workflow behavior without collecting images. Task6 eligibility and Task11 reviewer decisions remain separate plan dependencies. iOS runtime, earlier quantitative Phase0 evidence and actual Gmail delivery remain distinct release checks. No Task4 PR merge or main promotion is implied by local checks.
+
+
+## Task4 approval and Task5 start (2026-10-17)
+
+Owner tested Task4 on physical Android, accepted it and explicitly authorized merge/Task5. PR4 merged into development: backend e3ff075, admin87edbda, mobile0dc6772. Main unchanged. Pre-merge rerun: backend8 unit +13 Phase0 +31 integration tests, mobile115 Flutter tests and admin2 tests pass; backend/admin CI green. This does not invent iOS runtime or quantitative background/battery evidence. Task8 photo/CNIC integration remains pending as planned.
+
+Current phase: Phase2 Task5, feature/location-ingestion. Plan: docs/task5-location-plan.md.
+
+| Task5 checklist | Status | Evidence / dependency |
+|---|---|---|
+| Max50/coordinates/time/dedup/lease/pause/deletion tests | in progress | Write real PostGIS integration cases first |
+| Transactional samples/outbox and24h retention worker | not started | Matching handler remains Task6; no fake matching result |
+| Disclosure/staged permissions/encrypted native queue | in progress | Existing native encrypted200/15min queue; production integration next |
+| Offline pause/logout epoch ordering | not started | Native cancellation plus persisted pending control and expected-epoch server guard |
+| Physical permission/kill cases | awaiting device test | Owner operates phone after final local checks |
+
+
+## Task5 local handoff (2026-10-17)
+
+Current task: **Phase2 Task5 implemented; awaiting owner physical-device test.** API contract1.4.0 is byte-identical to the real Nest export in all three repositories. Regeneration of Dart and TypeScript consumers has no drift. Branch: `feature/location-ingestion`; main is unchanged. Task4 PR4 was merged after explicit owner Android acceptance, superseding the earlier pending Task4 notes above.
+
+Source commits: backend3179a68 (migration, validation, PostGIS sample/outbox and retention), e6a5c4b (scoped control/ingestion API and integration tests), ef58ff0 (worker/stack verification); mobile bef00be (contract/generator),80c0193 (native upload/permission bridge), fe5fe91 (repository, serialized controls, disclosure UI and tests); admin a42df74 (contract/readiness). Files include backend src/modules/locations, db/migrations/0005_locations.sql and test/integration/location-ingest.spec.ts; mobile lib/features/discovery, both native location trackers, test/features/discovery and tools/generate_api_contract.py; admin generated API types/readiness fixtures. Documentation commits follow these source commits and do not change the tested application.
+
+| Applicable Task5 checklist | Status | Evidence / remaining gate |
+|---|---|---|
+| Max50/bounds/time/duplicates/old lease/paused/deleting tests | verified |7 real location integration cases plus finite/inclusive policy boundaries; full38-test suite passes |
+| Atomic samples/matching intent and24h retention | verified | Concurrent retry dedup, transaction rollback, PostGIS/deletion and session-cascade orphan retention regressions pass; worker rebuilt and healthy |
+| Disclosure, staged native permissions, encrypted bounded queue | implemented; awaiting device test | Real native receipt uploader/reachability/backoff and foreground/background choices; analyzer, Flutter fixtures and Android/unsigned iOS builds pass; physical prompts/background/kill not executed |
+| Offline pause/logout/epoch ordering | verified in automated models/API; awaiting device test | Local purge, durable scoped stop, stale control/generation, account/device replacement and retry cases pass; owner runtime evidence pending |
+
+Executed checks: backend lint/typecheck/build,9 unit tests,13 retained Phase0 tests and38 PostGIS/Valkey integration tests pass. The final equivalent SQL readability edit was followed by all7 location integration tests passing. Compose built with existing images and --pull never; migration0005 applied, API/worker/proxy/PostGIS/Valkey/Mailpit healthy. Synthetic signup→OTP→adult→profile→lease→ingest/dedup→pause/reject→reset/logout verifier passes and cleans its own fixture. No real email, private document or phone coordinates were uploaded by the implementer.
+
+Mobile analyzer clean; all133 Flutter tests pass. Six Python tooling tests pass, including actual cached Kotlin/Swift endpoint-guard execution, generator shapes and splash geometry. Permission fixtures cover320/390/768 at100%/200% text; refreshed disclosure golden visually inspected with bundled fonts. Final offline Android Debug assembly passes (177 tasks); unsigned generic iphoneos build passes with automatic package resolution disabled. Admin lint/typecheck/build,2 transport tests and3 installed-Chrome cases pass. Contract copies and regeneration drift checks pass. No package/SDK/image installation or emulator/phone operation occurred.
+
+Review correction: one fresh reviewer found auth-session cascades leaving orphan matching intents. A failing real-DB case reproduced it; bounded user-first aged-orphan cleanup now passes that case. Author control tests also reproduced a slow pause using a newer enable generation; generation capture now occurs before the native await. A full integration run hit shared-schema migration-lock timeouts under concurrent builds; test files now run serially while explicit concurrency cases remain active, and all38 pass. Initial sandbox local-socket/telemetry restrictions were rerun with approved local access; those failed attempts are not presented as passing checks.
+
+Device handoff: paths-mobile/docs/TASK5_DEVICE_TESTS.md, source mobile fe5fe91 and backend ef58ff0 (or their subsequent documentation-only heads). Required owner cases: no automatic capture, coarse/precise/denied/settings, separate background choice/notification, leaving the page, API outage then local pause/restart/reconnect, account switch/logout and force-stop/permission changes. Return sanitized status/count/error-reference observations, never coordinates/tokens. iOS needs separate signed device/HTTPS validation; unsigned compilation is not runtime evidence. No unavailable tool/package currently blocks local Task5 checks. Physical access is reserved to the owner.
+
+Known dependencies: Task6 matching/Home remains unimplemented; matching intents stay pending and expire with their observations. Task8 real profile media/CNIC and Task11 review remain deferred as specified. Quantitative Phase0 battery/encounter accuracy/push latency and iOS runtime are still release evidence. Gmail SMTP requires the owner's private configuration; R2 integration remains Task8. Task5 is not complete and dependent Task6 work does not begin before owner results.
+
+
+Task5 draft PRs into development: [backend#5](https://github.com/awais-ur-rehman/paths-backend/pull/5), [mobile#5](https://github.com/awais-ur-rehman/paths-mobile/pull/5), [admin#5](https://github.com/awais-ur-rehman/paths-admin/pull/5). All remain draft pending the owner device gate. Final branch heads are available on these PRs; application source commits above remain the tested code.

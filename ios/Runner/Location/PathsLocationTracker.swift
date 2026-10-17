@@ -2,6 +2,11 @@ import CoreLocation
 import CryptoKit
 import Foundation
 import Security
+import Network
+
+private final class RejectRedirects: NSObject, URLSessionTaskDelegate {
+ func urlSession(_ session:URLSession,task:URLSessionTask,willPerformHTTPRedirection response:HTTPURLResponse,newRequest request:URLRequest,completionHandler:@escaping(URLRequest?)->Void){completionHandler(nil)}
+}
 
 final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
@@ -16,6 +21,24 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
     private var backgroundCompletion: ((Bool) -> Void)?
     private var endpoint: URL?
     private var testToken: String?
+    private var expiresAtMs=Double.greatestFiniteMagnitude
+    private var monitor:NWPathMonitor?
+    private var retryWork:DispatchWorkItem?
+    private var attempts=0
+    private var retryAt=Date.distantPast
+    private let transport:URLSession = {
+        let config=URLSessionConfiguration.ephemeral;config.urlCache=nil;config.httpCookieStorage=nil;config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration:config,delegate:RejectRedirects(),delegateQueue:nil)
+    }()
+    func permissions()->[String:Bool] {let authorization=manager.authorizationStatus;return ["granted":authorization == .authorizedAlways || authorization == .authorizedWhenInUse,"precise":manager.accuracyAuthorization == .fullAccuracy,"backgroundAllowed":authorization == .authorizedAlways,"servicesEnabled":CLLocationManager.locationServicesEnabled(),"canRequestForeground":authorization == .notDetermined]}
+    func flush(_ reset:Bool=true){if reset {attempts=0;retryAt = .distantPast};sendPending()}
+    private func watchNetwork(){let next=NWPathMonitor();next.pathUpdateHandler = { [weak self] path in if path.status == .satisfied {DispatchQueue.main.async {self?.flush()}}};monitor=next;next.start(queue:DispatchQueue(label:"com.paths.location.reachability"))}
+    private func retryUpload(_ activeSession:String,_ activeEpoch:Int){
+        guard session==activeSession,epoch==activeEpoch,attempts<5 else{return}
+        attempts+=1;lastStatus="offline";emit?(["status":lastStatus])
+        let delay=min(pow(2,Double(attempts-1)),60);retryAt=Date().addingTimeInterval(delay)
+        let work=DispatchWorkItem {[weak self] in self?.flush(false)};retryWork?.cancel();retryWork=work;DispatchQueue.main.asyncAfter(deadline:.now()+delay,execute:work)
+    }
     private var upload: URLSessionDataTask?
     private var lastStatus = "stopped"
     func status() -> String {
@@ -83,16 +106,23 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
     func start(_ policy: [String: Any]) throws {
         stop()
         guard let id = policy["deviceSessionId"] as? String, !id.isEmpty, let nextEpoch = policy["consentEpoch"] as? Int, nextEpoch > 0, policy["policyVersion"] as? String == "adaptive.v1" else { throw TrackerError.policy }
-        guard manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways,
-              manager.accuracyAuthorization == .fullAccuracy else { throw TrackerError.permission }
+        guard manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways else { throw TrackerError.permission }
         background = policy["background"] as? Bool ?? false
         if background && manager.authorizationStatus != .authorizedAlways { throw TrackerError.permission }
         let configured=policy["endpoint"] as? String ?? ""
-        if !configured.isEmpty {
-            guard let parsed=URL(string:configured), parsed.scheme == "https", parsed.host != nil else { throw TrackerError.policy }
-            endpoint=parsed
+        let production=policy["uploadMode"] as? String == "production"
+        if production {
+            #if DEBUG
+            let debug=true
+            #else
+            let debug=false
+            #endif
+            guard UploadEndpointPolicy.valid(configured,debug:debug),let token=policy["uploadToken"] as? String,token.range(of:"^[a-f0-9]{64}$",options:.regularExpression) != nil,let expires=policy["expiresAtMs"] as? NSNumber,expires.doubleValue>Date().timeIntervalSince1970*1000 else {throw TrackerError.policy}
+            endpoint=URL(string:configured);testToken=token;expiresAtMs=expires.doubleValue
+        } else {
+            if !configured.isEmpty {guard let parsed=URL(string:configured),parsed.scheme=="https",parsed.host != nil else {throw TrackerError.policy};endpoint=parsed}
+            testToken=(policy["testToken"] as? String).flatMap{$0.isEmpty ? nil : $0};expiresAtMs = .greatestFiniteMagnitude
         }
-        testToken = (policy["testToken"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         guard (endpoint == nil) == (testToken == nil) else { throw TrackerError.policy }
         startedAt=Date()
         session = id; epoch = nextEpoch; lastStatus = background ? "background" : "active"
@@ -100,6 +130,7 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
         manager.allowsBackgroundLocationUpdates = background
         manager.showsBackgroundLocationIndicator = background
         manager.pausesLocationUpdatesAutomatically = true
+        if endpoint != nil {watchNetwork()}
         configure()
     }
     func visibility(_ visible: Bool) {
@@ -118,9 +149,10 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
         if let previousEndpoint, let previousToken, let previousSession {
             var request=URLRequest(url:previousEndpoint.appendingPathComponent("stop")); request.httpMethod="POST"; request.timeoutInterval=5
             request.setValue("Bearer \(previousToken)",forHTTPHeaderField:"Authorization"); request.setValue("application/json",forHTTPHeaderField:"Content-Type")
-            do { request.httpBody=try JSONSerialization.data(withJSONObject:["deviceSessionId":previousSession,"consentEpoch":previousEpoch]); URLSession.shared.dataTask(with:request).resume() }
+            do { request.httpBody=try JSONSerialization.data(withJSONObject:["deviceSessionId":previousSession,"consentEpoch":previousEpoch]); transport.dataTask(with:request).resume() }
             catch { lastStatus="unavailable" }
         }
+        monitor?.cancel();monitor=nil;retryWork?.cancel();retryWork=nil;attempts=0;retryAt = .distantPast
         upload?.cancel(); upload = nil; endpoint = nil; testToken = nil; lastStatus = "stopped"; session = nil; epoch += 1; sequence = 0; manager.stopUpdatingLocation(); manager.stopMonitoringSignificantLocationChanges(); clearFile(); emit?(["status":lastStatus]) }
     func pending() throws -> [[String: Any]] {
         guard let current = session else { return [] }
@@ -131,17 +163,18 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
         let granted = manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse
         permissionCompletion?(granted); permissionCompletion = nil
         if manager.authorizationStatus == .authorizedAlways { backgroundCompletion?(true); backgroundCompletion=nil }
-        if !granted || manager.accuracyAuthorization != .fullAccuracy || (background && manager.authorizationStatus != .authorizedAlways) { stop() }
+        if !granted || (background && manager.authorizationStatus != .authorizedAlways) { stop() }
     }
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let current = session, foreground || background else { return }
+        if Date().timeIntervalSince1970*1000 >= expiresAtMs {stop();return}
         do {
             var list = try read()
             for fix in locations {
                 let age = Date().timeIntervalSince(fix.timestamp)
                 guard fix.timestamp >= startedAt, age >= -30, age <= 900, fix.horizontalAccuracy >= 0, fix.sourceInformation?.isSimulatedBySoftware != true else { continue }
                 sequence += 1
-                var sample: [String: Any] = ["sampleId": UUID().uuidString, "deviceSessionId": current, "consentEpoch": epoch, "sequence": sequence, "capturedAt": Int64(fix.timestamp.timeIntervalSince1970 * 1000), "latitude": fix.coordinate.latitude, "longitude": fix.coordinate.longitude, "horizontalAccuracyM": fix.horizontalAccuracy, "appState": foreground ? "foreground" : "background", "precisionMode": "precise", "policyVersion": "adaptive.v1"]
+                var sample: [String: Any] = ["sampleId": UUID().uuidString, "deviceSessionId": current, "consentEpoch": epoch, "sequence": sequence, "capturedAt": Int64(fix.timestamp.timeIntervalSince1970 * 1000), "latitude": fix.coordinate.latitude, "longitude": fix.coordinate.longitude, "horizontalAccuracyM": fix.horizontalAccuracy, "appState": foreground ? "foreground" : "background", "precisionMode": manager.accuracyAuthorization == .fullAccuracy ? "precise" : "coarse", "policyVersion": "adaptive.v1"]
                 if fix.speed >= 0 { sample["speedMps"] = fix.speed }
                 list.append(sample)
                 emit?(["sample":sample])
@@ -153,21 +186,28 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
         } catch { stop(); lastStatus="unavailable"; emit?(["status":lastStatus]) }
     }
     private func sendPending() {
-        guard upload == nil, let endpoint, let token = testToken, let activeSession = session else { return }
+        if Date().timeIntervalSince1970*1000 >= expiresAtMs {stop();return}
+        if attempts>=5 && Date()>retryAt.addingTimeInterval(300) {attempts=0}
+        guard attempts<5,Date()>=retryAt,upload == nil, let endpoint, let token = testToken, let activeSession = session else { return }
         let activeEpoch = epoch
         do {
             let batch = Array(try pending().prefix(50)); if batch.isEmpty { return }
             var request = URLRequest(url: endpoint.appendingPathComponent("batch")); request.httpMethod = "POST"; request.timeoutInterval = 5
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization"); request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONSerialization.data(withJSONObject: ["samples": batch])
-            upload = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            upload = transport.dataTask(with: request) { [weak self] data, response, error in
                 DispatchQueue.main.async {
                     guard let self, self.session == activeSession, self.epoch == activeEpoch else { return }
                     self.upload = nil
-                    guard error == nil, (response as? HTTPURLResponse)?.statusCode == 200, let data else { return }
+                    let status=(response as? HTTPURLResponse)?.statusCode ?? 0
+                    if [400,401,403,409,413].contains(status){self.stop();self.lastStatus="unavailable";self.emit?(["status":self.lastStatus]);return}
+                    guard error == nil,status == 200,let data,data.count<=65536 else {self.retryUpload(activeSession,activeEpoch);return}
                     do {
                         let result = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-                        if let ids = result?["acknowledged"] as? [String] { try self.acknowledge(ids) }
+                        guard let ids=result?["acknowledged"] as? [String] else {self.retryUpload(activeSession,activeEpoch);return}
+                        let sent=Set(batch.compactMap{$0["sampleId"] as? String});try self.acknowledge(ids.filter{sent.contains($0)});self.attempts=0;self.retryAt = .distantPast
+                        self.lastStatus = self.manager.accuracyAuthorization == .reducedAccuracy || ((batch.last?["horizontalAccuracyM"] as? NSNumber)?.doubleValue ?? 100)>25 ? "inaccurate" : (self.foreground ? "active" : "background");self.emit?(["status":self.lastStatus])
+                        DispatchQueue.main.asyncAfter(deadline:.now()+0.25){[weak self] in self?.flush(false)}
                     } catch { self.stop() }
                 }
             }

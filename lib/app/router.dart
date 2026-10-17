@@ -9,6 +9,8 @@ import '../features/profile/presentation/profile_setup_screen.dart';
 import '../features/profile/presentation/profile_preview_screen.dart';
 import '../features/verification/domain/verification_repository.dart';
 import '../features/verification/presentation/verification_screen.dart';
+import '../features/discovery/data/location_sync_service.dart';
+import '../features/discovery/presentation/location_setup_screen.dart';
 import '../features/auth/presentation/entry_screens.dart';
 import '../features/auth/presentation/credential_screens.dart';
 import '../features/auth/presentation/otp_screen.dart';
@@ -35,8 +37,9 @@ GoRouter createAuthRouter(
   AuthRouterRefresh refresh,
   ProfileRepository profiles,
   ProfileSummaryRepository summaries,
-  VerificationRepository verification,
-) => GoRouter(
+  VerificationRepository verification, {
+  LocationSyncService? locations,
+}) => GoRouter(
   initialLocation: '/',
   refreshListenable: refresh,
   redirect: (context, route) {
@@ -56,6 +59,7 @@ GoRouter createAuthRouter(
                     '/setup/profile',
                     '/setup/verification',
                     '/profile',
+                    if (locations != null) '/setup/permissions',
                   ].contains(path)
                   ? path
                   : '/setup/profile')
@@ -103,11 +107,19 @@ GoRouter createAuthRouter(
     ),
     GoRoute(
       path: '/profile',
-      builder: (_, _) => ProfilePreviewScreen(
+      builder: (context, _) => ProfilePreviewScreen(
         repository: summaries,
         userId: cubit.state.account!.id,
+        onLocationSetup: locations == null
+            ? null
+            : () => context.go('/setup/permissions'),
       ),
     ),
+    if (locations != null)
+      GoRoute(
+        path: '/setup/permissions',
+        builder: (_, _) => LocationSetupScreen(sync: locations),
+      ),
     GoRoute(
       path: '/account/restricted',
       builder: (_, _) => const RestrictedAccountScreen(),

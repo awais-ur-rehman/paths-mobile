@@ -35,6 +35,15 @@ class TestTracker implements LocationTracker {
   @override
   Future<TrackingStatus> currentStatus() async => status;
   @override
+  Future<TrackingPermissions> permissions() async => TrackingPermissions(
+    granted: granted,
+    precise: granted,
+    backgroundAllowed: backgroundGranted,
+    servicesEnabled: true,
+  );
+  @override
+  Future<void> flushPending() async {}
+  @override
   Future<int> queueCount() async => count;
   @override
   Future<List<LocationSample>> pendingSamples() async => [];

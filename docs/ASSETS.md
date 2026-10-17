@@ -45,3 +45,7 @@ Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained
 In-app Paths wordmark/symbol now render synchronously from the original SVG geometry via lib/shared/widgets/paths_brand.dart; loader uses the same curve builder. Existing SVG/raster exports remain editable handoff assets. This preserves aspect ratios and avoids raster decoder timing when changing routes; no new asset package is installed.
 
 Task4 adds no external assets or downloads. PathsAvatar uses the already bundled Material outline person glyph for unavailable/pending photos; VerificationBadge uses the same Material icon family and a factual explanation. Source: lib/shared/widgets/paths_avatar.dart and verification_badge.dart; existing Flutter/Material distribution licenses apply. Profile/review golden PNGs are synthetic test renders, not member records or testimonials.
+
+## Task5 permission fixture
+
+No new production visual asset or font. Location education reuses the original Paths vector symbol, loader/toast, bundled Inter and existing Material outline family under their recorded licenses. `test/features/discovery/goldens/location-permissions.png` is a locally rendered Flutter test fixture, not a production image or fabricated member. Editable source: `lib/features/discovery/presentation/location_setup_screen.dart`; inspected at390px, responsive fixtures cover320/390/768 and200% text.

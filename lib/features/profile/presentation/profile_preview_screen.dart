@@ -16,17 +16,27 @@ class ProfilePreviewScreen extends StatelessWidget {
   const ProfilePreviewScreen({
     required this.repository,
     required this.userId,
+    this.onLocationSetup,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
+  final VoidCallback? onLocationSetup;
   @override
-  Widget build(BuildContext context) =>
-      _PreviewOwner(repository: repository, userId: userId);
+  Widget build(BuildContext context) => _PreviewOwner(
+    repository: repository,
+    userId: userId,
+    onLocationSetup: onLocationSetup,
+  );
 }
 
 class _PreviewOwner extends StatefulWidget {
-  const _PreviewOwner({required this.repository, required this.userId});
+  const _PreviewOwner({
+    required this.repository,
+    required this.userId,
+    this.onLocationSetup,
+  });
+  final VoidCallback? onLocationSetup;
   final ProfileSummaryRepository repository;
   final String userId;
   @override
@@ -131,6 +141,14 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
                     onPressed: () => context.go('/setup/verification'),
                     child: const Text('Document review'),
                   ),
+                  if (widget.onLocationSetup != null) ...[
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: widget.onLocationSetup,
+                      icon: const Icon(Icons.location_on_outlined),
+                      label: const Text('Location & permissions'),
+                    ),
+                  ],
                 ],
               );
             },

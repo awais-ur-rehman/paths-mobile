@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private var permissionResult: MethodChannel.Result? = null
+    private fun canAskLocation():Boolean = tracker.permissions()["granted"]==true || !getSharedPreferences("paths_permissions",MODE_PRIVATE).getBoolean("location_asked",false) || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) || shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_COARSE_LOCATION)
     private val tracker by lazy { PathsLocationTracker.get(this) }
     override fun configureFlutterEngine(engine: FlutterEngine) {
         super.configureFlutterEngine(engine)
@@ -28,18 +29,21 @@ class MainActivity : FlutterActivity() {
                     "start" -> { tracker.start(call.arguments as Map<*, *>); check(tracker.status() in listOf("active","background","inaccurate")); result.success(null) }
                     "pause", "stopAndPurge" -> { tracker.stop(); result.success(null) }
                     "status" -> result.success(tracker.status())
+                    "permissions" -> result.success(tracker.permissions()+mapOf("canRequestForeground" to canAskLocation()))
+                    "flushPending" -> { tracker.flush(); result.success(null) }
                     "queueCount" -> result.success(tracker.pending().size)
                     "pendingSamples" -> result.success(tracker.pending())
                     "acknowledge" -> { tracker.acknowledge((call.arguments as List<*>).map { require(it is String); it }); result.success(null) }
                     "requestForegroundPermission" -> {
                         if(permissionResult != null) { result.error("busy","Permission request in progress",null) }
-                        else if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) result.success(true)
-                        else { permissionResult=result; requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION),100) }
+                        else if(tracker.permissions()["granted"]==true) result.success(true)
+                        else if(!canAskLocation())result.success(false)
+                        else {getSharedPreferences("paths_permissions",MODE_PRIVATE).edit().putBoolean("location_asked",true).apply();permissionResult=result;requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION),100)}
                     }
                     "requestBackgroundPermission" -> {
-                        if(Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),101)
-                        // FGS starts only from the visible opt-in action; no silent background launches.
-                        result.success(true)
+                        if(permissionResult!=null) result.error("busy","Permission request in progress",null)
+                        else if(Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED) result.success(true)
+                        else {permissionResult=result;requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),101)}
                     }
                     "openSettings" -> { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:$packageName"))); result.success(null) }
                     else -> result.notImplemented()
@@ -49,7 +53,8 @@ class MainActivity : FlutterActivity() {
     }
     override fun onRequestPermissionsResult(code: Int, permissions: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code,permissions,results)
-        if(code==100) { permissionResult?.success(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED); permissionResult=null }
+        if(code==100) {permissionResult?.success(tracker.permissions()["granted"]==true);permissionResult=null}
+        if(code==101) {permissionResult?.success(Build.VERSION.SDK_INT<33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED);permissionResult=null}
     }
     override fun onResume() { super.onResume(); tracker.visibility(true) }
     override fun onPause() { tracker.visibility(false); super.onPause() }
