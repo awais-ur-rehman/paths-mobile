@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase4 Task8 protected media; in progress**. API contract: `1.6.0`; experiment contract `phase0.v1`.
+Current phase: **Phase4 Task8 protected media; implemented, awaiting Android device evidence**. API contract: `1.7.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -87,12 +87,12 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 8: Protected media and camera publishing
 
-- [ ] Test wrong owner/type/size, decompression abuse, EXIF removal, private viewer denied and pending asset unpublished. — **not started**
-- [ ] Implement private storage adapters, quarantine processing, variants and CNIC record retention; no public CNIC links. — **not started**
-- [ ] Add safety-review state for user-visible images, neutral pending avatar, pending posts and server text filtering; test unreviewed/rejected content never reaches public responses. — **not started**
-- [ ] Connect profile/CNIC screens from Task4 to real uploads; implement camera/gallery/preview/caption/retry/cancel. — **not started**
-- [ ] Test privacy/block/deletion revokes media access; worker must not publish after deletion barrier. — **not started**
-- [ ] Add orphan/multipart cleanup and object inventory for deletion manifest. — **not started**
+- [ ] Test wrong owner/type/size, decompression abuse, EXIF removal, private viewer denied and pending asset unpublished. — **verified locally — real HTTP/PostgreSQL and Sharp tests; device transport/OS evidence pending**
+- [ ] Implement private storage adapters, quarantine processing, variants and CNIC record retention; no public CNIC links. — **implemented and verified locally — encrypted FS and local S3 protocol fixture; real R2 setup/test deferred by owner**
+- [ ] Add safety-review state for user-visible images, neutral pending avatar, pending posts and server text filtering; test unreviewed/rejected content never reaches public responses. — **implemented and verified locally — pending/rejected denial, neutral avatars, reusable limited pilot text policy; real staff review is Task11**
+- [ ] Connect profile/CNIC screens from Task4 to real uploads; implement camera/gallery/preview/caption/retry/cancel. — **implemented and verified locally — camera/gallery/preview/caption/retry/cancel and real profile/CNIC uploads; awaiting Android device test**
+- [ ] Test privacy/block/deletion revokes media access; worker must not publish after deletion barrier. — **verified locally — canonical authorization, worker deletion races and immediate Disconnect UI revalidation; iOS runtime pending**
+- [ ] Add orphan/multipart cleanup and object inventory for deletion manifest. — **implemented and verified locally — bounded cleanup, source retirement, multipart enumeration and durable inventory for Task12**
 
 ### Task 9: Text chat, reconnect and access revocation
 
@@ -471,3 +471,40 @@ Published Task7 drafts (base development, head feature/relationships-notificatio
 ## Task7 owner approval and Task8 start — 2026-10-17
 
 Owner tested Task7 on their physical Android phone, approves its functionality and authorizes merging PR7 and continuing Task8. Owner explicitly defers Firebase/APNs setup/live delivery; retain that unexecuted Android/iOS runtime check as a release prerequisite, not a passed result. PR7 merged normally into development in all three repositories after clean exact heads, green hosted backend/admin checks and fresh local74 integration,19unit13Phase0,187Flutter,admin2transport+3browser checks. No main promotion. Merge bases: backend4e6278f, admin afb2125, mobile8e85b0a. Task8 branch feature/protected-media; plan docs/task8-media-plan.md. All six specification checklist items are in progress/not started as detailed in the plan; implementation begins with image/storage security tests. API remains1.6 until the real media export. Owner approved required Task8 Sharp/image_picker and required artifacts; caches first. No Firebase/Apple/cloud service creation or real personal upload.
+
+
+## Task8 implementation and local verification — 2026-10-17
+
+Status: **implemented, locally verified, awaiting owner Android test**. Phase4 remains open; Task9 has not started. API1.7.0, SHA256 `9132509ecbef5e833a30e5c6cbec7106f257eba7a109ca736f1ac60b98e3bf54`. All three repositories use feature/protected-media; main unchanged. Source checkpoints: backend e1a5a86 (storage24bd974, upload/posts8615dd2, recovery/access6399af6, quota f46a3ef), mobile8670cbb (transport/native2ae4c8b, screens14dd691), admin67af1e5. Subsequent commits record this evidence and instructions.
+
+| Task8 requirement | Result / evidence |
+| --- | --- |
+| Wrong owner/type/size, decompression, EXIF and unpublished pending assets | verified locally — real PostgreSQL/HTTP integration and constrained Sharp decode tests; encrypted key-context/MIME binding; wrong-side/foreign CNIC denied |
+| Private FS/R2 adapters, quarantine/variants and CNIC lifetime | implemented and verified locally — encrypted source/variants, separate document namespace, source retirement after commit, retained submitted/replaced documents; S3 protocol test is local, real R2 deferred |
+| Safety state, neutral pending avatars/posts and text filtering | implemented and verified locally — rejected and unreviewed media excluded from peer reads, pending owner previews, approved references only, narrow reusable text rules; staff UI remains Task11 |
+| Profile/CNIC and camera/gallery/preview/caption/retry/cancel | implemented and verified locally — Task4 real uploads connected, one Next at creation, modal Camera, pending grid/detail/delete, bounded retries and guarded binary refresh; owner phone evidence pending |
+| Privacy/block/deletion revocation and worker barrier | verified locally — canonical authorization locks, deletion before/during processing, stale account response guards, immediate Disconnect grid/pixel revalidation |
+| Orphan/multipart cleanup and deletion inventory | implemented and verified locally — committed inventory before writes, root-deletion survival, acknowledged deletes, bounded multipart traversal, native temporary-file cleanup; Task12 owns the independent erasure orchestrator |
+
+Actual checks:
+
+- Backend ESLint and TypeScript build/typecheck pass. `npm test`:29 unit and13 retained Phase0 tests pass. Full isolated PostgreSQL/PostGIS/Valkey integration suite:88 tests pass;14 are media-access cases. A fresh test database prevents the development worker consuming fixtures.
+- Real local Compose build/migration/proxy/API/outbox/worker smoke passes. Synthetic authenticated upload becomes metadata-stripped JPEG variants and an owner-only pending post; synthetic account erasure removes its object inventory. Only private local storage was exercised end to end.
+- Mobile analyzer: no issues. Full `flutter test --no-pub`:202 tests pass. Seven Python contract/native-policy/splash tools tests pass. Six photo-preview cases cover320/390/768 at100%/200% text; actual bundled-font preview golden inspected. Existing profile/auth goldens remain passing.
+- Android Debug assembled offline with installed JDK21 and SDK:235 Gradle tasks. Unsigned generic iphoneos Debug compiled with automatic resolution disabled and the existing project-level resolved package file. These prove compilation, not OS/device behavior. Existing Gradle/AGP deprecation warnings remain.
+- Admin ESLint/typecheck/build,2 transport tests and3 installed-Chrome tests pass. Health/version fixtures now use1.7. Real OpenAPI export and both client generators have no drift; the three raw contract copies match exactly. `git diff --check` passes.
+
+Review scope and fixes:
+
+One fresh read-only whole-branch review reported an active-lease redelivery that could strand an image and stale private posts after Disconnect. Both were reproduced as failing regressions and fixed: active leases remain retryable, and relationship changes clear pixels/revalidate posts and detail. Self-review regressions also cover source recovery after transaction failure, symlink confinement before directory creation, ciphertext context substitution, declared MIME mismatch, rejected-content denial, original-file cleanup after native picking, detached-avatar deadlines without changing upload creation dates, and daily quota cancellation/replay behavior. Inspection does not establish real R2 permissions or native OS cleanup/permission behavior; those require the separate runtime checks below.
+
+Earlier development runs exposed outdated profile/FK/version fixtures, a narrow preview control overflow, a PostgreSQL restart during a test run, sandbox socket restrictions and the first Xcode invocation selecting the wrong resolved-file location. Fixtures/layout/commands were corrected and the final checks above were rerun successfully. No failed or unexecuted attempt is counted as passed. Local backend/admin packages and image binaries were resolved under existing approvals; no SDK, emulator, plugin or new service image was installed.
+
+Pending prerequisites and gate:
+
+- Owner physical Android camera/gallery/permissions, interruption/retry/cancel, process-loss and account-switch evidence: see `docs/TASK8_DEVICE_TESTS.md`, with exact commands/checkpoints and original synthetic cards in docs/testing/media. Await results before Task8 completion/PR merge or Task9.
+- Real R2 bucket/keys are not configured; owner explicitly chose private local storage for now. The live R2 check remains pending. Credentials stay in ignored local environment files.
+- iOS physical runtime/signing, Firebase/APNs setup/live delivery and quantitative Phase0 field results remain separate release evidence. Android acceptance does not verify iOS.
+- Actual image/CNIC staff review, appeals and authorization are Tasks10/11. Real uploads remain pending until that workflow exists; no fake approvals or staff-success routes were introduced.
+
+No real personal images/documents, credentials or raw coordinates were committed or uploaded by these checks. No deployment, purchase or app-store submission occurred. Feature PRs remain draft for the device gate; PR links and final docs heads are recorded in the handoff.

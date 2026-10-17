@@ -27,31 +27,33 @@ Mobile features/media: domain interfaces, picker/data upload + authenticated mem
 ## Execution checklist
 
 ### 1. Storage and image sanitization
-- [ ] RED storage ownership/key confinement, authenticated encryption/tamper, byte bounds and real Sharp metadata/dimension/malformed/animation tests.
-- [ ] Implement filesystem and R2 storage ports with bounded requests, no redirects/public links, object listing and multipart cleanup; safe typed errors.
-- [ ] Implement constrained decode/re-encode and derivative output; inspect generated synthetic image metadata. GREEN focused/full unit checks; micro commits.
+- [x] RED storage ownership/key confinement, authenticated encryption/tamper, byte bounds and real Sharp metadata/dimension/malformed/animation tests.
+- [x] Implement filesystem and R2 storage ports with bounded requests, no redirects/public links, object listing and multipart cleanup; safe typed errors.
+- [x] Implement constrained decode/re-encode and derivative output; inspect generated synthetic image metadata. GREEN focused/full unit checks; micro commits.
 
 ### 2. Upload/schema/worker lifecycle
-- [ ] RED real PostgreSQL/HTTP tests: wrong owner/kind/hash/size, unavailable account, upload retry, pending processing, intent/idempotency rollback, worker replay, expiry, status/deletion during processing.
-- [ ] Add media assets/object inventory/jobs/idempotency/profile reference tables/constraints/indexes and verification owned references. Existing test-only verification fixtures seed real owned assets for FK integrity.
-- [ ] Implement intent -> bounded authenticated upload -> completion/outbox -> processing and variants; no production fake success. Implement verification media port with actual processed owned CNIC kind checks.
-- [ ] Add object/orphan/multipart cleanup and owner inventory export for Task12. Deletion/status barrier checks before and after expensive work; submitted CNIC never ages out. GREEN focused/full integration checks.
+- [x] RED real PostgreSQL/HTTP tests: wrong owner/kind/hash/size, unavailable account, upload retry, pending processing, intent/idempotency rollback, worker replay, expiry, status/deletion during processing.
+- [x] Add media assets/object inventory/jobs/idempotency/profile reference tables/constraints/indexes and verification owned references. Existing test-only verification fixtures seed real owned assets for FK integrity.
+- [x] Implement intent -> bounded authenticated upload -> completion/outbox -> processing and variants; no production fake success. Implement verification media port with actual processed owned CNIC kind checks.
+- [x] Add object/orphan/multipart cleanup and owner inventory export for Task12. Deletion/status barrier checks before and after expensive work; submitted CNIC never ages out. GREEN focused/full integration checks.
 
 ### 3. Posts, visibility and safety
-- [ ] RED text filtering, processed asset/kind/owner, pending/approved/rejected publication, private/public/connected/blocked reads, avatar masking, privacy/disconnect/deletion races and delete retry tests.
-- [ ] Implement draft/pending posts, own/authorized profile grid/detail/delete, profile photo attachment and permission-checked binary media gateway; no direct URLs or CNIC member reads.
-- [ ] Implement image review state/queue and reusable server text policy on bio/caption (chat consumes Task9). No externally reachable moderation action until real staff authorization in Task11.
-- [ ] GREEN tests and synthetic real Compose API/worker smoke. Export real API1.7; regenerate both consumers and check drift.
+- [x] RED text filtering, processed asset/kind/owner, pending/approved/rejected publication, private/public/connected/blocked reads, avatar masking, privacy/disconnect/deletion races and delete retry tests.
+- [x] Implement draft/pending posts, own/authorized profile grid/detail/delete, profile photo attachment and permission-checked binary media gateway; no direct URLs or CNIC member reads.
+- [x] Implement image review state/queue and reusable server text policy on bio/caption (chat consumes Task9). No externally reachable moderation action until real staff authorization in Task11.
+- [x] GREEN tests and synthetic real Compose API/worker smoke. Export real API1.7; regenerate both consumers and check drift.
 
 ### 4. Mobile upload and profile flows
-- [ ] RED picker/upload Cubit tests: loading/progress, retry preserving intent, cancellation/cleanup, process loss, account change, unavailable permissions, stale response, pending vs published.
-- [ ] Implement scoped native picker adapter, uploader and memory-only authenticated media; single-flight refresh works for stream upload/download and does not leak raw Dio exceptions/tokens.
-- [ ] Integrate profile photo and real optional CNIC front/back upload with consent/retention and submit/skip; keep profile creation one Next button.
-- [ ] Add camera/gallery/retake/preview/caption/cancel/confirmation, pending-post owner grid/detail/delete and permitted peer grids/private lock. Camera modal returns to originating tab; post creation navigates via listener.
-- [ ] GREEN all Flutter tests/static checks, responsive320/390/768 at200% and inspected renders; offline Android + unsigned iOS builds using available/resolved dependencies. Retain licenses/asset ledger.
+- [x] RED picker/upload Cubit tests: loading/progress, retry preserving intent, cancellation/cleanup, process loss, account change, unavailable permissions, stale response, pending vs published.
+- [x] Implement scoped native picker adapter, uploader and memory-only authenticated media; single-flight refresh works for stream upload/download and does not leak raw Dio exceptions/tokens.
+- [x] Integrate profile photo and real optional CNIC front/back upload with consent/retention and submit/skip; keep profile creation one Next button.
+- [x] Add camera/gallery/retake/preview/caption/cancel/confirmation, pending-post owner grid/detail/delete and permitted peer grids/private lock. Camera modal returns to originating tab; post creation navigates via listener.
+- [x] GREEN all Flutter tests/static checks, responsive320/390/768 at200% and inspected renders; offline Android + unsigned iOS builds using available/resolved dependencies. Retain licenses/asset ledger.
 
 ### 5. Review and handoff
-- [ ] Verify all local backend/admin/mobile suites, contract drift, real Compose synthetic smoke and deletion/object inventory. Inspect complete branch against all six Task8 specification checkboxes.
-- [ ] One fresh read-only whole-branch review, fix Important/Critical issues with reproducing tests and rerun relevant checks.
-- [ ] Record every Task8 status/result/prerequisite/decision/API version in each repo; factual micro commits; push all changed repositories and draft PRs into development. Main unchanged.
+- [x] Verify all local backend/admin/mobile suites, contract drift, real Compose synthetic smoke and deletion/object inventory. Inspect complete branch against all six Task8 specification checkboxes.
+- [x] One fresh read-only whole-branch review, fix Important/Critical issues with reproducing tests and rerun relevant checks.
+- [x] Record every Task8 status/result/prerequisite/decision/API version in each repo; factual micro commits; push all changed repositories and draft PRs into development. Main unchanged.
 - [ ] Provide exact physical Android permission/gallery/camera/upload-failure/cancel/logout test steps and source commits. Signed iOS and real private R2 access remain separate evidence; no real personal upload/service creation/deployment. Await owner results before dependent gate.
+
+Implementation/local checks are verified as recorded in IMPLEMENTATION_STATUS.md. Owner Android results, real R2 and iOS runtime remain pending; the phase is not complete. No Task9 work has started.
