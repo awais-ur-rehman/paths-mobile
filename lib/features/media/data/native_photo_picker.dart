@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../auth/domain/auth_models.dart';
 import '../domain/media_repository.dart';
+import 'native_picker_cleanup.dart';
 
 final class NativePhotoPicker implements PhotoPicker {
   NativePhotoPicker({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
@@ -26,6 +27,7 @@ final class NativePhotoPicker implements PhotoPicker {
   Future<void> discardLostSelection() async {
     if (_recovered) return;
     if (Platform.isAndroid) {
+      await discardAndroidCameraFiles(Directory.systemTemp);
       final lost = await _picker.retrieveLostData();
       for (final file in lost.files ?? <XFile>[]) {
         await _discard(file);
@@ -52,57 +54,63 @@ final class NativePhotoPicker implements PhotoPicker {
   Future<PickedPhoto?> pick(PhotoSource source) async {
     try {
       await discardLostSelection();
-      final file = await _picker.pickImage(
-        source: source == PhotoSource.camera
-            ? ImageSource.camera
-            : ImageSource.gallery,
-        // Android otherwise leaves an unreturned original beside its compressed copy.
-        // The server owns resizing and metadata removal.
-        imageQuality: 100,
-        requestFullMetadata: false,
-      );
-      if (file == null) return null;
-      PickedPhoto? selected;
       try {
-        final size = await file.length();
-        if (size <= 0 || size > 10 * 1024 * 1024) {
-          throw const AuthFailure('image_size');
-        }
-        final bytes = await file.readAsBytes();
-        final jpeg =
-            bytes.length >= 3 &&
-            bytes[0] == 255 &&
-            bytes[1] == 216 &&
-            bytes[2] == 255;
-        final png =
-            bytes.length >= 8 &&
-            bytes[0] == 137 &&
-            bytes[1] == 80 &&
-            bytes[2] == 78 &&
-            bytes[3] == 71;
-        final webp =
-            bytes.length >= 12 &&
-            String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
-            String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP';
-        if (!jpeg && !png && !webp) {
-          bytes.fillRange(0, bytes.length, 0);
-          throw const AuthFailure('image_format');
-        }
-        return selected = PickedPhoto(
-          bytes,
-          jpeg
-              ? 'image/jpeg'
-              : png
-              ? 'image/png'
-              : 'image/webp',
+        final file = await _picker.pickImage(
+          source: source == PhotoSource.camera
+              ? ImageSource.camera
+              : ImageSource.gallery,
+          // Android otherwise leaves an unreturned original beside its compressed copy.
+          // The server owns resizing and metadata removal.
+          imageQuality: 100,
+          requestFullMetadata: false,
         );
-      } finally {
+        if (file == null) return null;
+        PickedPhoto? selected;
         try {
-          await _discard(file);
-          await _discardIOSFiles();
-        } catch (_) {
-          selected?.clear();
-          rethrow;
+          final size = await file.length();
+          if (size <= 0 || size > 10 * 1024 * 1024) {
+            throw const AuthFailure('image_size');
+          }
+          final bytes = await file.readAsBytes();
+          final jpeg =
+              bytes.length >= 3 &&
+              bytes[0] == 255 &&
+              bytes[1] == 216 &&
+              bytes[2] == 255;
+          final png =
+              bytes.length >= 8 &&
+              bytes[0] == 137 &&
+              bytes[1] == 80 &&
+              bytes[2] == 78 &&
+              bytes[3] == 71;
+          final webp =
+              bytes.length >= 12 &&
+              String.fromCharCodes(bytes.sublist(0, 4)) == 'RIFF' &&
+              String.fromCharCodes(bytes.sublist(8, 12)) == 'WEBP';
+          if (!jpeg && !png && !webp) {
+            bytes.fillRange(0, bytes.length, 0);
+            throw const AuthFailure('image_format');
+          }
+          return selected = PickedPhoto(
+            bytes,
+            jpeg
+                ? 'image/jpeg'
+                : png
+                ? 'image/png'
+                : 'image/webp',
+          );
+        } finally {
+          try {
+            await _discard(file);
+            await _discardIOSFiles();
+          } catch (_) {
+            selected?.clear();
+            rethrow;
+          }
+        }
+      } finally {
+        if (Platform.isAndroid) {
+          await discardAndroidCameraFiles(Directory.systemTemp);
         }
       }
     } on AuthFailure {
