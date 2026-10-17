@@ -14,6 +14,10 @@ class ContractGeneratorTest(unittest.TestCase):
   result=module.generate({'info':{'version':'1'},'components':{'schemas':{'X':schema}}},b'')
   self.assertIn('final num age',result);self.assertIn('final String? reason',result);self.assertIn('this.back',result)
   self.assertIn("if (back != null) 'back': back",result);self.assertIn('reason != null && reason is! String',result)
+ def test_required_arrays_of_strings_and_references_are_typed(self):
+  schemas={'Child':{'type':'object','required':['id'],'properties':{'id':{'type':'string'}}},'Batch':{'type':'object','required':['items','ids'],'properties':{'items':{'type':'array','items':{'$ref':'#/components/schemas/Child'}},'ids':{'type':'array','items':{'type':'string'}}}}}
+  result=module.generate({'info':{'version':'1.4.0'},'components':{'schemas':schemas}},b'')
+  self.assertIn('List<Child>',result);self.assertIn('Child.fromJson(item)',result);self.assertIn('item.toJson()',result);self.assertIn('List<String>',result)
  def test_nested_schema_fails_explicitly(self):
   with self.assertRaises(ValueError):module.generate({'info':{'version':'1'},'components':{'schemas':{'X':{'type':'object','properties':{'x':{'type':'object'}}}}}},b'')
 if __name__=='__main__':unittest.main()

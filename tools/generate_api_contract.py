@@ -14,15 +14,37 @@ def generate(contract, raw):
             raise ValueError(f'Unsupported schema {name}')
         properties = schema.get('properties', {})
         required = set(schema.get('required', []))
+        def field_type(value):
+            if value.get('type') == 'array':
+                item=value.get('items',{})
+                if '$ref' in item:
+                    ref=item['$ref'].removeprefix('#/components/schemas/')
+                    if ref not in contract['components']['schemas']: raise ValueError('Unknown reference')
+                    return f'List<{ref}>'
+                if item.get('type') in types: return f"List<{types[item['type']]}>"
+                raise ValueError('Unsupported array item')
+            return types[value['type']]
         types = {'string': 'String', 'boolean': 'bool', 'number': 'num', 'integer': 'int'}
         for field, value in properties.items():
-            if value.get('type') not in types:
+            if value.get('type') == 'array':
+                if field not in required or value.get('nullable'): raise ValueError('Optional arrays need explicit support')
+                field_type(value)
+            elif value.get('type') not in types:
                 raise ValueError(f'Unsupported field {name}.{field}')
         lines += [f'final class {name} {{',
                   f"  const {name}({{{', '.join(('required this.' if f in required else 'this.') + f for f in properties)}}});"]
-        lines += [f"  final {types[value['type']]}{'?' if field not in required or value.get('nullable') else ''} {field};" for field, value in properties.items()]
+        lines += [f"  final {field_type(value)}{'?' if field not in required or value.get('nullable') else ''} {field};" for field, value in properties.items()]
         lines += [f'  factory {name}.fromJson(Map<String, dynamic> json) {{']
         for field, value in properties.items():
+            if value.get('type') == 'array':
+                raw='raw'+field[0].upper()+field[1:]
+                item=value['items']
+                lines += [f"    final {raw} = json['{field}'];",f"    if ({raw} is! List) {{ throw const FormatException('Invalid {name}.{field}'); }}"]
+                item_type=field_type(value)[5:-1]
+                guard='Map<String, dynamic>' if '$ref' in item else types[item['type']]
+                result=f'{item_type}.fromJson(item)' if '$ref' in item else 'item'
+                lines += [f"    final {field} = List<{item_type}>.unmodifiable({raw}.map((item) {{ if(item is! {guard}) {{ throw const FormatException('Invalid {name}.{field} item'); }} return {result}; }}));"]
+                continue
             nullable = field not in required or value.get('nullable', False)
             if field in required:
                 lines += [f"    if (!json.containsKey('{field}')) {{ throw const FormatException('Missing {name}.{field}'); }}"]
@@ -32,7 +54,7 @@ def generate(contract, raw):
             if 'enum' in value:
                 lines += [f"    if ({guard}!const {json.dumps(value['enum'])}.contains({field})) {{ throw const FormatException('Unsupported {field}'); }}"]
         lines += [f"    return {name}({', '.join(f'{f}: {f}' for f in properties)});", '  }',
-                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': {f}" for f in properties) + '};', '}']
+                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': " + (f"{f}.map((item) => item.toJson()).toList(growable: false)" if properties[f].get('type')=='array' and '$ref' in properties[f].get('items',{}) else f) for f in properties) + '};', '}']
     return '\n'.join(lines) + '\n'
 
 
