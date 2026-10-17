@@ -475,7 +475,7 @@ Owner tested Task7 on their physical Android phone, approves its functionality a
 
 ## Task8 implementation and local verification — 2026-10-17
 
-Status: **implemented, locally verified, awaiting owner Android test**. Phase4 remains open; Task9 has not started. API1.7.0, SHA256 `9132509ecbef5e833a30e5c6cbec7106f257eba7a109ca736f1ac60b98e3bf54`. All three repositories use feature/protected-media; main unchanged. Source checkpoints: backend e1a5a86 (storage24bd974, upload/posts8615dd2, recovery/access6399af6, quota f46a3ef), mobile8670cbb (transport/native2ae4c8b, screens14dd691), admin67af1e5. Subsequent commits record this evidence and instructions.
+Status: **implemented, locally verified, awaiting owner Android test**. Phase4 remains open; Task9 has not started. API1.7.0, SHA256 `9132509ecbef5e833a30e5c6cbec7106f257eba7a109ca736f1ac60b98e3bf54`. All three repositories use feature/protected-media; main unchanged. Source checkpoints: backend e1a5a86 (storage24bd974, upload/posts8615dd2, recovery/access6399af6, quota f46a3ef), mobile55e0110 (transport/native2ae4c8b, screens14dd691, setup6f278ca, camera cleanup14f664d, session routing55e0110), admin67af1e5. Subsequent commits record this evidence and instructions.
 
 | Task8 requirement | Result / evidence |
 | --- | --- |
@@ -490,7 +490,7 @@ Actual checks:
 
 - Backend ESLint and TypeScript build/typecheck pass. `npm test`:29 unit and13 retained Phase0 tests pass. Full isolated PostgreSQL/PostGIS/Valkey integration suite:88 tests pass;14 are media-access cases. A fresh test database prevents the development worker consuming fixtures.
 - Real local Compose build/migration/proxy/API/outbox/worker smoke passes. Synthetic authenticated upload becomes metadata-stripped JPEG variants and an owner-only pending post; synthetic account erasure removes its object inventory. Only private local storage was exercised end to end.
-- Mobile analyzer: no issues. Full `flutter test --no-pub`:202 tests pass. Seven Python contract/native-policy/splash tools tests pass. Six photo-preview cases cover320/390/768 at100%/200% text; actual bundled-font preview golden inspected. Existing profile/auth goldens remain passing.
+- Mobile analyzer: no issues. Full `flutter test --no-pub`:212 tests pass. Seven Python contract/native-policy/splash tools tests pass. Six photo-preview cases cover320/390/768 at100%/200% text; actual bundled-font preview golden inspected. Existing profile/auth goldens remain passing.
 - Android Debug assembled offline with installed JDK21 and SDK:235 Gradle tasks. Unsigned generic iphoneos Debug compiled with automatic resolution disabled and the existing project-level resolved package file. These prove compilation, not OS/device behavior. Existing Gradle/AGP deprecation warnings remain.
 - Admin ESLint/typecheck/build,2 transport tests and3 installed-Chrome tests pass. Health/version fixtures now use1.7. Real OpenAPI export and both client generators have no drift; the three raw contract copies match exactly. `git diff --check` passes.
 
@@ -519,3 +519,8 @@ Task8 handoff links (all draft, base development):
 All three feature branches and their verification records are pushed. Source checkpoints remain those recorded above; subsequent changes are documentation only. Mobile has no hosted workflow; its native/static/test checks were run locally. Android owner acceptance remains pending. No PR8 merge or main promotion occurred.
 
 Hosted verification passed for backend777e4b3 ([run39039682108](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39039682108)) and admin e4ba53f ([run39039680971](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39039680971)). Later commits add PR links/documentation only; their current checks remain visible on the draft PRs. No mobile hosted check is configured.
+
+
+Task8 final mobile checks: source55e0110 includes server-authoritative profile/verification resume, per-account device permission education, and cancellation cleanup for the cached Android picker camera-file naming scheme. All212 Flutter tests pass, analyzer has no issues, all7 Python tool tests pass; Android Debug assembles offline (235 tasks) and unsigned generic iphoneos Debug compiles with package autoresolution disabled. Setup regressions cover completed returning accounts, mandatory incomplete setup, optional verification skip, failed education persistence/retry, and protected destinations during signed-out and delayed secure-session restoration. The focused follow-up review identified loss of a cold-start destination; capture now precedes boot/auth redirects and clears on actual account switch/logout. A second regression reproduced the router revisiting its old protected URI during sign-out;55e0110 suppresses that stale destination until login/onboarding, so a later sign-in starts fresh. The real logout/sign-in widget test passes. Camera cleanup tests retain unrelated files and symlinks. These checks do not establish physical OS behavior.
+
+Hosted checks passed at backend32f4997 ([run39039893496](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39039893496)) and admin2e682bf ([run39039891388](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39039891388)). Later handoff updates are documentation only. Draft PR8/device gate remains pending.

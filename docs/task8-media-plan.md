@@ -46,6 +46,7 @@ Mobile features/media: domain interfaces, picker/data upload + authenticated mem
 ### 4. Mobile upload and profile flows
 - [x] RED picker/upload Cubit tests: loading/progress, retry preserving intent, cancellation/cleanup, process loss, account change, unavailable permissions, stale response, pending vs published.
 - [x] Implement scoped native picker adapter, uploader and memory-only authenticated media; single-flight refresh works for stream upload/download and does not leak raw Dio exceptions/tokens.
+- [x] Resume setup from server profile/offer state and account-scoped device education; retain protected destinations through restoration/sign-in, reject stale-account responses, and test persistence failure/retry.
 - [x] Integrate profile photo and real optional CNIC front/back upload with consent/retention and submit/skip; keep profile creation one Next button.
 - [x] Add camera/gallery/retake/preview/caption/cancel/confirmation, pending-post owner grid/detail/delete and permitted peer grids/private lock. Camera modal returns to originating tab; post creation navigates via listener.
 - [x] GREEN all Flutter tests/static checks, responsive320/390/768 at200% and inspected renders; offline Android + unsigned iOS builds using available/resolved dependencies. Retain licenses/asset ledger.
