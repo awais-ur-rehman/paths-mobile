@@ -1,6 +1,81 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/encounters": {
+      "get": {
+        "operationId": "EncounterController_list",
+        "parameters": [
+          {
+            "name": "mode",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "recent",
+              "type": "string",
+              "enum": [
+                "recent",
+                "nearby"
+              ]
+            }
+          },
+          {
+            "name": "radiusKm",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "enum": [
+                0.5,
+                1,
+                3,
+                5
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 101,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EncounterPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "encounters"
+        ]
+      }
+    },
     "/health/live": {
       "get": {
         "operationId": "HealthController_live",
@@ -751,7 +826,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.4.0",
+    "version": "1.5.0",
     "contact": {}
   },
   "tags": [],
@@ -765,6 +840,139 @@
       }
     },
     "schemas": {
+      "EncounterCardDto": {
+        "type": "object",
+        "properties": {
+          "encounterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "age": {
+            "type": "number",
+            "minimum": 18
+          },
+          "bio": {
+            "type": "string"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pending",
+              "approved",
+              "declined"
+            ]
+          },
+          "photoState": {
+            "type": "string",
+            "enum": [
+              "unavailable"
+            ]
+          },
+          "coarseAreaId": {
+            "type": "string"
+          },
+          "coarseAreaLabel": {
+            "type": "string"
+          },
+          "areaLatitude": {
+            "type": "number"
+          },
+          "areaLongitude": {
+            "type": "number"
+          },
+          "timeBucket": {
+            "type": "string",
+            "enum": [
+              "recently",
+              "earlier_today",
+              "date"
+            ]
+          },
+          "encounterDate": {
+            "type": "string",
+            "description": "UTC calendar date only; never the exact encounter time."
+          },
+          "encounterCount": {
+            "type": "number",
+            "minimum": 1
+          },
+          "requestState": {
+            "type": "string",
+            "enum": [
+              "none"
+            ]
+          },
+          "eligibilityExpiresAt": {
+            "type": "string",
+            "description": "UTC calendar expiry date, not a precise encounter timestamp."
+          }
+        },
+        "required": [
+          "encounterId",
+          "userId",
+          "username",
+          "displayName",
+          "age",
+          "bio",
+          "verificationStatus",
+          "photoState",
+          "coarseAreaId",
+          "coarseAreaLabel",
+          "areaLatitude",
+          "areaLongitude",
+          "timeBucket",
+          "encounterDate",
+          "encounterCount",
+          "requestState",
+          "eligibilityExpiresAt"
+        ]
+      },
+      "EncounterPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EncounterCardDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          },
+          "nearbyAvailable": {
+            "type": "boolean"
+          },
+          "centerLatitude": {
+            "type": "number",
+            "nullable": true,
+            "description": "Coarse area center only."
+          },
+          "centerLongitude": {
+            "type": "number",
+            "nullable": true,
+            "description": "Coarse area center only."
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "nearbyAvailable",
+          "centerLatitude",
+          "centerLongitude"
+        ]
+      },
       "HealthDto": {
         "type": "object",
         "properties": {
@@ -777,7 +985,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.4.0"
+              "1.5.0"
             ]
           }
         },
