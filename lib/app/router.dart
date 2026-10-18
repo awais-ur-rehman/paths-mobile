@@ -1,3 +1,7 @@
+import '../features/chat/domain/chat_repository.dart';
+import '../features/chat/presentation/chat_screen.dart';
+import '../features/chat/presentation/chats_screen.dart';
+import '../core/network/generated/api_contract.dart';
 import '../features/setup/domain/setup_progress.dart';
 import '../features/setup/presentation/setup_resume_cubit.dart';
 import '../features/setup/presentation/setup_resume_screen.dart';
@@ -78,6 +82,7 @@ GoRouter createAuthRouter(
   RelationshipRepository? relationships,
   NotificationRepository? notifications,
   PushClient? push,
+  ChatRepository? chats,
 }) {
   SetupDestination? setupDestination;
   String? setupAccount, pendingDestination;
@@ -126,8 +131,15 @@ GoRouter createAuthRouter(
           setupDestination != SetupDestination.home &&
           route.uri.scheme.isEmpty &&
           route.uri.host.isEmpty &&
-          (['/home', '/likes', '/profile', '/notifications'].contains(path) ||
-              path.startsWith('/profiles/'))) {
+          ([
+                '/home',
+                '/likes',
+                '/chats',
+                '/profile',
+                '/notifications',
+              ].contains(path) ||
+              path.startsWith('/profiles/') ||
+              path.startsWith('/chats/'))) {
         pendingDestination ??= route.uri.toString();
       }
       if (hasSetupGate &&
@@ -174,7 +186,8 @@ GoRouter createAuthRouter(
                       if (relationships != null) '/likes',
                       if (notifications != null) '/notifications',
                       if (notifications != null) '/settings/notifications',
-                      if (encounters != null && path.startsWith('/profiles/'))
+                      if (encounters != null && path.startsWith('/profiles/') ||
+                          path.startsWith('/chats/'))
                         path,
                     ].contains(path)
                     ? path
@@ -309,6 +322,7 @@ GoRouter createAuthRouter(
           builder: (context, _, shell) => DiscoveryShell(
             shell: shell,
             hasLikes: relationships != null,
+            hasChats: chats != null,
             onCamera: media == null ? null : () => context.push('/media/post'),
           ),
           branches: [
@@ -351,8 +365,51 @@ GoRouter createAuthRouter(
                   ),
                 ],
               ),
+            if (chats != null)
+              StatefulShellBranch(
+                routes: [
+                  GoRoute(
+                    path: '/chats',
+                    builder: (context, _) => ChatsScreen(
+                      key: ValueKey(chats.accountId),
+                      repository: chats,
+                      onOpen: (item) =>
+                          context.push('/chats/${item.id}', extra: item),
+                    ),
+                  ),
+                ],
+              ),
             StatefulShellBranch(routes: [profileRoute]),
           ],
+        ),
+      if (chats != null)
+        GoRoute(
+          path: '/chats/:id',
+          builder: (context, route) => ChatScreen(
+            repository: chats,
+            conversationId: route.pathParameters['id']!,
+            name: route.extra is ConversationDto
+                ? (route.extra as ConversationDto).name
+                : 'Chat',
+            onOpened:
+                notifications == null ||
+                    route.uri.queryParameters['notification'] == null
+                ? null
+                : () async {
+                    try {
+                      await notifications.read(
+                        route.uri.queryParameters['notification']!,
+                      );
+                    } catch (_) {
+                      if (context.mounted) {
+                        PathsToast.show(
+                          context,
+                          'Opened. Could not mark as read.',
+                        );
+                      }
+                    }
+                  },
+          ),
         ),
       if (encounters != null)
         GoRoute(
@@ -360,6 +417,33 @@ GoRouter createAuthRouter(
           builder: (context, route) => PeerProfileScreen(
             repository: summaries,
             relationships: relationships,
+            onChat: chats == null
+                ? null
+                : () async {
+                    try {
+                      final peer = route.pathParameters['id'];
+                      final account = chats.accountId;
+                      final conversations = await chats.conversations();
+                      if (!context.mounted || chats.accountId != account) {
+                        return;
+                      }
+                      final item = conversations
+                          .where((c) => c.peerId == peer && c.canSend)
+                          .firstOrNull;
+                      if (item == null) {
+                        PathsToast.show(context, 'Conversation unavailable');
+                        return;
+                      }
+                      await context.push('/chats/${item.id}', extra: item);
+                    } catch (_) {
+                      if (context.mounted) {
+                        PathsToast.show(
+                          context,
+                          'Could not open chat. Try again.',
+                        );
+                      }
+                    }
+                  },
             onOpened:
                 notifications == null ||
                     route.uri.queryParameters['notification'] == null
@@ -404,6 +488,12 @@ GoRouter createAuthRouter(
                   destination.targetId != null) {
                 await context.push(
                   '/profiles/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
+                );
+              } else if (destination.destination == 'conversation' &&
+                  destination.targetId != null &&
+                  chats != null) {
+                await context.push(
+                  '/chats/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
                 );
               } else {
                 PathsToast.show(

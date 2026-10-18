@@ -14,10 +14,12 @@ class RelationshipControls extends StatefulWidget {
   const RelationshipControls({
     required this.repository,
     required this.target,
+    this.onChat,
     super.key,
   });
   final RelationshipRepository repository;
   final String target;
+  final VoidCallback? onChat;
   @override
   State<RelationshipControls> createState() => _ControlsState();
 }
@@ -106,13 +108,14 @@ class _ControlsState extends State<RelationshipControls> {
               spacing: 12,
               runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  onPressed: state.busy ? null : cubit.save,
-                  icon: Icon(
-                    value.saved ? Icons.bookmark : Icons.bookmark_outline,
+                if (value.status != 'connected' || widget.onChat == null)
+                  OutlinedButton.icon(
+                    onPressed: state.busy ? null : cubit.save,
+                    icon: Icon(
+                      value.saved ? Icons.bookmark : Icons.bookmark_outline,
+                    ),
+                    label: Text(value.saved ? 'Saved' : 'Save'),
                   ),
-                  label: Text(value.saved ? 'Saved' : 'Save'),
-                ),
                 if (value.available)
                   switch (value.status) {
                     'none' => FilledButton(
@@ -131,6 +134,36 @@ class _ControlsState extends State<RelationshipControls> {
                     'sent' => OutlinedButton(
                       onPressed: state.busy ? null : () => cubit.act('cancel'),
                       child: const Text('Cancel request'),
+                    ),
+                    'connected' when widget.onChat != null => Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: state.busy ? null : widget.onChat,
+                          icon: const Icon(Icons.chat_bubble_outline),
+                          label: const Text('Message'),
+                        ),
+                        PopupMenuButton<String>(
+                          tooltip: 'Connection options',
+                          onSelected: (action) {
+                            if (action == 'save') {
+                              unawaited(cubit.save());
+                            } else {
+                              unawaited(_confirm('disconnect', 'Disconnect?'));
+                            }
+                          },
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'save',
+                              child: Text(value.saved ? 'Unsave' : 'Save'),
+                            ),
+                            const PopupMenuItem(
+                              value: 'disconnect',
+                              child: Text('Disconnect'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     'connected' => OutlinedButton(
                       onPressed: state.busy

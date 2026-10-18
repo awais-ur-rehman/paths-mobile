@@ -17,13 +17,14 @@ class PeerProfileScreen extends StatelessWidget {
     required this.onBack,
     this.relationships,
     this.onOpened,
+    this.onChat,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
   final VoidCallback onBack;
   final RelationshipRepository? relationships;
-  final VoidCallback? onOpened;
+  final VoidCallback? onOpened, onChat;
   @override
   Widget build(BuildContext context) =>
       _PeerOwner(key: ValueKey(userId), configuration: this);
@@ -109,6 +110,7 @@ class _PeerOwnerState extends State<_PeerOwner> {
                     key: ValueKey(widget.configuration.userId),
                     repository: widget.configuration.relationships!,
                     target: widget.configuration.userId,
+                    onChat: widget.configuration.onChat,
                   ),
             onBack: widget.configuration.onBack,
           );
