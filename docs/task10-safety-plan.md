@@ -1,0 +1,16 @@
+# Task 10 safety controls
+
+Baseline: specification/06_IMPLEMENTATION_PLAN.md Task 10, SAFE-01/02/03, ADM-02 and app-flow safety lifecycle. API 1.9.0. Work stays on feature/safety-controls; main unchanged. Owner accepted Task 9 on Android and authorized its PR merges (backend c3de54d, mobile 23f7c51, admin a29191e). Specific two-device measurements were not supplied; no additional evidence is inferred.
+
+- [x] Backend block/unblock/list with canonical pair locks; bilateral saves removed, pending/accepted requests closed, connections blocked, private media/discovery/send revoked, unblocking restores nothing. Test inverse requests/races/retries. — **verified locally**
+- [x] Profile/post/message reports with categories, bounded explanation, actor-bound idempotency, reference acknowledgment, server-scoped evidence and priority. Test foreign/private evidence, reporting after block and deletion cascades/nonidentifying totals. — **verified locally**
+- [x] Internal account-status service plus database revocation barrier; deactivation/restriction stops sessions, tracking, push and queued publication. Reactivation requires a fresh session and explicit tracking consent. Test status/write races and queue suppression. — **verified locally**
+- [x] Suspected-minor reports enter urgent review; evidence-confirmed restriction is an internal moderation operation. No automatic suspension from an unverified report. Staff authorization/triage endpoints are Task 11. — **verified locally**
+- [ ] Concise mobile profile/chat/post safety actions, report form/acknowledgment, blocked list/unblock, cancellation/retry/error states; restricted support and deletion-help access. Self-service account erasure and deletion reauthentication are Task 12, not a fake success path in Task 10. — **implemented; automated checks verified; awaiting device test**
+- [ ] Meaningful backend/Flutter tests, contract generation, native builds, review and fixes; status in all repositories, phase-end pushes/draft PRs and owner device handoff. — **checks/review complete; publication and owner gate tracked in IMPLEMENTATION_STATUS.md**
+
+Ruling: preserve the existing active/deactivated/deleting status contract. Suspected-underage restriction uses deactivated with an internal reason and urgent report linkage; do not disclose reporter/evidence to the subject. Report evidence is one selected resource, never a conversation dump. FK cascades purge identifying reports when reporter/subject/content is erased; aggregate category totals retain no identifiers. Support contact remains configurable and existing policy URLs remain owner-configurable.
+
+No new package/tool/service is planned. Use available local dependencies. Staff UI/RBAC belongs to Task 11; complete self-service deletion belongs to Task 12. These dependencies are explicit in the implementation plan.
+
+Decisions: preserve a fresh capture cutoff at the final unblock; use canonical version locks and commit-only status invalidation hints with REST reconnect/resume recovery. Post-report capabilities are actor/subject/post-bound and expire in 15 minutes; expiry or quota failure never prevents blocking, and a member-report fallback is explicit. See IMPLEMENTATION_STATUS.md for actual test evidence and remaining device gate.
