@@ -1,6 +1,6 @@
 # Task 10 device checks
 
-Status: awaiting owner physical Android acceptance. Test `feature/safety-controls`: mobile source **cb0d545**, backend **3d21cc0** (plus whitespace/evidence commits), admin **d1b969f**. API 1.9.0. The APK was built from that mobile source; later documentation commits do not change it. Main remains unchanged. Task 11 waits for this gate.
+Status: owner accepted Task 10 on their phone on 2026-10-18; this checklist is retained as a test reference. Further development waits for the owner’s full-app retest. Test `feature/safety-controls`: mobile source **cb0d545**, backend **3d21cc0** (plus whitespace/evidence commits), admin **d1b969f**. API 1.9.0. The APK was built from that mobile source; later documentation commits do not change it. Main remains unchanged. Task 11 has not started.
 
 ## Setup and commands
 
@@ -43,6 +43,6 @@ Return the mobile commit, Android version, step number, exact toast, whether the
 
 Local checks pass: backend 36 unit + 13 feasibility + 113 integration; live synthetic block/report/replay/unblock/revocation through API/proxy/worker; stack restart; Flutter 250 tests/analyzer, 11 Python tooling tests; admin 2 transport + 3 browser tests/build. Android offline assembly and kernel comparison pass. Unsigned cached iOS build passes; iOS runtime/signing and APNs, actual Android push delivery/tap and Phase 0 field measurements remain separate pending evidence.
 
-APK: `build/app/outputs/flutter-apk/app-debug.apk`. Dart kernel 75,465,832 bytes, SHA256 `1ff51b8bf5c21170448b678985dbefd5d729186885d759f4ffcf166672d1fdf7`. Do not install if the kernel checker fails. Do not merge Task 10 or start Task 11 until owner acceptance.
+APK: `build/app/outputs/flutter-apk/app-debug.apk`. Dart kernel 75,465,832 bytes, SHA256 `1ff51b8bf5c21170448b678985dbefd5d729186885d759f4ffcf166672d1fdf7`. Do not install if the kernel checker fails. Owner authorized the Task 10 merges. Do not start Task 11 until the owner asks after their full-app retest.
 
 Published draft PRs: [backend #12](https://github.com/awais-ur-rehman/paths-backend/pull/12), [mobile #10](https://github.com/awais-ur-rehman/paths-mobile/pull/10), [admin #10](https://github.com/awais-ur-rehman/paths-admin/pull/10). All target development. Feature source and test evidence are pushed; owner Task 10 acceptance remains pending. Main unchanged.

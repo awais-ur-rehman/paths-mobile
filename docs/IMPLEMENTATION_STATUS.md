@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase 5 Task 10 safety controls; awaiting device test**. API 1.9.0; main remains unchanged.
+Current phase: **Task 10 accepted by owner; waiting for full-app retest**. API 1.9.0; main remains unchanged. Task 11 has not started.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -107,10 +107,10 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 10: Blocking/reporting and restricted account lifecycle
 
-- [ ] Test block removes both saves, cancels requests, stops sends, excludes discovery and revokes private media; unblock restores nothing automatically. — **implemented; verified locally — awaiting device test; see Task 10 evidence below**
-- [ ] Implement report categories, scoped evidence and acknowledgment; privacy-aware evidence deletion hooks. — **implemented; verified locally — awaiting device test; see Task 10 evidence below**
-- [ ] Implement deactivation/reactivation status guard, session revoke and queue suppression. — **implemented; verified locally — awaiting device test; see Task 10 evidence below**
-- [ ] Add support/delete access for restricted users and suspected-underage escalation flow. — **implemented; verified locally — awaiting device test; see Task 10 evidence below**
+- [x] Test block removes both saves, cancels requests, stops sends, excludes discovery and revokes private media; unblock restores nothing automatically. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Implement report categories, scoped evidence and acknowledgment; privacy-aware evidence deletion hooks. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Implement deactivation/reactivation status guard, session revoke and queue suppression. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Add support/delete access for restricted users and suspected-underage escalation flow. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
 
 ### Task 11: Admin portal and review workflow
 
@@ -652,3 +652,9 @@ Source checkpoints: backend `64a42e5` (storage/API/status), `3d21cc0` (tests/liv
 Pending prerequisites: owner physical Android acceptance for Task 10; separate signed iOS runtime evidence, Android FCM delivery/tap evidence and APNs setup; quantitative Phase 0 field metrics remain release evidence. No unavailable package/tool blocked the checks listed above. Builds cannot prove OS/device behavior. See TASK10_DEVICE_TESTS.md for exact commands, expected outcomes and redacted failure evidence. Do not merge Task 10 or start Task 11 before owner acceptance.
 
 Published draft PRs: [backend #12](https://github.com/awais-ur-rehman/paths-backend/pull/12), [mobile #10](https://github.com/awais-ur-rehman/paths-mobile/pull/10), [admin #10](https://github.com/awais-ur-rehman/paths-admin/pull/10). All target development. Feature source and test evidence are pushed; owner Task 10 acceptance remains pending. Main unchanged.
+
+## Task 10 owner acceptance — 2026-10-18
+
+The owner tested Task 10 on their physical phone, confirmed it looks good and authorized merging backend PR12, mobile PR10 and admin PR10 into development. This acceptance supersedes the earlier draft/device-pending handoff status. No additional per-step, multi-device, iOS or push-delivery measurements are inferred. Main remains unchanged.
+
+The owner explicitly requested waiting while they test the full app again. Task 11 and all further development are on hold; do not start the next task until asked. Existing separate release-evidence gaps remain documented above.
