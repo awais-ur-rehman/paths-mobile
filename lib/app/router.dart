@@ -1,3 +1,5 @@
+import '../features/auth/presentation/identity_settings_screen.dart';
+import '../features/auth/domain/provider_auth.dart';
 import '../features/deletion/domain/deletion_repository.dart';
 import '../features/deletion/presentation/deletion_screen.dart';
 import '../features/reviews/data/http_review_repository.dart';
@@ -112,6 +114,9 @@ GoRouter createAuthRouter(
       onDeleteAccount: deletion == null
           ? null
           : () => context.push('/account/delete'),
+      onSignInMethods: profiles is ProviderAuthRepository
+          ? () => context.push('/settings/sign-in')
+          : null,
       onBlockedAccounts: safety == null
           ? null
           : () => context.push('/settings/blocked'),
@@ -201,6 +206,8 @@ GoRouter createAuthRouter(
                       if (hasSetupGate) '/setup/resume',
                       '/setup/verification',
                       '/profile',
+                      if (profiles is ProviderAuthRepository)
+                        '/settings/sign-in',
                       if (media != null && path.startsWith('/media/')) path,
                       if (locations != null) '/setup/permissions',
                       if (encounters != null) '/home',
@@ -230,6 +237,11 @@ GoRouter createAuthRouter(
       return target == path ? null : target;
     },
     routes: [
+      if (profiles is ProviderAuthRepository)
+        GoRoute(
+          path: '/settings/sign-in',
+          builder: (_, _) => const IdentitySettingsScreen(),
+        ),
       if (deletion != null)
         GoRoute(
           path: '/account/delete',

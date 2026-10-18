@@ -54,6 +54,26 @@ class DeleteAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test('provider deletion sends only a scoped proof and retains only recovery data', () async {
+    final store = Store(),
+        adapter = DeleteAdapter(),
+        repo = HttpDeletionRepository(
+          origin: 'https://api.example.invalid',
+          store: store,
+          accountId: () => 'owner',
+          token: () async => 'access',
+          clearDevice: (_) async {},
+          transport: Dio()..httpClientAdapter = adapter,
+        );
+    final result = await repo.submitWithProof('deletion-scoped-fixture');
+    expect(result.accepted, true);
+    expect(adapter.calls.single.data['reauthToken'], 'deletion-scoped-fixture');
+    expect((adapter.calls.single.data as Map).containsKey('password'), false);
+    expect(store.value, isNot(contains('deletion-scoped-fixture')));
+    expect(store.value, isNot(contains('access')));
+    repo.close();
+  });
+
   test('every attempted delete first persists recovery proof; storage failures cannot submit', () async {
     final store = Store()..fail = true, adapter = DeleteAdapter();
     final repo = HttpDeletionRepository(

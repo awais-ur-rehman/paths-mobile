@@ -1,3 +1,7 @@
+import 'features/auth/domain/provider_auth.dart';
+import 'features/auth/data/social_auth_service.dart';
+import 'features/auth/presentation/provider_scope.dart';
+import 'core/network/generated/api_contract.dart' show ProviderSetupDto;
 import 'features/deletion/data/http_deletion_repository.dart';
 import 'features/deletion/data/deletion_store.dart';
 import 'features/deletion/domain/deletion_repository.dart';
@@ -66,6 +70,8 @@ class PathsApp extends StatefulWidget {
 }
 
 class _PathsAppState extends State<PathsApp> {
+  final providerSdk = SocialAuthService();
+  final providerLinkOffer = ValueNotifier<ProviderSetupDto?>(null);
   AuthRepository? repository;
   DeletionRepository? deletion;
   AuthCubit? cubit;
@@ -331,6 +337,7 @@ class _PathsAppState extends State<PathsApp> {
 
   @override
   void dispose() {
+    providerLinkOffer.dispose();
     lifecycle?.dispose();
     unawaited(chatAuth?.cancel());
     unawaited(safetyEvents?.cancel());
@@ -411,16 +418,23 @@ class _PathsAppState extends State<PathsApp> {
                   PathsToast.show(context, notice, tone: ToastTone.success);
                 }
               },
-              child: SafetyScope(
-                repository: safety,
-                child: media == null
-                    ? child!
-                    : MediaScope(
-                        media: media!,
-                        picker: photoPicker!,
-                        posts: posts!,
-                        child: child!,
-                      ),
+              child: ProviderAuthScope(
+                repository: repository is ProviderAuthRepository
+                    ? repository as ProviderAuthRepository
+                    : null,
+                sdk: providerSdk,
+                linkOffer: providerLinkOffer,
+                child: SafetyScope(
+                  repository: safety,
+                  child: media == null
+                      ? child!
+                      : MediaScope(
+                          media: media!,
+                          picker: photoPicker!,
+                          posts: posts!,
+                          child: child!,
+                        ),
+                ),
               ),
             ),
           ),

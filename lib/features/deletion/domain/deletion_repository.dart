@@ -75,3 +75,10 @@ abstract interface class DeletionRepository {
   Future<void> dismiss();
   void close();
 }
+
+abstract interface class ProviderDeletionRepository {
+  Future<DeletionRecord> submitWithProof(
+    String proof, {
+    CancelToken? cancelToken,
+  });
+}

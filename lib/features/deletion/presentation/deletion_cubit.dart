@@ -40,6 +40,16 @@ class DeletionCubit extends Cubit<DeletionState> {
 
   Future<void> submit(String password) =>
       _run((token) => repository.submit(password, cancelToken: token));
+  Future<void> submitProvider(String proof) => _run((token) {
+    final provider = repository;
+    if (provider is! ProviderDeletionRepository) {
+      throw const AuthFailure('configuration');
+    }
+    return (provider as ProviderDeletionRepository).submitWithProof(
+      proof,
+      cancelToken: token,
+    );
+  });
   Future<void> load() =>
       _run((token) => repository.refresh(cancelToken: token));
   @override

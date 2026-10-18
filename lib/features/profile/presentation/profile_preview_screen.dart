@@ -16,6 +16,7 @@ class ProfilePreviewScreen extends StatelessWidget {
     required this.userId,
     this.onLocationSetup,
     this.onBlockedAccounts,
+    this.onSignInMethods,
     this.onDeleteAccount,
     this.onBack,
     super.key,
@@ -25,6 +26,7 @@ class ProfilePreviewScreen extends StatelessWidget {
   final VoidCallback? onLocationSetup,
       onBack,
       onBlockedAccounts,
+      onSignInMethods,
       onDeleteAccount;
   @override
   Widget build(BuildContext context) => _PreviewOwner(
@@ -33,6 +35,7 @@ class ProfilePreviewScreen extends StatelessWidget {
     userId: userId,
     onLocationSetup: onLocationSetup,
     onBlockedAccounts: onBlockedAccounts,
+    onSignInMethods: onSignInMethods,
     onDeleteAccount: onDeleteAccount,
     onBack: onBack,
   );
@@ -44,6 +47,7 @@ class _PreviewOwner extends StatefulWidget {
     required this.userId,
     this.onLocationSetup,
     this.onBlockedAccounts,
+    this.onSignInMethods,
     this.onDeleteAccount,
     this.onBack,
     super.key,
@@ -51,6 +55,7 @@ class _PreviewOwner extends StatefulWidget {
   final VoidCallback? onLocationSetup,
       onBack,
       onBlockedAccounts,
+      onSignInMethods,
       onDeleteAccount;
   final ProfileSummaryRepository repository;
   final String userId;
@@ -115,6 +120,15 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
                   onTap: () {
                     Navigator.pop(sheet);
                     widget.onLocationSetup!();
+                  },
+                ),
+              if (widget.onSignInMethods != null)
+                ListTile(
+                  leading: const Icon(Icons.key_outlined),
+                  title: const Text('Sign-in methods'),
+                  onTap: () {
+                    Navigator.pop(sheet);
+                    widget.onSignInMethods!();
                   },
                 ),
               if (widget.onBlockedAccounts != null)
