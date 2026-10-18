@@ -52,6 +52,7 @@ abstract interface class TokenVault {
 abstract interface class AuthPreferences {
   Future<bool?> flag(String key);
   Future<void> setFlag(String key, bool value);
+  Future<void> clearDeviceId();
   Future<String?> deviceId();
   Future<void> setDeviceId(String value);
 }

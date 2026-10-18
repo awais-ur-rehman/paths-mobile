@@ -1,3 +1,5 @@
+import '../features/deletion/domain/deletion_repository.dart';
+import '../features/deletion/presentation/deletion_screen.dart';
 import '../features/reviews/data/http_review_repository.dart';
 import '../features/reviews/presentation/review_screen.dart';
 import '../features/safety/domain/safety_repository.dart';
@@ -88,6 +90,7 @@ GoRouter createAuthRouter(
   PushClient? push,
   ChatRepository? chats,
   SafetyRepository? safety,
+  DeletionRepository? deletion,
 }) {
   SetupDestination? setupDestination;
   String? setupAccount, pendingDestination;
@@ -106,6 +109,9 @@ GoRouter createAuthRouter(
       repository: summaries,
       userId: cubit.state.account!.id,
       onBack: encounters == null ? null : () => context.go('/home'),
+      onDeleteAccount: deletion == null
+          ? null
+          : () => context.push('/account/delete'),
       onBlockedAccounts: safety == null
           ? null
           : () => context.push('/settings/blocked'),
@@ -120,6 +126,12 @@ GoRouter createAuthRouter(
     redirect: (context, route) {
       final state = cubit.state;
       final path = route.uri.path;
+      if (deletion != null && path == '/deletion/receipt') return null;
+      if (deletion != null &&
+          path == '/account/delete' &&
+          state.stage == AuthStage.authenticated) {
+        return null;
+      }
       if (path == '/policies/terms' || path == '/policies/privacy') return null;
       final endedAccount =
           setupAccount != null && setupAccount != state.account?.id;
@@ -218,6 +230,22 @@ GoRouter createAuthRouter(
       return target == path ? null : target;
     },
     routes: [
+      if (deletion != null)
+        GoRoute(
+          path: '/account/delete',
+          builder: (context, _) => DeletionScreen(
+            repository: deletion,
+            onAccepted: () => context.go('/deletion/receipt'),
+          ),
+        ),
+      if (deletion != null)
+        GoRoute(
+          path: '/deletion/receipt',
+          builder: (context, _) => DeletionReceiptScreen(
+            repository: deletion,
+            onDone: () => context.go('/'),
+          ),
+        ),
       if (hasSetupGate)
         GoRoute(
           path: '/setup/resume',
@@ -565,7 +593,11 @@ GoRouter createAuthRouter(
         ),
       GoRoute(
         path: '/account/restricted',
-        builder: (_, _) => const RestrictedAccountScreen(),
+        builder: (context, _) => RestrictedAccountScreen(
+          onDelete: deletion == null
+              ? null
+              : () => context.go('/account/delete'),
+        ),
       ),
       GoRoute(
         path: '/policies/terms',

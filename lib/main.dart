@@ -1,3 +1,6 @@
+import 'features/deletion/data/http_deletion_repository.dart';
+import 'features/deletion/data/deletion_store.dart';
+import 'features/deletion/domain/deletion_repository.dart';
 import 'features/safety/data/http_safety_repository.dart';
 import 'features/safety/presentation/safety_scope.dart';
 import 'features/chat/data/chat_realtime.dart';
@@ -47,6 +50,7 @@ void main() {
 class PathsApp extends StatefulWidget {
   const PathsApp({
     this.repository,
+    this.deletion,
     this.locationSync,
     this.photoPicker,
     this.setupProgress,
@@ -56,12 +60,14 @@ class PathsApp extends StatefulWidget {
   final PhotoPicker? photoPicker;
   final LocationSyncService? locationSync;
   final AuthRepository? repository;
+  final DeletionRepository? deletion;
   @override
   State<PathsApp> createState() => _PathsAppState();
 }
 
 class _PathsAppState extends State<PathsApp> {
   AuthRepository? repository;
+  DeletionRepository? deletion;
   AuthCubit? cubit;
   AuthRouterRefresh? refresh;
   GoRouter? navigation;
@@ -228,6 +234,32 @@ class _PathsAppState extends State<PathsApp> {
           );
         });
       }
+      deletion = widget.deletion;
+      if (deletion == null &&
+          widget.repository == null &&
+          profiles is HttpAuthRepository) {
+        deletion = HttpDeletionRepository(
+          origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
+          store: PlatformDeletionStore(),
+          accountId: () => profiles.accountId,
+          token: profiles.realtimeToken,
+          clearDevice: (owner) async {
+            if (profiles.accountId != null && profiles.accountId != owner) {
+              return;
+            }
+            try {
+              await profiles.eraseAcceptedAccount(owner);
+            } finally {
+              if (profiles.accountId == null || profiles.accountId == owner) {
+                await Future.wait([
+                  if (locations != null) locations!.eraseDeletedAccount(owner),
+                  if (setupProgress != null) setupProgress!.erase(owner),
+                ]);
+              }
+            }
+          },
+        );
+      }
       navigation = createAuthRouter(
         cubit!,
         refresh!,
@@ -240,6 +272,7 @@ class _PathsAppState extends State<PathsApp> {
         posts: posts,
         chats: chats,
         safety: safety,
+        deletion: deletion,
         notifications: notifications,
         push: push,
         relationships: profiles is AuthenticatedApi
@@ -251,6 +284,18 @@ class _PathsAppState extends State<PathsApp> {
             : null,
       );
       unawaited(cubit!.initialize());
+      if (deletion != null) {
+        unawaited(() async {
+          try {
+            final record = await deletion!.saved();
+            if (mounted && record?.shouldResume == true) {
+              navigation?.go('/deletion/receipt');
+            }
+          } catch (_) {
+            if (mounted) navigation?.go('/deletion/receipt');
+          }
+        }());
+      }
       if (push != null && notifications != null) {
         pushAuth = cubit!.stream.listen((_) => unawaited(_pushResume()));
         pushEvents = push!.events.listen((id) {
@@ -294,6 +339,7 @@ class _PathsAppState extends State<PathsApp> {
     unawaited(pushAuth?.cancel());
     unawaited(pushEvents?.cancel());
     unawaited(push?.dispose());
+    deletion?.close();
     navigation?.dispose();
     refresh?.dispose();
     final owned = cubit;

@@ -99,6 +99,17 @@ class LocationSyncService {
     await Future.wait([stopped, pending]);
   }
 
+  Future<void> eraseDeletedAccount(String owner) async {
+    final current = repository.currentTrackingAccountId;
+    if (current != null && current != owner) return;
+    _generation++;
+    _request?.cancel();
+    await tracker.stopAndPurge();
+    _scope = null;
+    _mayHaveLease = false;
+    await _persist(false);
+  }
+
   Future<void> initialize() async {
     if (!await controls.pendingStop()) {
       await tracker.flushPending();

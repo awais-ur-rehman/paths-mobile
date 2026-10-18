@@ -101,6 +101,26 @@ class DelayedPauseTracker extends CapturingTracker {
 }
 
 void main() {
+  test('accepted deletion clears native samples and the saved account/epoch without another server control', () async {
+    final repository = FixtureLocationRepository(),
+        tracker = CapturingTracker(),
+        controls = MemoryTrackingControls()
+          ..pending = true
+          ..control = const TrackingStop('fixture-account', 3);
+    final sync = LocationSyncService(
+      repository,
+      tracker,
+      controls,
+      'https://api.example.invalid',
+    );
+    await sync.eraseDeletedAccount('fixture-account');
+    expect(controls.pending, isFalse);
+    expect(controls.control, isNull);
+    expect(repository.pauses, 0);
+    expect(await tracker.currentStatus(), TrackingStatus.stopped);
+    await sync.close();
+  });
+
   test('a persisted old-account stop never pauses the new account', () async {
     final repo = FixtureLocationRepository()..accountId = 'new-account';
     final tracker = CapturingTracker(),

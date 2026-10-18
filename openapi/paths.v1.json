@@ -1,6 +1,182 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/me/deletion": {
+      "post": {
+        "operationId": "DeletionController_begin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAccountInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/v1/public/deletion/challenge": {
+      "post": {
+        "operationId": "DeletionController_challenge",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionChallengeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionChallengeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/v1/public/deletion/confirm": {
+      "post": {
+        "operationId": "DeletionController_confirm",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionConfirmInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/v1/public/deletion/receipt": {
+      "post": {
+        "operationId": "DeletionController_receipt",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionReceiptInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/v1/public/deletion/recover": {
+      "post": {
+        "operationId": "DeletionController_recover",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletionRecoveryInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
+    "/v1/public/deletion/config": {
+      "get": {
+        "operationId": "DeletionController_config",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "deletion"
+        ]
+      }
+    },
     "/v1/me/content-appeals": {
       "post": {
         "operationId": "ContentReviewController_submit",
@@ -3589,7 +3765,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.10.0",
+    "version": "1.11.0",
     "contact": {}
   },
   "tags": [],
@@ -3603,6 +3779,180 @@
       }
     },
     "schemas": {
+      "DeleteAccountInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "recoveryKey": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "confirmation": {
+            "type": "string",
+            "enum": [
+              "DELETE"
+            ]
+          }
+        },
+        "required": [
+          "clientId",
+          "recoveryKey",
+          "password",
+          "confirmation"
+        ]
+      },
+      "DeletionReceiptDto": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "complete"
+            ]
+          },
+          "acceptedAt": {
+            "type": "string"
+          },
+          "backupExpiresAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "receipt",
+          "state",
+          "acceptedAt",
+          "backupExpiresAt",
+          "completedAt"
+        ]
+      },
+      "DeletionChallengeInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ]
+      },
+      "DeletionChallengeDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "deletion"
+            ]
+          },
+          "expiresAt": {
+            "type": "string"
+          },
+          "resendAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "purpose",
+          "expiresAt",
+          "resendAt"
+        ]
+      },
+      "DeletionConfirmInput": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "recoveryKey": {
+            "type": "string"
+          },
+          "confirmation": {
+            "type": "string",
+            "enum": [
+              "DELETE"
+            ]
+          }
+        },
+        "required": [
+          "challengeId",
+          "code",
+          "clientId",
+          "recoveryKey",
+          "confirmation"
+        ]
+      },
+      "DeletionReceiptInput": {
+        "type": "object",
+        "properties": {
+          "receipt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "receipt"
+        ]
+      },
+      "DeletionRecoveryInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "recoveryKey": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "clientId",
+          "recoveryKey"
+        ]
+      },
+      "DeletionConfigDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "supportEmail": {
+            "type": "string"
+          },
+          "livePurgeHours": {
+            "type": "integer"
+          },
+          "backupDays": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "supportEmail",
+          "livePurgeHours",
+          "backupDays"
+        ]
+      },
       "AppealInput": {
         "type": "object",
         "properties": {
@@ -5256,7 +5606,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.10.0"
+              "1.11.0"
             ]
           }
         },
