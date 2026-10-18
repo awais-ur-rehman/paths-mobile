@@ -796,3 +796,7 @@ Draft PRs into development (all pushed):
 | Mobile | https://github.com/awais-ur-rehman/paths-mobile/pull/14 | 0f62871, bb9234e, a160d13; device/setup report e624119 |
 
 Task14 code/available local checks and review are implemented/verified; phase acceptance remains **awaiting device test**, blocked on provider configuration. All six task checklist items are accounted for; the signed walkthrough remains unchecked. Remote CI is a separate gate and was not inferred from local results. No PR was merged for Task14. Main remains the last prior verified baseline.
+
+## Google setup checkpoint — 2026-10-18
+
+Owner requested Google sign-in using existing `paths-awais`; Apple deferred and all Task14 PRs remain draft until the owner's Google phone test. Registered and verified the actual debug certificate SHA-1/SHA-256 on existing `com.paths.mobile` Firebase app. Refreshed private SDK config still has no OAuth clients. Google Cloud browser authentication is required to configure the Web/Android clients; the open panel awaits owner login. No Google sign-in, billing change or real-device pass is claimed. Backend/mobile application code and private runtime configuration remain unchanged at this checkpoint. Details: backend `docs/testing/task14-google-setup.md`.
