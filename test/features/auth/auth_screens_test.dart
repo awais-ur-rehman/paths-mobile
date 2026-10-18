@@ -397,7 +397,7 @@ void main() {
       await tap(tester, 'Sign in');
       expect(find.text('Your account is restricted'), findsOneWidget);
       expect(find.text('Contact support'), findsOneWidget);
-      expect(find.text('Ask support about deletion'), findsOneWidget);
+      expect(find.text('Request deletion help'), findsOneWidget);
       final router = GoRouter.of(
         tester.element(find.text('Your account is restricted')),
       );
