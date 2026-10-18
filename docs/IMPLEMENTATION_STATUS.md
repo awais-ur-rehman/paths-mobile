@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase 5 Task 11 implemented and locally verified; awaiting owner testing and pilot staffing**. API 1.10.0. Main/development unchanged for Task 11; hosting deferred.
+Current phase: **Phase 6 Task 12 account erasure; implemented, awaiting Android device testing and owner restore sign-off**. Task11 accepted and merged to development; main unchanged. API contract **1.11.0**.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -126,13 +126,14 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 12: Complete account erasure
 
-- [ ] Seed two connected users with messages, posts, CNIC versions, reports, locations, caches and queued jobs; test deleting one leaves zero personal records and removes the shared conversation. — **not started**
-- [ ] Test FK constraints after deletion, another unrelated conversation unaffected, and staff audit anonymization without copied subject PII. — **not started**
-- [ ] Implement immediate barrier/revocation, encrypted independent manifest, external object/provider purge and bounded DB cascades. — **not started**
-- [ ] Inject failures after each stage; retry completes without losing manifest or recreating assets. — **not started**
-- [ ] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **not started**
-- [ ] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **not started**
-- [ ] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **not started**
+- [x] Seed two connected users with messages, posts, CNIC versions, reports, locations, caches and queued jobs; test deleting one leaves zero personal records and removes the shared conversation. — **verified — synthetic graph, shared-chat removal, locations/media/CNIC revisions/reports/queued work tests pass**
+- [x] Test FK constraints after deletion, another unrelated conversation unaffected, and staff audit anonymization without copied subject PII. — **verified — FK integrity, unrelated conversation and anonymized audit tests pass**
+- [x] Implement immediate barrier/revocation, encrypted independent manifest, external object/provider purge and bounded DB cascades. — **implemented and locally verified — immediate barrier, encrypted independent journal, durable retry, R2/recovery purge and bounded cascades; social providers remain Task14**
+- [x] Inject failures after each stage; retry completes without losing manifest or recreating assets. — **verified — checkpoint, storage failure, rollback, duplicate/concurrent erasure and recovery regressions pass**
+- [ ] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **implemented; automated checks verified; awaiting device test — password/receipt/cleanup and public OTP recovery/offline/browser tests pass**
+- [ ] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **implemented and locally verified; awaiting owner restore sign-off — actual isolated pre-deletion pg_dump restored/suppressed, managed backup expiry and restore barrier tested**
+- [ ] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **implemented; awaiting counterpart device test — server revocation generation/reconnect tests and screenshot/backup disclosures verified locally**
+
 
 ### Task 13: Load, security, battery and UI hardening
 
@@ -681,3 +682,12 @@ Draft PRs into development (owner acceptance pending):
 - Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/11 — implementation/status head8fe78ee before this link-only update.
 
 All use feature/admin-review. No Task11 merge or main promotion. GitHub checks are separate from the local evidence above; inspect the current PR check state. The local staff portal is running at http://127.0.0.1:5173.
+
+## Task 12 start — 2026-10-18
+
+Owner accepted Task11 and requested Task12. All Task11 PRs merged into development; no main promotion. Task12 checklist/rulings are in task12-deletion-plan.md. Dedicated test staff account is local only; private credential/enrollment files are ignored. Restore sign-off, device testing and earlier release evidence are not assumed.
+
+
+## Task12 delivery — 2026-10-18
+
+Feature branch `feature/account-erasure`; API1.11.0. Implementation, actual check scope, review fixes and code commits are recorded in [task12-evidence.md](testing/task12-evidence.md). [Owner test steps](testing/task12-erasure.md). Task11 owner acceptance is recorded; main remains unchanged. Device/restore gates remain pending, so no Task12 merge or Task13 start.
