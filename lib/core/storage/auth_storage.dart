@@ -32,6 +32,8 @@ final class PlatformAuthPreferences implements AuthPreferences {
   Future<void> setFlag(String key, bool value) =>
       _preferences.setBool(key, value);
   @override
+  Future<void> clearDeviceId() => _preferences.remove('paths.auth.device');
+  @override
   Future<String?> deviceId() => _preferences.getString('paths.auth.device');
   @override
   Future<void> setDeviceId(String value) =>

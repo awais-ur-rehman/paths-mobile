@@ -79,15 +79,21 @@ class _AdultFormState extends State<_AdultForm> {
 }
 
 class RestrictedAccountScreen extends StatelessWidget {
-  const RestrictedAccountScreen({super.key});
+  const RestrictedAccountScreen({this.onDelete, super.key});
+  final VoidCallback? onDelete;
   @override
   Widget build(BuildContext context) => AuthScaffold(
     title: 'Your account is restricted',
-    subtitle: 'Contact support to appeal or request deletion.',
+    subtitle: 'Contact support to appeal, or delete your account.',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SupportActions(),
+        if (onDelete != null)
+          FilledButton(
+            onPressed: onDelete,
+            child: const Text('Delete account'),
+          ),
         const SizedBox(height: 20),
         TextButton(
           onPressed: () => context.read<AuthCubit>().logout(),

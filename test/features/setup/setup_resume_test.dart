@@ -9,6 +9,11 @@ import 'package:paths_mobile/features/setup/domain/setup_progress.dart';
 import 'package:paths_mobile/features/setup/presentation/setup_resume_cubit.dart';
 
 class Progress implements SetupProgressStore {
+  @override
+  Future<void> erase(String account) async {
+    seen.remove(account);
+  }
+
   final seen = <String>{};
   bool fail = false, failWrite = false;
   @override

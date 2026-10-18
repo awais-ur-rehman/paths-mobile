@@ -30,6 +30,11 @@ class MemoryVault implements TokenVault {
 
 class MemoryPreferences implements AuthPreferences {
   final values = <String, bool>{'paths.auth.installed': true};
+  @override
+  Future<void> clearDeviceId() async {
+    device = null;
+  }
+
   String? device;
   bool failTombstone = false;
   @override

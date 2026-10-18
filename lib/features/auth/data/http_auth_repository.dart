@@ -997,6 +997,14 @@ final class HttpAuthRepository
     return account;
   }
 
+  Future<void> eraseAcceptedAccount(String owner) async {
+    if (_session != null && _session!.account.id != owner) return;
+    await _invalidate();
+    await _device;
+    await _preferences.clearDeviceId();
+    _device = null;
+  }
+
   @override
   Future<void> logout() async {
     final token = _session?.tokens.refreshToken;

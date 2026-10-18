@@ -7,6 +7,15 @@ final class PlatformSetupProgress implements SetupProgressStore {
   final _preferences = SharedPreferencesAsync();
   String _key(String account) => 'paths.setup.permissions.$account';
   @override
+  Future<void> erase(String account) async {
+    try {
+      await _preferences.remove(_key(account));
+    } catch (_) {
+      throw const AuthFailure('storage');
+    }
+  }
+
+  @override
   Future<bool> permissionSeen(String account) async {
     try {
       return await _preferences.getBool(_key(account)) ?? false;

@@ -16,12 +16,16 @@ class ProfilePreviewScreen extends StatelessWidget {
     required this.userId,
     this.onLocationSetup,
     this.onBlockedAccounts,
+    this.onDeleteAccount,
     this.onBack,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
-  final VoidCallback? onLocationSetup, onBack, onBlockedAccounts;
+  final VoidCallback? onLocationSetup,
+      onBack,
+      onBlockedAccounts,
+      onDeleteAccount;
   @override
   Widget build(BuildContext context) => _PreviewOwner(
     key: ValueKey(userId),
@@ -29,6 +33,7 @@ class ProfilePreviewScreen extends StatelessWidget {
     userId: userId,
     onLocationSetup: onLocationSetup,
     onBlockedAccounts: onBlockedAccounts,
+    onDeleteAccount: onDeleteAccount,
     onBack: onBack,
   );
 }
@@ -39,10 +44,14 @@ class _PreviewOwner extends StatefulWidget {
     required this.userId,
     this.onLocationSetup,
     this.onBlockedAccounts,
+    this.onDeleteAccount,
     this.onBack,
     super.key,
   });
-  final VoidCallback? onLocationSetup, onBack, onBlockedAccounts;
+  final VoidCallback? onLocationSetup,
+      onBack,
+      onBlockedAccounts,
+      onDeleteAccount;
   final ProfileSummaryRepository repository;
   final String userId;
   @override
