@@ -1,3 +1,5 @@
+import '../domain/provider_auth.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
@@ -20,6 +22,7 @@ import '../domain/auth_repository.dart';
 final class HttpAuthRepository
     implements
         AuthRepository,
+        ProviderAuthRepository,
         ProfileRepository,
         ProfileSummaryRepository,
         VerificationRepository,
@@ -874,6 +877,58 @@ final class HttpAuthRepository
       ),
     ),
   );
+  @override
+  int get providerEpoch => _generation;
+  @override
+  Future<ProviderConfigDto> providerConfig({CancelToken? cancelToken}) async =>
+      ProviderConfigDto.fromJson(
+        await _request('GET', '/v1/auth/providers', cancelToken: cancelToken),
+      );
+  @override
+  Future<Map<String, dynamic>> providerRequest(
+    String method,
+    String path, {
+    Map<String, dynamic>? data,
+    bool authenticated = false,
+    required int epoch,
+    CancelToken? cancelToken,
+  }) async {
+    if (epoch != _generation) throw const AuthFailure('cancelled');
+    if (!path.startsWith('/v1/auth/') && !path.startsWith('/v1/me/')) {
+      throw const AuthFailure('configuration');
+    }
+    final result = await _request(
+      method,
+      path,
+      data: data,
+      authenticated: authenticated,
+      cancelToken: cancelToken,
+    );
+    if (epoch != _generation || cancelToken?.isCancelled == true) {
+      throw const AuthFailure('cancelled');
+    }
+    return result;
+  }
+
+  @override
+  Future<AuthSession> acceptProviderSession(
+    Map<String, dynamic> value, {
+    required int epoch,
+    CancelToken? cancelToken,
+  }) async {
+    if (epoch != _generation || cancelToken?.isCancelled == true) {
+      throw const AuthFailure('cancelled');
+    }
+    final generation = ++_generation;
+    _coordinator.replace(null);
+    final session = await _accept(SessionDto.fromJson(value), generation);
+    if (cancelToken?.isCancelled == true) {
+      if (_generation == generation) await _invalidate();
+      throw const AuthFailure('cancelled');
+    }
+    return session;
+  }
+
   @override
   Future<AuthSession> login(
     String email,

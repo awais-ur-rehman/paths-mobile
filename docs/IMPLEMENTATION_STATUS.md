@@ -152,12 +152,12 @@ Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged
 
 ### Task 14: Provider login and safe linking
 
-- [ ] Test invalid audience/issuer/nonce/expired token and signature rotation; use test verifier fixtures, never production credentials in repo. — **not started**
-- [ ] Test same-email collision does not merge; existing-account reauthentication required; provider+subject unique. — **not started**
-- [ ] Implement Google and Apple SDK flows, cancellation handling, Apple relay/name-first-login behavior and missing email recovery. — **not started**
-- [ ] Integrate profile/adult onboarding and secure provider reauthentication for delete. — **not started**
-- [ ] Add Apple token revocation to deletion workflow, test provider outage retry; prevent removing last sign-in method. — **not started**
-- [ ] Verify both providers on real signed iOS/Android builds as supported by configured provider flows; recheck login-service store requirement. — **not started**
+- [x] Test invalid audience/issuer/nonce/expired token and signature rotation; use test verifier fixtures, never production credentials in repo. — **verified locally — signed fixture validation, key rotation, fetch limits/backoff and native presenter allowlists; no production credentials in tests**
+- [x] Test same-email collision does not merge; existing-account reauthentication required; provider+subject unique. — **verified locally — explicit linking and account-bound candidates; collision, OTP/signup, unique-subject and concurrent last-method regressions**
+- [x] Implement Google and Apple SDK flows, cancellation handling, Apple relay/name-first-login behavior and missing email recovery. — **implemented; automated checks verified — cached native SDK flows, quiet cancellation, fresh nonce, relay/name and missing-email steps; live-provider acceptance pending**
+- [x] Integrate profile/adult onboarding and secure provider reauthentication for delete. — **implemented; automated checks verified — existing adult/profile routing, secure Paths sessions and action/session-scoped provider deletion proof; device walkthrough pending**
+- [x] Add Apple token revocation to deletion workflow, test provider outage retry; prevent removing last sign-in method. — **verified locally — encrypted revocation outbox/manifests, outage retry, bounded cleanup progress, restore replay and last-method protection**
+- [ ] Verify both providers on real signed iOS/Android builds as supported by configured provider flows; recheck login-service store requirement. — **awaiting device test / blocked by configuration — Google OAuth clients and Apple Developer capability/key setup missing; Android and unsigned iOS compile, policy review recorded; no real signed login evidence**
 
 ## Phase 8 — deployment and release validation
 
@@ -742,7 +742,7 @@ All Task13 PRs remain draft into development. Main unchanged; no Task14. Local b
 
 ## Shared incremental matching — 2026-10-18
 
-**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Main is unchanged; no Task 14. All three PRs remain draft.
+**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Historical pre-merge report: superseded by the owner-authorized Task13 development merge and Task14 status below. Main remains unchanged.
 
 | Work | Status | Evidence |
 | --- | --- | --- |
@@ -760,3 +760,113 @@ All five final runtime recovery faults passed at `2fbfb36`: worker crash 33.517 
 **Qualification remains open:** shared matching is slower than the 19,928.782 ms owner control in this workload. Passing streak is zero; cold discovery also exceeded the application query deadline in a separate probe. Proof/evidence/atomic-inbox costs need further work. No threshold, constraint or authorization rule was weakened. The application remains on the owner default. No owner data/device or vendor service was faulted; no local dependency/tool/image downloads occurred.
 
 Backend [draft PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) contains the full measurements in `docs/task13-incremental-measurements.md` and checklist in `docs/superpowers/plans/2026-10-18-incremental-matching.md`. Earlier failed runs remain recorded.
+
+
+## Task 14: provider login — in progress; signed-provider acceptance pending
+
+Owner requested Task13 development integration despite its reported failed load gate. Backend PR15/admin PR13/mobile PR13 merged normally (9a53f8f/e5ed6bf/6df7564); no main promotion or protection bypass. Task13 remains unqualified, owner matching stays default and prior load/native-baseline/device debt remains open. Task15 deployment/store work has not started.
+
+Branch: `feature/provider-auth`. API contract **1.12.0**, identical backend/admin/mobile artifact, genuinely regenerated client DTOs. Applicable checklist coverage is recorded above; checked code/fixture tasks do not imply real-provider acceptance.
+
+| Work | Status | Evidence |
+| --- | --- | --- |
+| Signed provider verification/config | Verified locally | Backend8458f39 and review fixf64e233; fixed JWKS endpoints, signature/issuer/audience/nonce/time checks, Google native presenter allowlist, bounded cache/fetch/rotation |
+| Identity/session/link transitions | Implemented; verified locally | Backend618ec5f, unique identities, terms/email OTP, collision handling, authenticated account-bound link candidate, secure existing session/adult routing |
+| Reauth, unlink, Apple erasure/retention/restore | Implemented; verified locally | Backend5b2fef6/03c507b/f64e233; action/session-scoped one-use proof, last-method serialization, encrypted retry/manifest, cleanup saturation regression |
+| Native SDK/session/UI | Implemented; automated checks verified | Mobile0f62871/bb9234e/a160d13; per-attempt nonce, serialized SDK cleanup, cancellation/epoch/vault, compact controls/settings, provider-only deletion, shared OTP cooldown |
+| Provider credentials/signed runtime | Google Android configured; awaiting device test | Web/Android OAuth clients and debug certificate configured in paths-awais. Owner test user/basic identity scopes saved. Apple/iOS configuration pending; no real provider login claimed |
+| Handoff/review | Verified locally; draft PR/device handoff prepared | Whole-branch reviewer found Google presenter rejection and expired-cleanup starvation; both fixed with observed RED/GREEN regressions and rechecked. Final evidence/push/PR links follow |
+
+Checks observed: backend **56 unit**, **13 Phase0**, **4 metric**, **32 final focused auth/deletion** pass. Final full **211 integration** passed after the isolated3-test bootstrap check. A preceding run during concurrent native compilation had210 pass/1 migration100ms-query-budget timeout; the same isolated test and serial full suite then passed without changing limits or code. The failed attempt is retained here; runtime capacity is not inferred from these checks. Mobile **294 Flutter**, **12 Python tooling** and analyzer pass. Admin contract generation/lint/types/build and **8 tests** pass; unchanged admin browser UI was not retested for this contract-only task.
+
+Android Debug assembled offline (274 tasks) with explicit USB-loopback origin and existing ignored push configuration. Final APK/staged Dart kernel equals compiler output: **76,099,904 bytes**, SHA256 **163befe01eccfcde5e547180d5c698f85e358f0f700aaea183e4b4d7082697d6**. Unsigned generic iOS Debug compiled with automatic resolution/updates disabled. These builds do not establish signing, OAuth consent, native chooser behavior or phone acceptance.
+
+Dependencies: Google/Apple Dart packages and Android artifacts came from existing caches. Initial iOS compile correctly blocked on missing GoogleSignIn-iOS; the owner then specifically approved its download. Real Swift resolution records GoogleSignIn9.2.0 and required transitives while retaining MapLibre6.28.0. No fabricated lockfile, tool installation, emulator or phone operation. Original Google button artwork is bundled under its branding terms; standard Apple button uses its cached package. Asset sources/license details are in mobile `docs/ASSETS.md`.
+
+Local backend runtime f64e233 was built by copying compiled sources/migrations into the cached image with network disabled. Additive migration0019 applied; only API/worker restarted. Readiness and public provider metadata returned200/API1.12.0 with both providers disabled. Existing private env, R2/Gmail/FCM mounts and volumes were retained. Provider environment keys are passed to both services by Compose; no real user/provider data was added for these checks.
+
+Setup/protocol/release gates: backend `docs/runbooks/provider-auth.md`. Exact owner build/configuration and numbered physical checks: mobile `docs/TASK14_DEVICE_TESTS.md`. Apple guideline4.8 login-service requirements were checked against the official current page; no exception/store readiness is claimed. No deployment, purchase or store submission.
+
+Draft PRs into development (all pushed):
+
+| Repository | PR | Verified implementation commits |
+| --- | --- | --- |
+| Backend | https://github.com/awais-ur-rehman/paths-backend/pull/16 | 8458f39, 5b2fef6, 618ec5f, 03c507b, f64e233; verification report0513493 |
+| Admin | https://github.com/awais-ur-rehman/paths-admin/pull/14 | ef09c0a (contract/evidence only) |
+| Mobile | https://github.com/awais-ur-rehman/paths-mobile/pull/14 | 0f62871, bb9234e, a160d13; device/setup report e624119 |
+
+Task14 code/available local checks and review are implemented/verified; phase acceptance remains **awaiting device test**. Google Android configuration is ready; Apple/iOS configuration remains pending. All six task checklist items are accounted for; the signed walkthrough remains unchecked. Remote CI is a separate gate and was not inferred from local results. No PR was merged for Task14. Main remains the last prior verified baseline.
+
+## Google setup checkpoint — 2026-10-18
+
+Owner requested Google sign-in using existing `paths-awais`; Apple deferred and all Task14 PRs remain draft until the owner's Google phone test. Registered and verified the actual debug certificate SHA-1/SHA-256 on existing `com.paths.mobile` Firebase app. Refreshed private SDK config still has no OAuth clients. Google Cloud browser authentication is required to configure the Web/Android clients; the open panel awaits owner login. No Google sign-in, billing change or real-device pass is claimed. Backend/mobile application code and private runtime configuration remain unchanged at this checkpoint. Details: backend `docs/testing/task14-google-setup.md`.
+
+## Google Android ready for owner test — 2026-10-18
+
+Supersedes the earlier Google setup checkpoint. Owner authenticated the browser and approved the policy plus both OAuth clients. Existing `paths-awais` now has Paths backend Web and Paths Android debug clients; actual APK certificate matches registered `com.paths.mobile` SHA-1/SHA-256. External audience stays Testing with the owner email as test user. Saved only OpenID/email/profile; no sensitive/restricted scopes. Public client IDs are in ignored backend `.env.local`; refreshed Firebase config remains ignored. No billing change or Firebase Auth migration.
+
+Current local checks: API/worker healthy after configuration restart with retained private env/volumes, readiness200/API1.12.0, provider metadata200/Googletrue/Applefalse. Offline Android build passed (274tasks,24executed/250up-to-date). Kernel comparison passed (76,099,904bytes; SHA256 `8e8670be4182ff26f9ab47e0511393a29b7b86b9ca65a13d8043218c8aaf09a0`); actual APK signature verification passed. Existing Gradle deprecation warnings remain. No application code or API contract changed; previous unit/integration/widget counts above are prior evidence, not rerun checks for this configuration-only update. Reviewed the configuration/documentation diff and confirmed private files are ignored.
+
+Google chooser/login, owner email collision/linking, cancellation/retry and secure session restore are **awaiting device test**. Apple and signed iOS provider setup/validation remain **blocked** on owner configuration. No real Google login or physical-device result claimed. All Task14 PRs stay draft (backend16/admin14/mobile14); main unchanged, no merge. Setup details: backend `docs/testing/task14-google-setup.md`; owner commands/numbered steps: mobile `docs/TASK14_DEVICE_TESTS.md`. Task13 capacity debt remains separate.
+
+## Android navigation/location follow-up — 2026-10-18
+
+Owner reports Google sign-in worked on the physical Android phone. This records that acceptance only; Apple setup and signed iOS provider testing remain deferred. Owner then reported Chats redirecting to profile setup, Home hiding the map without encounters, and confusing permission/background status.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Chats navigation after completed setup | Implemented; automated regression verified | Mobile353087a: `/chats` was missing from the authenticated route allowlist; detail routes now also check chat availability |
+| Empty-history map and own-location layer | Implemented; automated behavior verified; awaiting device test | Mobileddc9dda: map no longer requires backend center; native self-location layer follows permission/services and centers once on a fresh fix; peers remain authorized approximate encounter areas |
+| First Home permission / retry / Settings | Implemented; automated behavior verified; awaiting device test | Mobileddc9dda: concise optional prompt, top-right icon, explicit retry and permanent-denial Settings recovery; no standalone permission onboarding gate; no silent restart of paused sharing |
+| Background sharing vs GPS quality | Implemented; native policy verified; awaiting device test | Mobile213ae6f: active background choice reported separately on Android/iOS; one Android precision burst capped at20sec, foreground/precise only, ends early at<=25m; balanced collection afterward |
+| Concise location controls | Implemented; widget/accessibility-size checks verified | Mobileddc9dda: one primary enable/pause action, background switch and contextual Settings; updated rendered golden inspected |
+| Native/device gate | Android offline build and unsigned iOS compile verified; awaiting device test | No phone/emulator operated. GPS quality, actual permission sheets, tile rendering, background delivery and battery remain physical/runtime checks |
+| Merge/main promotion | Pending | Google owner acceptance recorded, but new navigation/location device checks are pending. Main remains unchanged; Task13 failed load qualification remains open; no history rewrite/protection bypass |
+
+Checks: affected set62 passed before final additional regressions; final Home set17 passed including permanent-denial return from Settings. Final full Flutter suite **301 passed**, including the extra Settings-recovery test. Dart analyzer clean;13 Python/tooling tests passed, including executed cached Kotlin precision-policy and Kotlin/Swift endpoint guards. Final offline Android build passed274tasks (24executed/250up-to-date); kernel comparison76,097,400bytes, SHA256 `129777b80e9a4ce33ee7cb82bfee5c84becf0e87ee26ad59f039957e073be072`. Unsigned generic iOS build succeeded with dependency resolution/updates disabled; no iOS runtime claim.
+
+Review corrections: missing Chats allowlist and chat-detail capability condition; map no longer hidden by null server center; permission denial leaves Home usable; precise-fix quality does not erase the background switch; precision timer cannot restart foreground-only capture after leaving the app; existing OS permission cannot silently restart paused sharing. Existing encounter accuracy/authorization rules, API1.12.0 and private settings remain intact. Only fixtures represent synthetic users/coordinates.
+
+GitHub branch-protection inspection returned403 for each private repository: current plan requires an upgrade or public visibility. Neither was changed; no claim of enforced GitHub protection. Maintain the documented release gate and normal PR workflow. All Task14 PRs remain draft pending this follow-up's phone check. No deployment, purchase, tool/package download, public repository or main push.
+
+Owner retest: mobile `docs/NAVIGATION_LOCATION_DEVICE_TESTS.md`. Backend/admin application code is unchanged in this follow-up; their earlier test counts are historical, not rerun passes.
+
+## Owner acceptance and release-gate audit — 2026-10-18
+
+Owner confirmed the navigation/location fixes worked on the physical Android phone and authorized merge/promotion **only if CI and load gates pass**. This closes the reported Android functionality retest at mobilee66bd26; it does not invent quantified battery/accuracy/background-delivery results or signed iOS evidence. Apple/iOS runtime setup remains deferred. No UI work was started.
+
+Gate audit at pushed implementation heads:
+
+- Backend31400a9: [Backend checks39147846827](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39147846827) **passed**.
+- Adminda021ca: [Admin checks39147846133](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39147846133) **passed**.
+- Mobilee66bd26: no GitHub workflow/check is configured; local evidence remains301 Flutter/13 tooling tests, clean analyzer, Android build/kernel check and unsigned iOS compile, plus owner Android acceptance. No missing remote check is reported as passed.
+- Backend [dense-load39147846764](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39147846764) **failed** against head31400a9 (PR merge teste143670d91266d40116fe97f601fa55b84e29326). Downloaded the actual synthetic artifact and inspected the failed measurement step; this was not a build/startup failure. Chatp95 **2063.645483ms** misses<2000ms; encounterp95 **35871.806ms** misses<5000ms. APIp95<=137.091313ms passed; all5000 offered observations accepted,44,850 expected pairs produced,300 sockets remained connected and the queue drained. Backend `docs/testing/task14-release-gate.json` retains the small artifact-derived summary and provenance.
+
+Result: **release gate failed**. All Task14 PRs remain draft; no development merge or main promotion, threshold change, rerun-to-green, or branch-protection bypass. This audit changes documentation only; it does not fix the known Task13 capacity issue or rerun application suites. CI triggered by this documentation push is separate evidence and must pass before any future merge. Next engineering work required for release is the failing dense-processing/chat-latency gate; UI work remains for the owner's later session.
+
+
+## Latency follow-up — 2026-10-18
+
+Current task: fix the failed encounter/chat release gate before Task14 integration. API contract remains **1.12.0**. No UI changes or device operation in this follow-up. Branch remains `feature/provider-auth`.
+
+| Applicable work | Status | Evidence |
+| --- | --- | --- |
+| Independent chat publication and read-root concurrency | Implemented; regression verified; native latency passed at measured heads | Backendda5bf43:100ms scoped dispatcher; shared root reads with pair/conversation serialization and exclusive safety mutations |
+| Exact short-history matching / stored-pair inbox input | Implemented; regression verified; capacity still failing | Backendf16ac18/5b7775c:exactly-two-fix proof path, full-history fallback, one bounded history read/member, proof hash reuse, database-derived recipients |
+| Authorization/idempotency under new concurrency | Verified by observed RED/GREEN regressions | Backenddf64321:reject token expired during pair-lock wait;translate exact sender/message uniqueness race after rollback;no partial sequence/message effects |
+| Final local backend checks | Verified |218 integration,56 unit,13 feasibility,4 metric tests;lint/types/build/contract drift and cached offline hardening image passed |
+| Runtime recovery on final source | Verified |df64321 rebuilt offline;5/5faults passed:34.174s worker,33.811s committed-chunk replay,30.770s queue,5.172s database,10.142s SMTP;isolated services stopped with volumes retained |
+| Native full load | Failed |39154572163:f16ac18 chatp95481.095ms / encounter31,961.871ms;39154869412:5b7775c chat451.011ms / encounter25,002.482ms. Both retained all5,000 observations/44,850 pairs/300 sockets/API/drain. Limits remain2,000/5,000ms |
+| Remaining Task13 qualification | Pending / blocked prerequisites |Zero consecutive full passing runs;required4vCPU/8GB native deployment baseline/soak unavailable;field/device/push-pressure evidence remains separately pending. No claim of iOS runtime validation |
+| Merge and main promotion | Blocked by failed load gate |All three PRs remain draft:backend16/admin14/mobile14. No branch-protection bypass or threshold change |
+
+Fresh read-only review found the pair-wait expiry and cross-conversation idempotency races;both were reproduced then fixed. Reviewer did not establish capacity or independently execute suites. Local PostgreSQL probes were rollback-only synthetic diagnostics;no owner data/queue or vendor service was faulted. No dependency/tool/image download occurred locally. Temporary collation experiment was rejected after no measured improvement;no schema/collation change was added.
+
+Backend nativeCI39154572320/39154869416/39155026735 passed at their respective implementation heads. AdminCI39153852041 passed at50e0ae9. Admin/mobile application suites were not rerun for this backend-only work;prior Android acceptance remains recorded above. Final reviewed-source load39155026717 failed:chatp95531.834ms passed;encounter36,652.463ms failed;APIp95<=285.490ms and all5,000observations/44,850pairs/300sockets/drain passed. The intermediate25,002ms result was not stable;encounter latency remains unresolved. Complete performance stage/provenance data is in backend `docs/task13-incremental-measurements.md` and `docs/testing/task14-latency-gates.json`.
+
+
+## Owner-authorized main promotion — 2026-10-18
+
+Owner explicitly requested merging the open PRs and promoting all current work to main for continued testing, overriding the earlier requirement to wait for the encounter load gate. This promotion does not qualify Task13 or represent a verified performance release. Final measured source df64321 passed chatp95=531.834ms and failed encounterp95=36,652.463ms against5,000ms; all5,000samples/44,850pairs/300sockets/API/drain passed. Existing218integration/56unit/13feasibility/4metric and5recovery results remain the evidence for that source; documentation updates do not rerun those tests.
+
+Proceed through normal feature→development and development→main PR merges, preserving published history and branch protections. Keep the failed load measurements and outstanding native baseline/soak/field/push/iOS gates open. No UI change, deployment or device operation is included. UI work and further owner testing are deferred to the next session.

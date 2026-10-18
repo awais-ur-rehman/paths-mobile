@@ -94,3 +94,11 @@ Reuses existing original Paths vector symbol/logo and bundled Inter. No new visu
 ## Task 13 hardening
 
 No new production visual assets. Existing Paths branding, fonts and reference goldens are reused. The inline one-pixel RGBA PNG in mobile `test/features/media/private_image_lifecycle_test.dart` is original test-only artwork generated with Python standard-library PNG chunks/zlib; project-owned, no attribution required. It contains no people or personal data.
+
+## Task14 sign-in controls
+
+`assets/auth/google-sign-in.png` is the unmodified 354×80 RGBA pre-approved light pill button from https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_lg.png (6,953 bytes), linked by https://developers.google.com/identity/branding-guidelines. Google brand features remain Google's trademarks; use is limited to the documented sign-in control under those branding guidelines, not a general open-source logo license. No additional attribution is requested by the guidelines. Keep its proportions and colors. It is bundled locally, displayed with contain fit and a screen-reader button label; no hotlink, invented G or font dependency. This is third-party artwork, not Paths project artwork.
+
+The Apple control uses the cached `sign_in_with_apple` package's standard button (8.2.0, MIT code license; Apple mark remains subject to Apple's Sign in with Apple design rules). No separate Apple logo asset was copied. Both controls retain their provider names and comparable size. Native signed-device presentation remains to be checked.
+
+Google sign-in artwork SHA-256: `d260d50a14d8f7deb03025e8ceb644577a8798e127fe203a959cd6cebf145e4e`.

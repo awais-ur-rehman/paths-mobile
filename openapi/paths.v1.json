@@ -1,6 +1,381 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/auth/providers": {
+      "get": {
+        "operationId": "ProviderController_metadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/providers/challenge": {
+      "post": {
+        "operationId": "ProviderController_challenge",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderChallengeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderChallengeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/google": {
+      "post": {
+        "operationId": "ProviderController_google",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderCredentialInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProviderSetupDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ProviderSessionDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthGrantDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/apple": {
+      "post": {
+        "operationId": "ProviderController_apple",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderCredentialInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProviderSetupDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ProviderSessionDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReauthGrantDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/providers/continue": {
+      "post": {
+        "operationId": "ProviderController_continue",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderContinueInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProviderSetupDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ProviderSessionDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/providers/email": {
+      "post": {
+        "operationId": "ProviderController_email",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderEmailInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProviderEmailStepDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ProviderSetupDto"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/providers/email/verify": {
+      "post": {
+        "operationId": "ProviderController_verifyEmail",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderEmailVerifyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/me/identities": {
+      "get": {
+        "operationId": "ProviderController_methods",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityMethodsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/me/reauth/password": {
+      "post": {
+        "operationId": "ProviderController_password",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReauthPasswordInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReauthGrantDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/auth/identities/link": {
+      "post": {
+        "operationId": "ProviderController_link",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityLinkInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityLinkResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
+    "/v1/me/identities/unlink": {
+      "post": {
+        "operationId": "ProviderController_unlink",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdentityUnlinkInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityUnlinkResultDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "provider-auth"
+        ]
+      }
+    },
     "/v1/me/deletion": {
       "post": {
         "operationId": "DeletionController_begin",
@@ -3765,7 +4140,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.11.0",
+    "version": "1.12.0",
     "contact": {}
   },
   "tags": [],
@@ -3779,6 +4154,464 @@
       }
     },
     "schemas": {
+      "ProviderSetupDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "setupRequired",
+              "linkRequired"
+            ]
+          },
+          "pendingToken": {
+            "type": "string"
+          },
+          "emailRequired": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "apple"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "kind",
+          "pendingToken",
+          "emailRequired",
+          "provider",
+          "expiresAt"
+        ]
+      },
+      "SessionDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "accountStatus": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deactivated"
+            ]
+          },
+          "setupStage": {
+            "type": "string",
+            "enum": [
+              "adult",
+              "profile"
+            ]
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "accessExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "refreshExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "userId",
+          "email",
+          "name",
+          "accountStatus",
+          "setupStage",
+          "accessToken",
+          "refreshToken",
+          "accessExpiresAt",
+          "refreshExpiresAt"
+        ]
+      },
+      "ProviderSessionDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "session"
+            ]
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDto"
+          }
+        },
+        "required": [
+          "kind",
+          "session"
+        ]
+      },
+      "ReauthGrantDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "reauthenticated"
+            ]
+          },
+          "token": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "kind",
+          "token",
+          "expiresAt"
+        ]
+      },
+      "ProviderEmailChallengeDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "provider-email"
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resendAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "challengeId",
+          "purpose",
+          "expiresAt",
+          "resendAt"
+        ]
+      },
+      "ProviderEmailStepDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "emailRequired"
+            ]
+          },
+          "pendingToken": {
+            "type": "string"
+          },
+          "challenge": {
+            "$ref": "#/components/schemas/ProviderEmailChallengeDto"
+          }
+        },
+        "required": [
+          "kind",
+          "pendingToken",
+          "challenge"
+        ]
+      },
+      "ProviderConfigDto": {
+        "type": "object",
+        "properties": {
+          "googleEnabled": {
+            "type": "boolean"
+          },
+          "appleEnabled": {
+            "type": "boolean"
+          },
+          "googleClientId": {
+            "type": "string"
+          },
+          "googleIosClientId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "googleEnabled",
+          "appleEnabled",
+          "googleClientId",
+          "googleIosClientId"
+        ]
+      },
+      "ProviderChallengeInput": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "apple"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "signin",
+              "reauth",
+              "link"
+            ]
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "link",
+              "unlink",
+              "deletion"
+            ]
+          }
+        },
+        "required": [
+          "provider",
+          "purpose"
+        ]
+      },
+      "ProviderChallengeDto": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nonce": {
+            "type": "string"
+          },
+          "verifier": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "challengeId",
+          "nonce",
+          "verifier",
+          "expiresAt"
+        ]
+      },
+      "ProviderCredentialInput": {
+        "type": "object",
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "verifier": {
+            "type": "string"
+          },
+          "idToken": {
+            "type": "string"
+          },
+          "authorizationCode": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "termsAccepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "challengeId",
+          "verifier",
+          "idToken"
+        ]
+      },
+      "ProviderContinueInput": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "description": "Terms acceptance must be true."
+          },
+          "displayName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pendingToken",
+          "termsAccepted"
+        ]
+      },
+      "ProviderEmailInput": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "termsAccepted": {
+            "type": "boolean",
+            "description": "Terms acceptance must be true."
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pendingToken",
+          "termsAccepted",
+          "email"
+        ]
+      },
+      "ProviderEmailVerifyInput": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pendingToken",
+          "challengeId",
+          "code"
+        ]
+      },
+      "IdentityMethodsDto": {
+        "type": "object",
+        "properties": {
+          "passwordEnabled": {
+            "type": "boolean"
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "google",
+                "apple"
+              ]
+            }
+          }
+        },
+        "required": [
+          "passwordEnabled",
+          "providers"
+        ]
+      },
+      "ReauthPasswordInput": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "link",
+              "unlink",
+              "deletion"
+            ]
+          }
+        },
+        "required": [
+          "password",
+          "action"
+        ]
+      },
+      "IdentityLinkInput": {
+        "type": "object",
+        "properties": {
+          "pendingToken": {
+            "type": "string"
+          },
+          "reauthToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "pendingToken",
+          "reauthToken"
+        ]
+      },
+      "IdentityLinkResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "linked"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "IdentityUnlinkInput": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "google",
+              "apple"
+            ]
+          },
+          "reauthToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "reauthToken"
+        ]
+      },
+      "IdentityUnlinkResultDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "removed",
+              "revocationPending"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "DeleteAccountInput": {
         "type": "object",
         "properties": {
@@ -3791,6 +4624,9 @@
           "password": {
             "type": "string"
           },
+          "reauthToken": {
+            "type": "string"
+          },
           "confirmation": {
             "type": "string",
             "enum": [
@@ -3801,7 +4637,6 @@
         "required": [
           "clientId",
           "recoveryKey",
-          "password",
           "confirmation"
         ]
       },
@@ -5606,7 +6441,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.11.0"
+              "1.12.0"
             ]
           }
         },
@@ -5633,60 +6468,6 @@
           "code",
           "message",
           "requestId"
-        ]
-      },
-      "SessionDto": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "accountStatus": {
-            "type": "string",
-            "enum": [
-              "active",
-              "deactivated"
-            ]
-          },
-          "setupStage": {
-            "type": "string",
-            "enum": [
-              "adult",
-              "profile"
-            ]
-          },
-          "accessToken": {
-            "type": "string"
-          },
-          "refreshToken": {
-            "type": "string"
-          },
-          "accessExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "refreshExpiresAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        },
-        "required": [
-          "userId",
-          "email",
-          "name",
-          "accountStatus",
-          "setupStage",
-          "accessToken",
-          "refreshToken",
-          "accessExpiresAt",
-          "refreshExpiresAt"
         ]
       },
       "ResetGrantDto": {

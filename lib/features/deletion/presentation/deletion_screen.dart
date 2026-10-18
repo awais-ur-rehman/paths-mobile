@@ -1,3 +1,8 @@
+import '../../auth/domain/provider_auth.dart';
+import '../../auth/presentation/provider_auth_sheet.dart';
+import '../../auth/presentation/provider_scope.dart';
+import '../../auth/domain/auth_models.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -32,7 +37,36 @@ class _DeletionOwner extends StatefulWidget {
 class _DeletionOwnerState extends State<_DeletionOwner> {
   late final cubit = DeletionCubit(widget.repository);
   final password = TextEditingController(), form = GlobalKey<FormState>();
-  bool confirmed = false;
+  bool confirmed = false, proving = false;
+  bool get supportsProvider =>
+      widget.repository is ProviderDeletionRepository &&
+      ProviderAuthScope.maybeOf(context)?.repository != null;
+  Future<void> submit() async {
+    if (proving) return;
+    if (!supportsProvider) {
+      if (form.currentState!.validate()) await cubit.submit(password.text);
+      return;
+    }
+    setState(() => proving = true);
+    try {
+      final proof = await showProviderReauth(context, ReauthAction.deletion);
+      if (mounted && proof?['token'] is String) {
+        await cubit.submitProvider(proof!['token'] as String);
+      }
+    } catch (e) {
+      if (mounted) {
+        PathsToast.show(
+          context,
+          e is AuthFailure
+              ? e.message
+              : 'Could not confirm this request. Retry.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => proving = false);
+    }
+  }
+
   @override
   void dispose() {
     password.dispose();
@@ -79,16 +113,17 @@ class _DeletionOwnerState extends State<_DeletionOwner> {
                   'Access ends immediately. Live data is removed within 24 hours; backups expire within 7 days. Screenshots and delivered notifications cannot be erased.',
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
-                  controller: password,
-                  obscureText: true,
-                  enabled: !state.busy,
-                  autofillHints: const [AutofillHints.password],
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  validator: (value) => value == null || value.length < 12
-                      ? 'Enter your password.'
-                      : null,
-                ),
+                if (!supportsProvider)
+                  TextFormField(
+                    controller: password,
+                    obscureText: true,
+                    enabled: !state.busy,
+                    autofillHints: const [AutofillHints.password],
+                    decoration: const InputDecoration(labelText: 'Password'),
+                    validator: (value) => value == null || value.length < 12
+                        ? 'Enter your password.'
+                        : null,
+                  ),
                 const SizedBox(height: 16),
                 CheckboxListTile(
                   contentPadding: EdgeInsets.zero,
@@ -103,13 +138,9 @@ class _DeletionOwnerState extends State<_DeletionOwner> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.error,
                   ),
-                  onPressed: state.busy || !confirmed
+                  onPressed: state.busy || proving || !confirmed
                       ? null
-                      : () {
-                          if (form.currentState!.validate()) {
-                            unawaited(cubit.submit(password.text));
-                          }
-                        },
+                      : submit,
                   child: state.busy
                       ? const PathsLoader(size: 24, color: Colors.white)
                       : const Text('Delete account'),

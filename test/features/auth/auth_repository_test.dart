@@ -105,7 +105,14 @@ class ApiAdapter implements HttpClientAdapter {
     requests.add(options);
     var status = 200;
     Object body = {};
-    if (options.path.startsWith('/v1/me/location')) {
+    if (options.path == '/v1/auth/providers') {
+      body = {
+        'googleEnabled': false,
+        'appleEnabled': false,
+        'googleClientId': '',
+        'googleIosClientId': '',
+      };
+    } else if (options.path.startsWith('/v1/me/location')) {
       if (options.method == 'POST' &&
           (options.data as Map)['expectedConsentEpoch'] != trackingEpoch) {
         status = 409;
@@ -263,6 +270,56 @@ class ApiAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test('provider session cannot survive logout, cancellation during secure write or failed vault write', () async {
+    final adapter = ApiAdapter(),
+        vault = MemoryVault(),
+        repo = HttpAuthRepository(
+          origin: 'https://api.example.invalid',
+          vault: vault,
+          preferences: MemoryPreferences(),
+          publicTransport: Dio()..httpClientAdapter = adapter,
+          authenticatedTransport: Dio()..httpClientAdapter = adapter,
+        );
+    final epoch = repo.providerEpoch;
+    await repo.logout();
+    await expectLater(
+      repo.acceptProviderSession(
+        adapter.session('provider-access', 'provider-refresh'),
+        epoch: epoch,
+      ),
+      throwsA(isA<AuthFailure>().having((e) => e.code, 'code', 'cancelled')),
+    );
+    expect(vault.value, isNull);
+    final token = CancelToken();
+    vault.pause = Completer<void>();
+    vault.writeStarted = Completer<void>();
+    final accepting = repo.acceptProviderSession(
+      adapter.session('provider-access', 'provider-refresh'),
+      epoch: repo.providerEpoch,
+      cancelToken: token,
+    );
+    await vault.writeStarted!.future;
+    token.cancel();
+    vault.pause!.complete();
+    await expectLater(
+      accepting,
+      throwsA(isA<AuthFailure>().having((e) => e.code, 'code', 'cancelled')),
+    );
+    expect(vault.value, isNull);
+    vault.pause = null;
+    vault.writeStarted = null;
+    vault.failWrite = true;
+    await expectLater(
+      repo.acceptProviderSession(
+        adapter.session('provider-access', 'provider-refresh'),
+        epoch: repo.providerEpoch,
+      ),
+      throwsA(isA<AuthFailure>().having((e) => e.code, 'code', 'storage')),
+    );
+    expect(vault.value, isNull);
+    await repo.close();
+  });
+
   test(
     'push cleanup failure still clears tracking and local credentials',
     () async {

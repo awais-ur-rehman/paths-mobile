@@ -8,7 +8,8 @@ import '../../../core/network/generated/api_contract.dart';
 import '../../auth/domain/auth_models.dart';
 import '../domain/deletion_repository.dart';
 
-class HttpDeletionRepository implements DeletionRepository {
+class HttpDeletionRepository
+    implements DeletionRepository, ProviderDeletionRepository {
   HttpDeletionRepository({
     required String origin,
     required this.store,
@@ -90,8 +91,16 @@ class HttpDeletionRepository implements DeletionRepository {
   }
 
   @override
-  Future<DeletionRecord> submit(
-    String password, {
+  Future<DeletionRecord> submit(String password, {CancelToken? cancelToken}) =>
+      _submit(password: password, cancelToken: cancelToken);
+  @override
+  Future<DeletionRecord> submitWithProof(
+    String proof, {
+    CancelToken? cancelToken,
+  }) => _submit(reauthToken: proof, cancelToken: cancelToken);
+  Future<DeletionRecord> _submit({
+    String? password,
+    String? reauthToken,
     CancelToken? cancelToken,
   }) async {
     if (_submitting) throw const AuthFailure('cancelled');
@@ -124,6 +133,7 @@ class HttpDeletionRepository implements DeletionRepository {
           clientId: pending.clientId,
           recoveryKey: pending.recoveryKey,
           password: password,
+          reauthToken: reauthToken,
           confirmation: 'DELETE',
         ).toJson(),
         access: access,

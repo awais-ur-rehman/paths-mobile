@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paths_mobile/features/discovery/presentation/encounter_bloc.dart';
@@ -7,6 +10,7 @@ import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_c
 import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_filters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:paths_mobile/core/platform/location_tracker.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paths_mobile/app/theme/paths_theme.dart';
 import 'package:paths_mobile/features/auth/domain/auth_models.dart';
@@ -15,6 +19,39 @@ import 'package:paths_mobile/features/discovery/presentation/home_screen.dart';
 import 'package:paths_mobile/shared/widgets/paths_toast.dart';
 
 import 'encounter_bloc_test.dart' show page;
+import 'location_sync_service_test.dart';
+
+import 'package:paths_mobile/features/discovery/data/location_sync_service.dart';
+import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_map.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+// Replace only the native view boundary; Home and map widget logic remain real.
+class TestMapPlatform extends MapLibrePlatform {
+  @override
+  Widget buildView(
+    Map<String, dynamic> params,
+    OnPlatformViewCreatedCallback created,
+    Set<Factory<OneSequenceGestureRecognizer>>? recognizers,
+  ) => const SizedBox();
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class SettingsTracker extends CapturingTracker {
+  int settingsOpened = 0;
+  @override
+  Future<TrackingPermissions> permissions() async => TrackingPermissions(
+    granted: granted,
+    precise: granted,
+    backgroundAllowed: false,
+    servicesEnabled: true,
+    canRequestForeground: false,
+  );
+  @override
+  Future<void> openSettings() async {
+    settingsOpened++;
+  }
+}
 
 class HomeFixture implements EncounterRepository {
   @override
@@ -55,6 +92,216 @@ Widget app(
   ),
 );
 void main() {
+  final originalMapFactory = MapLibrePlatform.createInstance;
+  setUp(() {
+    MapLibrePlatform.createInstance = () => TestMapPlatform();
+  });
+  tearDown(() {
+    MapLibrePlatform.createInstance = originalMapFactory;
+  });
+  testWidgets('empty history still renders map before server center exists', (
+    tester,
+  ) async {
+    final repo = HomeFixture()
+      ..result = EncounterPage(
+        items: [],
+        nextCursor: null,
+        nearbyAvailable: false,
+        centerLatitude: null,
+        centerLongitude: null,
+      );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        home: HomeScreen(
+          repository: repo,
+          onProfile: (_) {},
+          onLocationSetup: () {},
+          mapStyleUrl: 'https://map.example.invalid/style.json',
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+    expect(find.byType(EncounterMap), findsOneWidget);
+    expect(
+      tester.widget<MapLibreMap>(find.byType(MapLibreMap)).myLocationEnabled,
+      false,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets(
+    'own-location layer follows permission changes without encounter history',
+    (tester) async {
+      final tracker = CapturingTracker()..status = TrackingStatus.active;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      final repo = HomeFixture()
+        ..result = EncounterPage(
+          items: [],
+          nextCursor: null,
+          nearbyAvailable: false,
+          centerLatitude: null,
+          centerLongitude: null,
+        );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          builder: (_, child) => PathsToastHost(child: child!),
+          home: HomeScreen(
+            repository: repo,
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+            mapStyleUrl: 'https://map.example.invalid/style.json',
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+      await tester.pump();
+      expect(
+        tester.widget<MapLibreMap>(find.byType(MapLibreMap)).myLocationEnabled,
+        true,
+      );
+      tracker.granted = false;
+      tracker.statuses.add(TrackingStatus.permissionNeeded);
+      await tester.pump();
+      await tester.pump();
+      expect(
+        tester.widget<MapLibreMap>(find.byType(MapLibreMap)).myLocationEnabled,
+        false,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
+  testWidgets('an existing OS grant does not silently restart paused sharing', (
+    tester,
+  ) async {
+    final tracker = CapturingTracker();
+    final data = FixtureLocationRepository();
+    final sync = LocationSyncService(
+      data,
+      tracker,
+      MemoryTrackingControls(),
+      'https://api.example.invalid',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        builder: (_, child) => PathsToastHost(child: child!),
+        home: HomeScreen(
+          repository: HomeFixture(),
+          locations: sync,
+          onProfile: (_) {},
+          onLocationSetup: () {},
+          mapStyleUrl: '',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(data.grants, 0);
+    expect(tracker.starts, 0);
+    expect(find.byTooltip('Enable location'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await sync.close();
+    await tracker.dispose();
+  });
+  testWidgets('permanent denial uses Settings and resumes an explicit grant', (
+    tester,
+  ) async {
+    final tracker = SettingsTracker()..granted = false;
+    final data = FixtureLocationRepository();
+    final sync = LocationSyncService(
+      data,
+      tracker,
+      MemoryTrackingControls(),
+      'https://api.example.invalid',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        builder: (_, child) => PathsToastHost(child: child!),
+        home: HomeScreen(
+          repository: HomeFixture(),
+          locations: sync,
+          onProfile: (_) {},
+          onLocationSetup: () {},
+          mapStyleUrl: '',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Allow location'), findsNothing);
+    await tester.tap(find.byTooltip('Enable location'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open settings'));
+    await tester.pumpAndSettle();
+    expect(tracker.settingsOpened, 1);
+    expect(data.grants, 0);
+    tracker.granted = true;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+    expect(data.grants, 1);
+    expect(tracker.policy?.background, false);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await sync.close();
+    await tracker.dispose();
+  });
+  testWidgets(
+    'first Home visit offers location once and denial keeps Home usable',
+    (tester) async {
+      final tracker = CapturingTracker()..granted = false;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          builder: (_, child) => PathsToastHost(child: child!),
+          home: HomeScreen(
+            repository: HomeFixture(),
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+            mapStyleUrl: '',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Allow location'), findsOneWidget);
+      await tester.tap(find.text('Allow location'));
+      await tester.pumpAndSettle();
+      expect(tracker.starts, 0);
+      expect(find.text('Recent'), findsOneWidget);
+      expect(find.byTooltip('Enable location'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 7));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Enable location'));
+      await tester.pumpAndSettle();
+      expect(find.text('Allow location'), findsOneWidget);
+      await tester.tap(find.text('Not now'));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
   testWidgets('returning from a peer refreshes Home relationship metadata', (
     tester,
   ) async {

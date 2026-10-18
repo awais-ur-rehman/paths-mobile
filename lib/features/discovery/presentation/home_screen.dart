@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/theme/paths_tokens.dart';
 import '../../../core/platform/location_tracker.dart';
 import '../../../shared/widgets/paths_brand.dart';
+import '../../../shared/widgets/paths_toast.dart';
 import 'widgets/encounter_filters.dart';
 import 'widgets/encounter_results.dart';
 import '../data/location_sync_service.dart';
@@ -54,6 +55,7 @@ class _HomeOwnerState extends State<_HomeOwner> {
   late bool _showMap = validMapStyle(widget.configuration.mapStyleUrl);
   bool _mapFailed = false;
   bool _active = true;
+  bool _openingSettings = false, _requestingLocation = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -74,13 +76,13 @@ class _HomeOwnerState extends State<_HomeOwner> {
     final sync = widget.configuration.locations;
     if (sync != null) {
       location = LocationCubit(sync);
-      unawaited(location!.initialize());
+      unawaited(_prepareLocation());
     }
     _lifecycle = AppLifecycleListener(
       onResume: () {
         if (mounted && TickerMode.valuesOf(context).enabled) {
           bloc.add(const RefreshEncounters());
-          unawaited(location?.refresh());
+          unawaited(_resumeLocation());
         }
       },
     );
@@ -123,29 +125,159 @@ class _HomeOwnerState extends State<_HomeOwner> {
     );
   }
 
+  Future<void> _prepareLocation() async {
+    final cubit = location!;
+    await cubit.initialize();
+    if (!mounted || !TickerMode.valuesOf(context).enabled) return;
+    final permissions = cubit.state.permissions;
+    if (permissions?.granted == false &&
+        permissions?.canRequestForeground == true) {
+      await _requestLocation();
+    }
+  }
+
+  Future<void> _resumeLocation() async {
+    final cubit = location;
+    if (cubit == null) return;
+    await cubit.refresh();
+    if (!mounted || !_openingSettings) return;
+    _openingSettings = false;
+    if (cubit.state.permissions?.granted == true &&
+        cubit.state.permissions?.servicesEnabled == true) {
+      await cubit.enable(false);
+    }
+  }
+
+  Future<void> _requestLocation() async {
+    final cubit = location;
+    if (cubit == null) {
+      widget.configuration.onLocationSetup();
+      return;
+    }
+    if (_requestingLocation || cubit.state.busy) return;
+    _requestingLocation = true;
+    try {
+      final permissions = cubit.state.permissions;
+      if (permissions?.granted == true &&
+          permissions?.servicesEnabled == true &&
+          ![
+            TrackingStatus.stopped,
+            TrackingStatus.paused,
+            TrackingStatus.permissionNeeded,
+          ].contains(cubit.state.status) &&
+          !cubit.state.pendingStop) {
+        widget.configuration.onLocationSetup();
+        return;
+      }
+      final settings =
+          permissions?.servicesEnabled == false ||
+          (permissions?.granted == false &&
+              permissions?.canRequestForeground == false);
+      final accepted = await showModalBottomSheet<bool>(
+        context: context,
+        showDragHandle: true,
+        isScrollControlled: true,
+        builder: (sheet) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Find your paths',
+                  style: Theme.of(sheet).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  settings ? 'Enable location for Paths in device settings.' : 'Paths uses your precise location on its server to find crossed paths. Others see approximate areas.',
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => Navigator.pop(sheet, true),
+                  child: Text(settings ? 'Open settings' : 'Allow location'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(sheet, false),
+                  child: const Text('Not now'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      if (!mounted || accepted != true) return;
+      if (settings) {
+        _openingSettings = true;
+        await cubit.openSettings();
+      } else {
+        await cubit.enable(false);
+      }
+    } finally {
+      _requestingLocation = false;
+    }
+  }
+
   Widget _locationButton() {
-    Widget button(TrackingStatus status) => TextButton.icon(
-      onPressed: widget.configuration.onLocationSetup,
-      icon: const Icon(Icons.location_on_outlined, size: 18),
-      label: Text(switch (status) {
-        TrackingStatus.active || TrackingStatus.background => 'Sharing',
-        TrackingStatus.offline => 'Offline',
-        TrackingStatus.inaccurate => 'Approximate',
-        _ => 'Paused',
-      }),
-    );
     final cubit = location;
     if (cubit == null) {
       return IconButton(
-        tooltip: 'Location settings',
-        onPressed: widget.configuration.onLocationSetup,
+        tooltip: 'Enable location',
+        onPressed: _requestLocation,
         icon: const Icon(Icons.location_on_outlined),
       );
     }
-    return BlocSelector<LocationCubit, LocationState, TrackingStatus>(
+    return BlocListener<LocationCubit, LocationState>(
       bloc: cubit,
-      selector: (s) => s.status,
-      builder: (_, status) => button(status),
+      listenWhen: (a, b) => b.error != null && a.error != b.error,
+      listener: (context, state) =>
+          PathsToast.show(context, state.error!.message),
+      child: BlocSelector<LocationCubit, LocationState, (bool, bool)>(
+        bloc: cubit,
+        selector: (s) => (
+          s.busy,
+          s.permissions?.granted == true &&
+              !s.pendingStop &&
+              ![
+                TrackingStatus.stopped,
+                TrackingStatus.paused,
+                TrackingStatus.permissionNeeded,
+              ].contains(s.status),
+        ),
+        builder: (_, value) => IconButton(
+          tooltip: value.$2 ? 'Location settings' : 'Enable location',
+          onPressed: value.$1 ? null : _requestLocation,
+          icon: Icon(value.$2 ? Icons.location_on : Icons.location_on_outlined),
+        ),
+      ),
+    );
+  }
+
+  Widget _map(EncounterState state) {
+    Widget map(bool enabled) => EncounterMap(
+      items: state.items,
+      latitude: state.centerLatitude,
+      longitude: state.centerLongitude,
+      showUserLocation: enabled,
+      styleUrl: widget.configuration.mapStyleUrl,
+      onAreaSelected: _area,
+      onUnavailable: () {
+        if (mounted) {
+          setState(() {
+            _mapFailed = true;
+            _showMap = false;
+          });
+        }
+      },
+    );
+    final cubit = location;
+    if (cubit == null) return map(false);
+    return BlocSelector<LocationCubit, LocationState, bool>(
+      bloc: cubit,
+      selector: (s) =>
+          s.permissions?.granted == true &&
+          s.permissions?.servicesEnabled == true,
+      builder: (_, enabled) => map(enabled),
     );
   }
 
@@ -224,62 +356,35 @@ class _HomeOwnerState extends State<_HomeOwner> {
                         if (_showMap &&
                             !_mapFailed &&
                             TickerMode.valuesOf(context).enabled)
-                          BlocSelector<
-                            EncounterBloc,
-                            EncounterState,
-                            (List<Encounter>, double?, double?)
-                          >(
-                            selector: (s) =>
-                                (s.items, s.centerLatitude, s.centerLongitude),
-                            builder: (context, value) {
-                              if (value.$2 == null || value.$3 == null) {
-                                return const SliverToBoxAdapter(
-                                  child: SizedBox.shrink(),
-                                );
-                              }
-                              return SliverPadding(
-                                padding: EdgeInsets.fromLTRB(
-                                  gutter,
-                                  8,
-                                  gutter,
-                                  16,
-                                ),
-                                sliver: SliverToBoxAdapter(
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(28),
-                                    child: SizedBox(
-                                      height: 280,
-                                      child: EncounterMap(
-                                        key: ValueKey(
-                                          '${value.$2}:${value.$3}',
-                                        ),
-                                        items: value.$1,
-                                        latitude: value.$2!,
-                                        longitude: value.$3!,
-                                        styleUrl:
-                                            widget.configuration.mapStyleUrl,
-                                        onAreaSelected: _area,
-                                        onUnavailable: () {
-                                          if (mounted) {
-                                            setState(() {
-                                              _mapFailed = true;
-                                              _showMap = false;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ),
+                          BlocBuilder<EncounterBloc, EncounterState>(
+                            buildWhen: (a, b) =>
+                                a.items != b.items ||
+                                a.centerLatitude != b.centerLatitude ||
+                                a.centerLongitude != b.centerLongitude,
+                            builder: (context, state) => SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                gutter,
+                                8,
+                                gutter,
+                                16,
+                              ),
+                              sliver: SliverToBoxAdapter(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: SizedBox(
+                                    height: 360,
+                                    child: _map(state),
                                   ),
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           ),
                         EncounterResults(
                           relationships: widget.configuration.relationships,
                           gutter: gutter,
                           mapFailed: _mapFailed,
                           onProfile: (id) => unawaited(_openProfile(id)),
-                          onLocationSetup: widget.configuration.onLocationSetup,
+                          onLocationSetup: _requestLocation,
                         ),
                       ],
                     ),

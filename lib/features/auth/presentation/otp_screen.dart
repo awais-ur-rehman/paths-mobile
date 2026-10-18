@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'resend_code_control.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,7 +76,15 @@ class _OtpFormState extends State<_OtpForm> {
         const SizedBox(height: 16),
         AuthSubmit(label: 'Verify code', onPressed: submit),
         const SizedBox(height: 16),
-        _ResendControl(challenge: widget.challenge),
+        BlocSelector<AuthCubit, AuthState, bool>(
+          selector: (s) => s.busy,
+          builder: (context, busy) => ResendCodeControl(
+            resendAt: widget.challenge.resendAt,
+            expiresAt: widget.challenge.expiresAt,
+            busy: busy,
+            onResend: () => context.read<AuthCubit>().resend(),
+          ),
+        ),
         TextButton(
           onPressed: () => context.read<AuthCubit>().cancelFlow(),
           child: const Text('Change email or cancel'),
@@ -84,55 +92,4 @@ class _OtpFormState extends State<_OtpForm> {
       ],
     ),
   );
-}
-
-class _ResendControl extends StatefulWidget {
-  const _ResendControl({required this.challenge});
-  final AuthChallenge challenge;
-  @override
-  State<_ResendControl> createState() => _ResendControlState();
-}
-
-class _ResendControlState extends State<_ResendControl> {
-  late final Timer timer;
-  @override
-  void initState() {
-    super.initState();
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    timer.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final remaining =
-        widget.challenge.resendAt.difference(DateTime.now()).inSeconds + 1;
-    final expired = !widget.challenge.expiresAt.isAfter(DateTime.now());
-    return Column(
-      children: [
-        if (expired)
-          const Text(
-            'This code expired. Request a new one.',
-            style: TextStyle(color: Color(0xFFB42318)),
-          ),
-        BlocSelector<AuthCubit, AuthState, bool>(
-          selector: (state) => state.busy,
-          builder: (context, busy) => TextButton(
-            onPressed: remaining > 0 || busy
-                ? null
-                : () => context.read<AuthCubit>().resend(),
-            child: Text(
-              remaining > 0 ? 'Resend in ${remaining}s' : 'Send a new code',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
 }

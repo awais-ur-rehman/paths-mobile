@@ -76,6 +76,17 @@ final class AuthFailure implements Exception {
     'CONTENT_REVIEW_REQUIRED' => 'Please edit this text before continuing.',
     'CONFLICT' => 'Things changed. Refresh and try again.',
     'USERNAME_TAKEN' => 'That username is already taken. Choose another.',
+    'PROVIDER_INVALID' =>
+      'This sign-in attempt expired or could not be verified. Start again.',
+    'PROVIDER_UNAVAILABLE' =>
+      'This sign-in service is unavailable. Retry in a moment.',
+    'PROVIDER_LINK_REQUIRED' =>
+      'Sign into your existing account to link this method.',
+    'PROVIDER_ALREADY_LINKED' =>
+      'This method is already linked to another account or provider.',
+    'LAST_SIGN_IN_METHOD' =>
+      'Add another sign-in method before removing this one.',
+    'REAUTH_REQUIRED' => 'Confirm it’s you again to continue.',
     'INVALID_CREDENTIALS' => 'Email or password is incorrect.',
     'OTP_INVALID' =>
       'The code is invalid or no longer available. Request a new code.',
