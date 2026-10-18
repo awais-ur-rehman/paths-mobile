@@ -843,3 +843,23 @@ Gate audit at pushed implementation heads:
 - Backend [dense-load39147846764](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39147846764) **failed** against head31400a9 (PR merge teste143670d91266d40116fe97f601fa55b84e29326). Downloaded the actual synthetic artifact and inspected the failed measurement step; this was not a build/startup failure. Chatp95 **2063.645483ms** misses<2000ms; encounterp95 **35871.806ms** misses<5000ms. APIp95<=137.091313ms passed; all5000 offered observations accepted,44,850 expected pairs produced,300 sockets remained connected and the queue drained. Backend `docs/testing/task14-release-gate.json` retains the small artifact-derived summary and provenance.
 
 Result: **release gate failed**. All Task14 PRs remain draft; no development merge or main promotion, threshold change, rerun-to-green, or branch-protection bypass. This audit changes documentation only; it does not fix the known Task13 capacity issue or rerun application suites. CI triggered by this documentation push is separate evidence and must pass before any future merge. Next engineering work required for release is the failing dense-processing/chat-latency gate; UI work remains for the owner's later session.
+
+
+## Latency follow-up — 2026-10-18
+
+Current task: fix the failed encounter/chat release gate before Task14 integration. API contract remains **1.12.0**. No UI changes or device operation in this follow-up. Branch remains `feature/provider-auth`.
+
+| Applicable work | Status | Evidence |
+| --- | --- | --- |
+| Independent chat publication and read-root concurrency | Implemented; regression verified; native latency passed at measured heads | Backendda5bf43:100ms scoped dispatcher; shared root reads with pair/conversation serialization and exclusive safety mutations |
+| Exact short-history matching / stored-pair inbox input | Implemented; regression verified; capacity still failing | Backendf16ac18/5b7775c:exactly-two-fix proof path, full-history fallback, one bounded history read/member, proof hash reuse, database-derived recipients |
+| Authorization/idempotency under new concurrency | Verified by observed RED/GREEN regressions | Backenddf64321:reject token expired during pair-lock wait;translate exact sender/message uniqueness race after rollback;no partial sequence/message effects |
+| Final local backend checks | Verified |218 integration,56 unit,13 feasibility,4 metric tests;lint/types/build/contract drift and cached offline hardening image passed |
+| Runtime recovery on final source | Verified |df64321 rebuilt offline;5/5faults passed:34.174s worker,33.811s committed-chunk replay,30.770s queue,5.172s database,10.142s SMTP;isolated services stopped with volumes retained |
+| Native full load | Failed |39154572163:f16ac18 chatp95481.095ms / encounter31,961.871ms;39154869412:5b7775c chat451.011ms / encounter25,002.482ms. Both retained all5,000 observations/44,850 pairs/300 sockets/API/drain. Limits remain2,000/5,000ms |
+| Remaining Task13 qualification | Pending / blocked prerequisites |Zero consecutive full passing runs;required4vCPU/8GB native deployment baseline/soak unavailable;field/device/push-pressure evidence remains separately pending. No claim of iOS runtime validation |
+| Merge and main promotion | Blocked by failed load gate |All three PRs remain draft:backend16/admin14/mobile14. No branch-protection bypass or threshold change |
+
+Fresh read-only review found the pair-wait expiry and cross-conversation idempotency races;both were reproduced then fixed. Reviewer did not establish capacity or independently execute suites. Local PostgreSQL probes were rollback-only synthetic diagnostics;no owner data/queue or vendor service was faulted. No dependency/tool/image download occurred locally. Temporary collation experiment was rejected after no measured improvement;no schema/collation change was added.
+
+Backend nativeCI39154572320/39154869416/39155026735 passed at their respective implementation heads. AdminCI39153852041 passed at50e0ae9. Admin/mobile application suites were not rerun for this backend-only work;prior Android acceptance remains recorded above. Final reviewed-source load39155026717 failed:chatp95531.834ms passed;encounter36,652.463ms failed;APIp95<=285.490ms and all5,000observations/44,850pairs/300sockets/drain passed. The intermediate25,002ms result was not stable;encounter latency remains unresolved. Complete performance stage/provenance data is in backend `docs/task13-incremental-measurements.md` and `docs/testing/task14-latency-gates.json`.
