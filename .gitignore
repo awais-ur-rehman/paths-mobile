@@ -68,3 +68,6 @@ coverage/
 
 /paths.performance.local.json
 /artifacts/
+
+/ios/Flutter/ProviderAuth.local.xcconfig
+/paths.providers.local.json
