@@ -27,6 +27,8 @@ class PathsLocationTracker private constructor(private val context: Context) {
     private var epoch = 0L
     private var sequence = 0L
     private var background = false
+    private val accuracyBurst = AccuracyBurst()
+    private val endBurst = Runnable { synchronized(this) { if(session != null && (foreground || background)) subscribe() } }
     private var foreground = true
     private var callback: LocationCallback? = null
     private var endpoint: String? = null
@@ -39,7 +41,7 @@ class PathsLocationTracker private constructor(private val context: Context) {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private val retry = Runnable { flush(false) }
     private fun granted(): Boolean = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED || context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED
-    @Synchronized fun permissions(): Map<String,Boolean> = mapOf("granted" to granted(),"precise" to (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED),"backgroundAllowed" to (Build.VERSION.SDK_INT<33 || context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED),"servicesEnabled" to context.getSystemService(android.location.LocationManager::class.java).isLocationEnabled)
+    @Synchronized fun permissions(): Map<String,Boolean> = mapOf("granted" to granted(),"precise" to (context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED),"backgroundEnabled" to (background && session != null),"backgroundAllowed" to (Build.VERSION.SDK_INT<33 || context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED),"servicesEnabled" to context.getSystemService(android.location.LocationManager::class.java).isLocationEnabled)
     @Synchronized fun notificationTitle(): String = if(production) "Paths location sharing" else "Paths location experiment"
     @Synchronized fun flush(reset: Boolean = true) { if(reset) { attempts=0;retryAt=0 }; val active=session ?: return; sendPending(active,epoch) }
     private fun watchNetwork() {
@@ -86,6 +88,7 @@ class PathsLocationTracker private constructor(private val context: Context) {
         endpoint = configured.takeIf { it.isNotEmpty() }
         require((endpoint == null) == (testToken == null)) { "incomplete_test_configuration" }
         startedElapsed = SystemClock.elapsedRealtimeNanos()
+        accuracyBurst.start(SystemClock.elapsedRealtime())
         background = policy["background"] == true
         lastStatus = if(background) "background" else "active"
         if (background) context.startForegroundService(Intent(context, PathsLocationService::class.java))
@@ -104,10 +107,13 @@ class PathsLocationTracker private constructor(private val context: Context) {
         removeUpdates()
         val activeSession = session ?: return
         val activeEpoch = epoch
-        val interval = if (foreground) 20_000L else 90_000L
-        val request = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, interval)
-            .setMinUpdateDistanceMeters(if (foreground) 25f else 50f)
-            .setMaxUpdateDelayMillis(if (foreground) 30_000L else 120_000L).build()
+        val burst = accuracyBurst.active(SystemClock.elapsedRealtime(),foreground,permissions()["precise"]==true)
+        retryHandler.removeCallbacks(endBurst)
+        if(burst) retryHandler.postDelayed(endBurst,accuracyBurst.remaining(SystemClock.elapsedRealtime()))
+        val interval = if(burst) 2_000L else if (foreground) 20_000L else 90_000L
+        val request = LocationRequest.Builder(if(burst) Priority.PRIORITY_HIGH_ACCURACY else Priority.PRIORITY_BALANCED_POWER_ACCURACY, interval)
+            .setMinUpdateDistanceMeters(if(burst) 0f else if (foreground) 25f else 50f)
+            .setMaxUpdateDelayMillis(if(burst) 0L else if (foreground) 30_000L else 120_000L).build()
         val next = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 synchronized(this@PathsLocationTracker) {
@@ -117,6 +123,7 @@ class PathsLocationTracker private constructor(private val context: Context) {
                         val samples = queue.read()
                         for (fix in result.locations) {
                             if (fix.elapsedRealtimeNanos < startedElapsed || isMock(fix) || !fix.hasAccuracy() || fix.accuracy < 0 || System.currentTimeMillis()-fix.time !in -30_000L..900_000L) continue
+                            accuracyBurst.accept(fix.accuracy.toDouble())
                             val sample=toJson(fix, activeSession, activeEpoch)
                             samples.add(sample)
                             emit?.invoke(mapOf("sample" to sample.keys().asSequence().associateWith { sample.get(it) }))
@@ -125,6 +132,9 @@ class PathsLocationTracker private constructor(private val context: Context) {
                         lastStatus = if((samples.lastOrNull()?.optDouble("horizontalAccuracyM", 100.0) ?: 100.0) > 25.0) "inaccurate" else if(foreground) "active" else "background"
                         emit?.invoke(mapOf("status" to lastStatus))
                         sendPending(activeSession, activeEpoch)
+                        if(burst && !accuracyBurst.active(SystemClock.elapsedRealtime(),foreground,permissions()["precise"]==true)) {
+                            retryHandler.removeCallbacks(endBurst);retryHandler.post(endBurst)
+                        }
                     } catch (_: Exception) { stop(); lastStatus="unavailable"; emit?.invoke(mapOf("status" to lastStatus)) } // Fail closed on permission or encryption failure.
                 }
             }
@@ -178,11 +188,11 @@ class PathsLocationTracker private constructor(private val context: Context) {
             finally { request?.disconnect(); synchronized(this) { if(connection === request) connection = null } }
         }
     }
-    private fun removeUpdates() { callback?.let { provider.removeLocationUpdates(it) }; callback = null }
+    private fun removeUpdates() { retryHandler.removeCallbacks(endBurst); callback?.let { provider.removeLocationUpdates(it) }; callback = null }
     @Synchronized fun stop(stopService: Boolean = true) {
         val oldSession=session; val oldEpoch=epoch; val oldEndpoint=endpoint; val oldToken=testToken
         session = null; epoch++; sequence = 0; lastStatus = "stopped"; endpoint = null; testToken = null
-        retryHandler.removeCallbacksAndMessages(null);attempts=0;retryAt=0
+        accuracyBurst.stop();retryHandler.removeCallbacksAndMessages(null);attempts=0;retryAt=0
         networkCallback?.let { context.getSystemService(ConnectivityManager::class.java).unregisterNetworkCallback(it) };networkCallback=null
         connection?.disconnect(); connection = null; upload?.cancel(true); upload = null
         removeUpdates(); queue.clear()

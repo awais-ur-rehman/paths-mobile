@@ -102,12 +102,14 @@ final class TrackingPermissions {
     required this.backgroundAllowed,
     required this.servicesEnabled,
     this.canRequestForeground = true,
+    this.backgroundEnabled = false,
   });
   final bool granted,
       precise,
       backgroundAllowed,
       servicesEnabled,
-      canRequestForeground;
+      canRequestForeground,
+      backgroundEnabled;
 }
 
 abstract interface class LocationTracker {
@@ -221,6 +223,7 @@ final class PlatformLocationTracker implements LocationTracker {
       backgroundAllowed: value['backgroundAllowed'] == true,
       servicesEnabled: value['servicesEnabled'] == true,
       canRequestForeground: value['canRequestForeground'] == true,
+      backgroundEnabled: value['backgroundEnabled'] == true,
     );
   }
 

@@ -30,7 +30,7 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
         let config=URLSessionConfiguration.ephemeral;config.urlCache=nil;config.httpCookieStorage=nil;config.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration:config,delegate:RejectRedirects(),delegateQueue:nil)
     }()
-    func permissions()->[String:Bool] {let authorization=manager.authorizationStatus;return ["granted":authorization == .authorizedAlways || authorization == .authorizedWhenInUse,"precise":manager.accuracyAuthorization == .fullAccuracy,"backgroundAllowed":authorization == .authorizedAlways,"servicesEnabled":CLLocationManager.locationServicesEnabled(),"canRequestForeground":authorization == .notDetermined]}
+    func permissions()->[String:Bool] {let authorization=manager.authorizationStatus;return ["granted":authorization == .authorizedAlways || authorization == .authorizedWhenInUse,"precise":manager.accuracyAuthorization == .fullAccuracy,"backgroundAllowed":authorization == .authorizedAlways,"backgroundEnabled":background && session != nil,"servicesEnabled":CLLocationManager.locationServicesEnabled(),"canRequestForeground":authorization == .notDetermined]}
     func flush(_ reset:Bool=true){if reset {attempts=0;retryAt = .distantPast};sendPending()}
     private func watchNetwork(){let next=NWPathMonitor();next.pathUpdateHandler = { [weak self] path in if path.status == .satisfied {DispatchQueue.main.async {self?.flush()}}};monitor=next;next.start(queue:DispatchQueue(label:"com.paths.location.reachability"))}
     private func retryUpload(_ activeSession:String,_ activeEpoch:Int){
