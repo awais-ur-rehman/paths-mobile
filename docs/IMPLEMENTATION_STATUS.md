@@ -691,3 +691,13 @@ Owner accepted Task11 and requested Task12. All Task11 PRs merged into developme
 ## Task12 delivery — 2026-10-18
 
 Feature branch `feature/account-erasure`; API1.11.0. Implementation, actual check scope, review fixes and code commits are recorded in [task12-evidence.md](testing/task12-evidence.md). [Owner test steps](testing/task12-erasure.md). Task11 owner acceptance is recorded; main remains unchanged. Device/restore gates remain pending, so no Task12 merge or Task13 start.
+
+## Published review branches
+
+All use `feature/account-erasure` → `development`, draft pending owner Android/counterpart test and restore sign-off. Published implementation/evidence heads before this cross-reference update:
+
+- paths-backend: `1168861`, [draft PR](https://github.com/awais-ur-rehman/paths-backend/pull/14).
+- paths-admin: `0c8b030`, [draft PR](https://github.com/awais-ur-rehman/paths-admin/pull/12).
+- paths-mobile: `c476846`, [draft PR](https://github.com/awais-ur-rehman/paths-mobile/pull/12).
+
+Main is unchanged. No Task12 PR has been merged and Task13 has not started. Follow docs/testing/task12-erasure.md on these feature branches. Later cross-reference commits change documentation only; native builds correspond to the implementation commits recorded in the evidence.
