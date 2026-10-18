@@ -65,7 +65,7 @@ final class PathsPushNotifications: NSObject, UNUserNotificationCenterDelegate {
   }
   func failRegistration() { timeout?.cancel(); timeout = nil; let result = waiting; waiting = nil; result?(FlutterError(code: "unavailable", message: "Push registration unavailable", details: nil)) }
   private func event(_ data: [AnyHashable: Any]) -> String? {
-    guard store.bool(forKey: "paths.push.enabled"), let event = data["eventId"] as? String, UUID(uuidString: event) != nil, let binding = data["bindingId"] as? String, binding == store.string(forKey: "paths.push.binding"), let kind = data["kind"] as? String, ["encounter", "request_received", "request_accepted", "message"].contains(kind) else { return nil }
+    guard store.bool(forKey: "paths.push.enabled"), let event = data["eventId"] as? String, UUID(uuidString: event) != nil, let binding = data["bindingId"] as? String, binding == store.string(forKey: "paths.push.binding"), let kind = data["kind"] as? String, ["encounter", "request_received", "request_accepted", "message", "review"].contains(kind) else { return nil }
     return event
   }
   func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
