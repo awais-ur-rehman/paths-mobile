@@ -86,3 +86,7 @@ No new production stock photos, fonts or icon packages. Camera/gallery/post cont
 Cards contain no people, identity numbers, real accounts or testimonials. SVG is editable source; upload the generated PNG. Exports are600×800, inspected locally, below10MB, and generated without downloading fonts/assets or a new dependency. Production app branding/fonts remain the existing locally bundled assets.
 
 Profile handoff regression image: original1×1 RGBA PNG generated with Python standard-library PNG chunks/zlib and encoded inline in test/features/setup/setup_routing_test.dart (ProfilePickerFixture). Test-only decoder/route fixture, project-owned, no attribution or external asset dependency; no production asset/export or personal image is involved.
+
+## Task 11 staff workspace
+
+Reuses existing original Paths vector symbol/logo and bundled Inter. No new visual asset downloads or people images. Admin RHF/Zod MIT notices are retained in paths-admin/docs/licenses; these are code dependencies, not image assets.
