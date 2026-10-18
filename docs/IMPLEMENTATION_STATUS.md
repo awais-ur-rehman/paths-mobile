@@ -775,7 +775,7 @@ Branch: `feature/provider-auth`. API contract **1.12.0**, identical backend/admi
 | Reauth, unlink, Apple erasure/retention/restore | Implemented; verified locally | Backend5b2fef6/03c507b/f64e233; action/session-scoped one-use proof, last-method serialization, encrypted retry/manifest, cleanup saturation regression |
 | Native SDK/session/UI | Implemented; automated checks verified | Mobile0f62871/bb9234e/a160d13; per-attempt nonce, serialized SDK cleanup, cancellation/epoch/vault, compact controls/settings, provider-only deletion, shared OTP cooldown |
 | Provider credentials/signed runtime | Blocked / awaiting device test | Google OAuth IDs absent; owner confirmed Apple not configured. No real Google/Apple login, relay delivery or live revocation result claimed |
-| Handoff/review | Verified locally; PR/device handoff in progress | Whole-branch reviewer found Google presenter rejection and expired-cleanup starvation; both fixed with observed RED/GREEN regressions and rechecked. Final evidence/push/PR links follow |
+| Handoff/review | Verified locally; draft PR/device handoff prepared | Whole-branch reviewer found Google presenter rejection and expired-cleanup starvation; both fixed with observed RED/GREEN regressions and rechecked. Final evidence/push/PR links follow |
 
 Checks observed: backend **56 unit**, **13 Phase0**, **4 metric**, **32 final focused auth/deletion** pass. Final full **211 integration** passed after the isolated3-test bootstrap check. A preceding run during concurrent native compilation had210 pass/1 migration100ms-query-budget timeout; the same isolated test and serial full suite then passed without changing limits or code. The failed attempt is retained here; runtime capacity is not inferred from these checks. Mobile **294 Flutter**, **12 Python tooling** and analyzer pass. Admin contract generation/lint/types/build and **8 tests** pass; unchanged admin browser UI was not retested for this contract-only task.
 
@@ -786,3 +786,13 @@ Dependencies: Google/Apple Dart packages and Android artifacts came from existin
 Local backend runtime f64e233 was built by copying compiled sources/migrations into the cached image with network disabled. Additive migration0019 applied; only API/worker restarted. Readiness and public provider metadata returned200/API1.12.0 with both providers disabled. Existing private env, R2/Gmail/FCM mounts and volumes were retained. Provider environment keys are passed to both services by Compose; no real user/provider data was added for these checks.
 
 Setup/protocol/release gates: backend `docs/runbooks/provider-auth.md`. Exact owner build/configuration and numbered physical checks: mobile `docs/TASK14_DEVICE_TESTS.md`. Apple guideline4.8 login-service requirements were checked against the official current page; no exception/store readiness is claimed. No deployment, purchase or store submission.
+
+Draft PRs into development (all pushed):
+
+| Repository | PR | Verified implementation commits |
+| --- | --- | --- |
+| Backend | https://github.com/awais-ur-rehman/paths-backend/pull/16 | 8458f39, 5b2fef6, 618ec5f, 03c507b, f64e233; verification report0513493 |
+| Admin | https://github.com/awais-ur-rehman/paths-admin/pull/14 | ef09c0a (contract/evidence only) |
+| Mobile | https://github.com/awais-ur-rehman/paths-mobile/pull/14 | 0f62871, bb9234e, a160d13; device/setup report e624119 |
+
+Task14 code/available local checks and review are implemented/verified; phase acceptance remains **awaiting device test**, blocked on provider configuration. All six task checklist items are accounted for; the signed walkthrough remains unchecked. Remote CI is a separate gate and was not inferred from local results. No PR was merged for Task14. Main remains the last prior verified baseline.
