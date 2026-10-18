@@ -113,7 +113,8 @@ void main() {
           await tester.ensureVisible(destination);
           await tester.tap(destination);
           await tester.pump(const Duration(seconds: 1));
-          peak = ProcessInfo.currentRss > peak ? ProcessInfo.currentRss : peak;
+          final rss = ProcessInfo.currentRss;
+          if (rss > peak) peak = rss;
           final scrollable = find.byType(Scrollable).hitTestable();
           if (scrollable.evaluate().isNotEmpty) {
             await tester.drag(scrollable.first, const Offset(0, -250));
@@ -125,9 +126,15 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       expect(await tracker.queueCount(), 0);
       expect(await tracker.pendingSamples(), isEmpty);
+      final measuredFrames = frames.skip(samplesBefore).toList();
+      expect(
+        measuredFrames,
+        isNotEmpty,
+        reason: 'No real frame timings were collected.',
+      );
       final summary = {
         'status': 'completed',
-        ...frameSummary(frames.skip(samplesBefore).toList()),
+        ...frameSummary(measuredFrames),
         'mode': const bool.fromEnvironment('dart.vm.product')
             ? 'release'
             : const bool.fromEnvironment('dart.vm.profile')
