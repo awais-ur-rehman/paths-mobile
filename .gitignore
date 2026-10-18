@@ -65,3 +65,6 @@ coverage/
 **/google-services.json
 **/GoogleService-Info.plist
 *.p8
+
+/paths.performance.local.json
+/artifacts/
