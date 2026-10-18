@@ -152,12 +152,12 @@ Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged
 
 ### Task 14: Provider login and safe linking
 
-- [ ] Test invalid audience/issuer/nonce/expired token and signature rotation; use test verifier fixtures, never production credentials in repo. — **not started**
-- [ ] Test same-email collision does not merge; existing-account reauthentication required; provider+subject unique. — **not started**
-- [ ] Implement Google and Apple SDK flows, cancellation handling, Apple relay/name-first-login behavior and missing email recovery. — **not started**
-- [ ] Integrate profile/adult onboarding and secure provider reauthentication for delete. — **not started**
-- [ ] Add Apple token revocation to deletion workflow, test provider outage retry; prevent removing last sign-in method. — **not started**
-- [ ] Verify both providers on real signed iOS/Android builds as supported by configured provider flows; recheck login-service store requirement. — **not started**
+- [x] Test invalid audience/issuer/nonce/expired token and signature rotation; use test verifier fixtures, never production credentials in repo. — **verified locally — signed fixture validation, key rotation, fetch limits/backoff and native presenter allowlists; no production credentials in tests**
+- [x] Test same-email collision does not merge; existing-account reauthentication required; provider+subject unique. — **verified locally — explicit linking and account-bound candidates; collision, OTP/signup, unique-subject and concurrent last-method regressions**
+- [x] Implement Google and Apple SDK flows, cancellation handling, Apple relay/name-first-login behavior and missing email recovery. — **implemented; automated checks verified — cached native SDK flows, quiet cancellation, fresh nonce, relay/name and missing-email steps; live-provider acceptance pending**
+- [x] Integrate profile/adult onboarding and secure provider reauthentication for delete. — **implemented; automated checks verified — existing adult/profile routing, secure Paths sessions and action/session-scoped provider deletion proof; device walkthrough pending**
+- [x] Add Apple token revocation to deletion workflow, test provider outage retry; prevent removing last sign-in method. — **verified locally — encrypted revocation outbox/manifests, outage retry, bounded cleanup progress, restore replay and last-method protection**
+- [ ] Verify both providers on real signed iOS/Android builds as supported by configured provider flows; recheck login-service store requirement. — **awaiting device test / blocked by configuration — Google OAuth clients and Apple Developer capability/key setup missing; Android and unsigned iOS compile, policy review recorded; no real signed login evidence**
 
 ## Phase 8 — deployment and release validation
 
@@ -742,7 +742,7 @@ All Task13 PRs remain draft into development. Main unchanged; no Task14. Local b
 
 ## Shared incremental matching — 2026-10-18
 
-**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Main is unchanged; no Task 14. All three PRs remain draft.
+**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Historical pre-merge report: superseded by the owner-authorized Task13 development merge and Task14 status below. Main remains unchanged.
 
 | Work | Status | Evidence |
 | --- | --- | --- |
@@ -760,3 +760,29 @@ All five final runtime recovery faults passed at `2fbfb36`: worker crash 33.517 
 **Qualification remains open:** shared matching is slower than the 19,928.782 ms owner control in this workload. Passing streak is zero; cold discovery also exceeded the application query deadline in a separate probe. Proof/evidence/atomic-inbox costs need further work. No threshold, constraint or authorization rule was weakened. The application remains on the owner default. No owner data/device or vendor service was faulted; no local dependency/tool/image downloads occurred.
 
 Backend [draft PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) contains the full measurements in `docs/task13-incremental-measurements.md` and checklist in `docs/superpowers/plans/2026-10-18-incremental-matching.md`. Earlier failed runs remain recorded.
+
+
+## Task 14: provider login — in progress; signed-provider acceptance pending
+
+Owner requested Task13 development integration despite its reported failed load gate. Backend PR15/admin PR13/mobile PR13 merged normally (9a53f8f/e5ed6bf/6df7564); no main promotion or protection bypass. Task13 remains unqualified, owner matching stays default and prior load/native-baseline/device debt remains open. Task15 deployment/store work has not started.
+
+Branch: `feature/provider-auth`. API contract **1.12.0**, identical backend/admin/mobile artifact, genuinely regenerated client DTOs. Applicable checklist coverage is recorded above; checked code/fixture tasks do not imply real-provider acceptance.
+
+| Work | Status | Evidence |
+| --- | --- | --- |
+| Signed provider verification/config | Verified locally | Backend8458f39 and review fixf64e233; fixed JWKS endpoints, signature/issuer/audience/nonce/time checks, Google native presenter allowlist, bounded cache/fetch/rotation |
+| Identity/session/link transitions | Implemented; verified locally | Backend618ec5f, unique identities, terms/email OTP, collision handling, authenticated account-bound link candidate, secure existing session/adult routing |
+| Reauth, unlink, Apple erasure/retention/restore | Implemented; verified locally | Backend5b2fef6/03c507b/f64e233; action/session-scoped one-use proof, last-method serialization, encrypted retry/manifest, cleanup saturation regression |
+| Native SDK/session/UI | Implemented; automated checks verified | Mobile0f62871/bb9234e/a160d13; per-attempt nonce, serialized SDK cleanup, cancellation/epoch/vault, compact controls/settings, provider-only deletion, shared OTP cooldown |
+| Provider credentials/signed runtime | Blocked / awaiting device test | Google OAuth IDs absent; owner confirmed Apple not configured. No real Google/Apple login, relay delivery or live revocation result claimed |
+| Handoff/review | Verified locally; PR/device handoff in progress | Whole-branch reviewer found Google presenter rejection and expired-cleanup starvation; both fixed with observed RED/GREEN regressions and rechecked. Final evidence/push/PR links follow |
+
+Checks observed: backend **56 unit**, **13 Phase0**, **4 metric**, **32 final focused auth/deletion** pass. Final full **211 integration** passed after the isolated3-test bootstrap check. A preceding run during concurrent native compilation had210 pass/1 migration100ms-query-budget timeout; the same isolated test and serial full suite then passed without changing limits or code. The failed attempt is retained here; runtime capacity is not inferred from these checks. Mobile **294 Flutter**, **12 Python tooling** and analyzer pass. Admin contract generation/lint/types/build and **8 tests** pass; unchanged admin browser UI was not retested for this contract-only task.
+
+Android Debug assembled offline (274 tasks) with explicit USB-loopback origin and existing ignored push configuration. Final APK/staged Dart kernel equals compiler output: **76,099,904 bytes**, SHA256 **163befe01eccfcde5e547180d5c698f85e358f0f700aaea183e4b4d7082697d6**. Unsigned generic iOS Debug compiled with automatic resolution/updates disabled. These builds do not establish signing, OAuth consent, native chooser behavior or phone acceptance.
+
+Dependencies: Google/Apple Dart packages and Android artifacts came from existing caches. Initial iOS compile correctly blocked on missing GoogleSignIn-iOS; the owner then specifically approved its download. Real Swift resolution records GoogleSignIn9.2.0 and required transitives while retaining MapLibre6.28.0. No fabricated lockfile, tool installation, emulator or phone operation. Original Google button artwork is bundled under its branding terms; standard Apple button uses its cached package. Asset sources/license details are in mobile `docs/ASSETS.md`.
+
+Local backend runtime f64e233 was built by copying compiled sources/migrations into the cached image with network disabled. Additive migration0019 applied; only API/worker restarted. Readiness and public provider metadata returned200/API1.12.0 with both providers disabled. Existing private env, R2/Gmail/FCM mounts and volumes were retained. Provider environment keys are passed to both services by Compose; no real user/provider data was added for these checks.
+
+Setup/protocol/release gates: backend `docs/runbooks/provider-auth.md`. Exact owner build/configuration and numbered physical checks: mobile `docs/TASK14_DEVICE_TESTS.md`. Apple guideline4.8 login-service requirements were checked against the official current page; no exception/store readiness is claimed. No deployment, purchase or store submission.
