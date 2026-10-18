@@ -17,6 +17,11 @@ def generate(contract, raw):
         properties = schema.get('properties', {})
         required = set(schema.get('required', []))
         def field_type(value):
+            if '$ref' in value:
+                ref=value['$ref'].removeprefix('#/components/schemas/')
+                if value['$ref'] != '#/components/schemas/'+ref or ref not in contract['components']['schemas']:
+                    raise ValueError('Unknown reference')
+                return ref
             if value.get('type') == 'array':
                 item=value.get('items',{})
                 if '$ref' in item:
@@ -30,6 +35,8 @@ def generate(contract, raw):
         for field, value in properties.items():
             if value.get('type') == 'array':
                 if field not in required or value.get('nullable'): raise ValueError('Optional arrays need explicit support')
+                field_type(value)
+            elif '$ref' in value:
                 field_type(value)
             elif value.get('type') not in types:
                 raise ValueError(f'Unsupported field {name}.{field}')
@@ -47,6 +54,11 @@ def generate(contract, raw):
                 result=f'{item_type}.fromJson(item)' if '$ref' in item else 'item'
                 lines += [f"    final {field} = List<{item_type}>.unmodifiable({raw}.map((item) {{ if(item is! {guard}) {{ throw const FormatException('Invalid {name}.{field} item'); }} return {result}; }}));"]
                 continue
+            if '$ref' in value:
+                if field not in required or value.get('nullable'): raise ValueError('Optional objects need explicit support')
+                raw='raw'+field[0].upper()+field[1:]
+                lines += [f"    final {raw} = json['{field}'];", f"    if ({raw} is! Map<String, dynamic>) {{ throw const FormatException('Invalid {name}.{field}'); }}", f"    final {field} = {field_type(value)}.fromJson({raw});"]
+                continue
             nullable = field not in required or value.get('nullable', False)
             if field in required:
                 lines += [f"    if (!json.containsKey('{field}')) {{ throw const FormatException('Missing {name}.{field}'); }}"]
@@ -56,7 +68,7 @@ def generate(contract, raw):
             if 'enum' in value:
                 lines += [f"    if ({guard}!const {json.dumps(value['enum'])}.contains({field})) {{ throw const FormatException('Unsupported {field}'); }}"]
         lines += [f"    return {name}({', '.join(f'{f}: {f}' for f in properties)});", '  }',
-                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': " + (f"{f}.map((item) => item.toJson()).toList(growable: false)" if properties[f].get('type')=='array' and '$ref' in properties[f].get('items',{}) else f) for f in properties) + '};', '}']
+                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': " + (f"{f}.toJson()" if '$ref' in properties[f] else f"{f}.map((item) => item.toJson()).toList(growable: false)" if properties[f].get('type')=='array' and '$ref' in properties[f].get('items',{}) else f) for f in properties) + '};', '}']
     return '\n'.join(lines) + '\n'
 
 

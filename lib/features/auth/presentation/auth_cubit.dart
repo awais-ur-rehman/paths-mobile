@@ -175,6 +175,18 @@ final class AuthCubit extends Cubit<AuthState> {
           policies: _policies,
         );
       });
+  void acceptProviderSession(AuthSession session) {
+    if (isClosed || state.stage != AuthStage.signedOut || state.busy) return;
+    _cancel();
+    emit(
+      AuthState(
+        stage: AuthStage.authenticated,
+        account: session.account,
+        policies: _policies,
+      ),
+    );
+  }
+
   Future<void> login(String email, String password) => _run((token) async {
     final session = await _repository.login(
       email.trim().toLowerCase(),
