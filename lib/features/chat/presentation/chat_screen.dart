@@ -50,6 +50,14 @@ class _ThreadOwnerState extends State<_ThreadOwner> {
     if (active == _active) return;
     _active = active;
     bloc.add(ChatVisibility(active));
+    if (active) {
+      // A response may have completed under another route without a new sync page.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && (!scroll.hasClients || scroll.position.pixels < 80)) {
+          _seen();
+        }
+      });
+    }
   }
 
   @override

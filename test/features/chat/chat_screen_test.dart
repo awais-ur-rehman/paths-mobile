@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:paths_mobile/shared/widgets/paths_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -104,6 +106,47 @@ void main() {
     r.reads.clear();
     sequence = 2;
     r.changes.add(const ChatSignal(resourceId: 'c'));
+    await tester.pumpAndSettle();
+    expect(r.reads, isEmpty);
+    navigation.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(r.reads, contains(2));
+    await tester.pumpWidget(const SizedBox());
+    await r.changes.close();
+  });
+  testWidgets('returning reads a response completed under the covering route', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final r = FakeChat();
+    final pending = Completer<ChatHistoryDto>();
+    var calls = 0;
+    r.historyResult = (_, _) {
+      calls++;
+      if (calls == 1) return Future.value(page([message(1)]));
+      if (calls == 2) return pending.future;
+      return Future.value(page([]));
+    };
+    final navigation = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigation,
+        theme: PathsTheme.light,
+        builder: (context, child) => PathsToastHost(child: child!),
+        home: ChatScreen(repository: r, conversationId: 'c'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    r.reads.clear();
+    r.changes.add(const ChatSignal(resourceId: 'c'));
+    await tester.pump();
+    navigation.currentState!.push(
+      MaterialPageRoute<void>(
+        builder: (_) => const Scaffold(body: Text('Another conversation')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    pending.complete(page([message(2)]));
     await tester.pumpAndSettle();
     expect(r.reads, isEmpty);
     navigation.currentState!.pop();
