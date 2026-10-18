@@ -62,6 +62,7 @@ final class AuthFailure implements Exception {
     'LOCATION_LEASE_INVALID' => 'Location access ended. Enable sharing again.',
     'LOCATION_PAUSED' => 'Location sharing is paused.',
     'media_unavailable' => 'This photo is unavailable.',
+    'report_length' => 'Keep report details under 1,000 characters.',
     'image_size' => 'Choose a photo under 10 MB.',
     'image_format' => 'Choose a JPEG, PNG or WebP photo.',
     'image_rejected' => 'This photo could not be processed. Choose another.',

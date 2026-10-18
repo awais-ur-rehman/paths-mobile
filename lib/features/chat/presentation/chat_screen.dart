@@ -1,3 +1,7 @@
+import '../../safety/presentation/message_evidence_picker.dart';
+import '../../safety/presentation/report_sheet.dart';
+import '../../safety/domain/safety_repository.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -13,11 +17,13 @@ class ChatScreen extends StatelessWidget {
     required this.repository,
     required this.conversationId,
     this.name = 'Chat',
+    this.peerId,
     this.onOpened,
     super.key,
   });
   final ChatRepository repository;
   final String conversationId, name;
+  final String? peerId;
   final VoidCallback? onOpened;
   @override
   Widget build(BuildContext context) => _ThreadOwner(
@@ -138,6 +144,24 @@ class _ThreadOwnerState extends State<_ThreadOwner> {
       appBar: AppBar(
         title: Text(widget.configuration.name),
         actions: [
+          BlocBuilder<ChatBloc, ChatState>(
+            buildWhen: (a, b) => a.messages != b.messages,
+            builder: (context, state) {
+              final peer =
+                  widget.configuration.peerId ??
+                  state.messages
+                      .where(
+                        (m) =>
+                            m.senderId !=
+                            widget.configuration.repository.accountId,
+                      )
+                      .firstOrNull
+                      ?.senderId;
+              return peer == null
+                  ? const SizedBox.shrink()
+                  : MessageSafetyMenuButton(subject: peer);
+            },
+          ),
           IconButton(
             tooltip: 'Refresh',
             onPressed: () => bloc.add(const ChatRefresh()),
@@ -211,11 +235,25 @@ class _ThreadOwnerState extends State<_ThreadOwner> {
                     }
                     final rows = <Widget>[
                       for (final message in state.messages)
-                        _Bubble(
-                          text: message.text,
-                          mine:
+                        GestureDetector(
+                          onLongPress:
                               message.senderId ==
-                              widget.configuration.repository.accountId,
+                                  widget.configuration.repository.accountId
+                              ? null
+                              : () => showSafetyActions(
+                                  context,
+                                  SafetyTarget(
+                                    message.senderId,
+                                    kind: 'message',
+                                    contentId: message.id,
+                                  ),
+                                ),
+                          child: _Bubble(
+                            text: message.text,
+                            mine:
+                                message.senderId ==
+                                widget.configuration.repository.accountId,
+                          ),
                         ),
                       for (final pending in state.pending)
                         _Bubble(

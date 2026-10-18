@@ -1,3 +1,5 @@
+import '../features/safety/domain/safety_repository.dart';
+import '../features/safety/presentation/blocked_accounts_screen.dart';
 import '../features/chat/domain/chat_repository.dart';
 import '../features/chat/presentation/chat_screen.dart';
 import '../features/chat/presentation/chats_screen.dart';
@@ -83,6 +85,7 @@ GoRouter createAuthRouter(
   NotificationRepository? notifications,
   PushClient? push,
   ChatRepository? chats,
+  SafetyRepository? safety,
 }) {
   SetupDestination? setupDestination;
   String? setupAccount, pendingDestination;
@@ -101,6 +104,9 @@ GoRouter createAuthRouter(
       repository: summaries,
       userId: cubit.state.account!.id,
       onBack: encounters == null ? null : () => context.go('/home'),
+      onBlockedAccounts: safety == null
+          ? null
+          : () => context.push('/settings/blocked'),
       onLocationSetup: locations == null
           ? null
           : () => context.go('/setup/permissions'),
@@ -186,6 +192,7 @@ GoRouter createAuthRouter(
                       if (relationships != null) '/likes',
                       if (notifications != null) '/notifications',
                       if (notifications != null) '/settings/notifications',
+                      if (safety != null) '/settings/blocked',
                       if (encounters != null && path.startsWith('/profiles/') ||
                           path.startsWith('/chats/'))
                         path,
@@ -388,6 +395,9 @@ GoRouter createAuthRouter(
           builder: (context, route) => ChatScreen(
             repository: chats,
             conversationId: route.pathParameters['id']!,
+            peerId: route.extra is ConversationDto
+                ? (route.extra! as ConversationDto).peerId
+                : null,
             name: route.extra is ConversationDto
                 ? (route.extra as ConversationDto).name
                 : 'Chat',
@@ -528,6 +538,11 @@ GoRouter createAuthRouter(
                     }
                   },
           ),
+        ),
+      if (safety != null)
+        GoRoute(
+          path: '/settings/blocked',
+          builder: (_, _) => BlockedAccountsScreen(repository: safety),
         ),
       GoRoute(
         path: '/account/restricted',

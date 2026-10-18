@@ -26,6 +26,13 @@ class LikesCubit extends Cubit<LikesState> {
   CancelToken? _cancel;
   int _generation = 0;
   String? _account;
+  Future<void> invalidate() {
+    _generation++;
+    _cancel?.cancel();
+    emit(LikesState(box: state.box));
+    return load();
+  }
+
   Future<void> load({String? box, bool more = false}) async {
     if (more && (state.busy || state.cursor == null)) return;
     final account = repository.accountId, selected = box ?? state.box;

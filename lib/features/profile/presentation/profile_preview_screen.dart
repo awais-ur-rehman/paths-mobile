@@ -15,18 +15,20 @@ class ProfilePreviewScreen extends StatelessWidget {
     required this.repository,
     required this.userId,
     this.onLocationSetup,
+    this.onBlockedAccounts,
     this.onBack,
     super.key,
   });
   final ProfileSummaryRepository repository;
   final String userId;
-  final VoidCallback? onLocationSetup, onBack;
+  final VoidCallback? onLocationSetup, onBack, onBlockedAccounts;
   @override
   Widget build(BuildContext context) => _PreviewOwner(
     key: ValueKey(userId),
     repository: repository,
     userId: userId,
     onLocationSetup: onLocationSetup,
+    onBlockedAccounts: onBlockedAccounts,
     onBack: onBack,
   );
 }
@@ -36,10 +38,11 @@ class _PreviewOwner extends StatefulWidget {
     required this.repository,
     required this.userId,
     this.onLocationSetup,
+    this.onBlockedAccounts,
     this.onBack,
     super.key,
   });
-  final VoidCallback? onLocationSetup, onBack;
+  final VoidCallback? onLocationSetup, onBack, onBlockedAccounts;
   final ProfileSummaryRepository repository;
   final String userId;
   @override
@@ -84,6 +87,15 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
                 onTap: () {
                   Navigator.pop(sheet);
                   widget.onLocationSetup!();
+                },
+              ),
+            if (widget.onBlockedAccounts != null)
+              ListTile(
+                leading: const Icon(Icons.block),
+                title: const Text('Blocked accounts'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  widget.onBlockedAccounts!();
                 },
               ),
             ListTile(

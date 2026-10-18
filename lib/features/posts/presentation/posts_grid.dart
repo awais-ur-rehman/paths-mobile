@@ -1,3 +1,6 @@
+import '../../safety/presentation/report_sheet.dart';
+import '../../safety/domain/safety_repository.dart';
+
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -118,6 +121,7 @@ class _PostsGridState extends State<PostsGrid> {
                     builder: (_) => PostDetail(
                       scope: widget.scope,
                       post: post,
+                      owner: widget.owner,
                       own: widget.owner == widget.scope.posts.accountId,
                     ),
                   );
@@ -181,11 +185,13 @@ class PostDetail extends StatefulWidget {
     required this.scope,
     required this.post,
     required this.own,
+    required this.owner,
     super.key,
   });
   final MediaScope scope;
   final PostDto post;
   final bool own;
+  final String owner;
   @override
   State<PostDetail> createState() => _PostDetailState();
 }
@@ -288,6 +294,14 @@ class _PostDetailState extends State<PostDetail> {
       appBar: AppBar(
         title: const Text('Post'),
         actions: [
+          if (!widget.own)
+            SafetyMenuButton(
+              target: SafetyTarget(
+                widget.owner,
+                kind: 'post',
+                contentId: widget.post.id,
+              ),
+            ),
           if (widget.own)
             IconButton(
               tooltip: 'Delete post',
