@@ -830,3 +830,16 @@ Review corrections: missing Chats allowlist and chat-detail capability condition
 GitHub branch-protection inspection returned403 for each private repository: current plan requires an upgrade or public visibility. Neither was changed; no claim of enforced GitHub protection. Maintain the documented release gate and normal PR workflow. All Task14 PRs remain draft pending this follow-up's phone check. No deployment, purchase, tool/package download, public repository or main push.
 
 Owner retest: mobile `docs/NAVIGATION_LOCATION_DEVICE_TESTS.md`. Backend/admin application code is unchanged in this follow-up; their earlier test counts are historical, not rerun passes.
+
+## Owner acceptance and release-gate audit — 2026-10-18
+
+Owner confirmed the navigation/location fixes worked on the physical Android phone and authorized merge/promotion **only if CI and load gates pass**. This closes the reported Android functionality retest at mobilee66bd26; it does not invent quantified battery/accuracy/background-delivery results or signed iOS evidence. Apple/iOS runtime setup remains deferred. No UI work was started.
+
+Gate audit at pushed implementation heads:
+
+- Backend31400a9: [Backend checks39147846827](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39147846827) **passed**.
+- Adminda021ca: [Admin checks39147846133](https://github.com/awais-ur-rehman/paths-admin/actions/runs/39147846133) **passed**.
+- Mobilee66bd26: no GitHub workflow/check is configured; local evidence remains301 Flutter/13 tooling tests, clean analyzer, Android build/kernel check and unsigned iOS compile, plus owner Android acceptance. No missing remote check is reported as passed.
+- Backend [dense-load39147846764](https://github.com/awais-ur-rehman/paths-backend/actions/runs/39147846764) **failed** against head31400a9 (PR merge teste143670d91266d40116fe97f601fa55b84e29326). Downloaded the actual synthetic artifact and inspected the failed measurement step; this was not a build/startup failure. Chatp95 **2063.645483ms** misses<2000ms; encounterp95 **35871.806ms** misses<5000ms. APIp95<=137.091313ms passed; all5000 offered observations accepted,44,850 expected pairs produced,300 sockets remained connected and the queue drained. Backend `docs/testing/task14-release-gate.json` retains the small artifact-derived summary and provenance.
+
+Result: **release gate failed**. All Task14 PRs remain draft; no development merge or main promotion, threshold change, rerun-to-green, or branch-protection bypass. This audit changes documentation only; it does not fix the known Task13 capacity issue or rerun application suites. CI triggered by this documentation push is separate evidence and must pass before any future merge. Next engineering work required for release is the failing dense-processing/chat-latency gate; UI work remains for the owner's later session.
