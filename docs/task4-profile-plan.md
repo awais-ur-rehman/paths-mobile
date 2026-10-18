@@ -1,0 +1,12 @@
+# Task4: profile and optional verification
+
+Baseline: docs/specification/06_IMPLEMENTATION_PLAN.md Task4; PRD PROF-01/02/03, VER-01/02/03; TRD sections5/9; app flow setup/profile/verification. User approved Task3 Android UI and merges. Work in the three existing repository feature branches; reuse installed tools/packages.
+
+1. Backend tests first: extend private details with editable visibility; allowlisted basic summary with calendar age/noDOB; deny cross-user reads until Task6 eligibility exists. Persist verification offer seen separately from status. Verify skip entitlements, status isolation, duplicate pending submission, owner/type/processing checks and cascade.
+2. Backend implement: shared locked adult-session authorization; profile edit/summary; owned verification read/skip/submit contract. Submission requires explicit consent and processed document assets through a media port. Default adapter refuses all assets until Task8. Test-only adapter exercises pending/processed cases; no live CNIC endpoint accepts arbitrary assets. Retain submission records until account deletion; reviewer mutation remains Task11.
+3. Export real OpenAPI, regenerate both clients and prove no drift.
+4. Mobile tests first: profile privacy/save isolation and lifecycle; verification load/skip/upload/consent/submit/status/late completion/duplicates. Implement stateless roots and lifecycle owners, shared neutral avatar/badge, own profile preview and edit. Use approved white/black/blue design and bundled fonts. Offer status/skip remains available despite media outage. No fake Home or completed setup.
+5. Verify meaningful goldens and responsive text at320/390/768 and200%, full suites, API smoke and available native builds. Review the entire branch; fix regressions; record actual results and Task8/iOS prerequisites. Push micro commits, draft PRs to development and provide focused physical retest.
+
+Ruling: the existing user request approved the documented architecture and execution; no redundant design/menu approval. Existing clean feature checkouts preserve locally installed dependencies; use focused branches in place instead of new dependency-less worktrees.
+Ruling: media dependencies explicitly deferred by Task4→Task8. Build real status/skip/validation and unavailable production boundaries; isolate fixture uploads to tests. Full profileComplete remains false until required photo processing is implemented. No live public profile eligibility is granted before Task6.

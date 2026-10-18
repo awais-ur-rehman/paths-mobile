@@ -56,3 +56,18 @@ coverage/
 .DS_Store
 .superpowers/
 *.local
+
+/android/.kotlin/
+
+# Owner-only push setup files.
+/paths.push.local.json
+.secrets/
+**/google-services.json
+**/GoogleService-Info.plist
+*.p8
+
+/paths.performance.local.json
+/artifacts/
+
+/ios/Flutter/ProviderAuth.local.xcconfig
+/paths.providers.local.json

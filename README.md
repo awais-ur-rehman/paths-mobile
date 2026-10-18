@@ -2,10 +2,24 @@
 
 Flutter Android/iOS app. Phase 0 is an explicitly opted-in private location experiment, not a public pilot.
 
-This baseline is documentation only, not a working release. See docs/IMPLEMENTATION_STATUS.md and docs/specification/06_IMPLEMENTATION_PLAN.md.
+`main` remains the documentation baseline. Phase0 was accepted by the owner and merged into `development`. Phase1 foundation work is tracked in docs/IMPLEMENTATION_STATUS.md.
 
 ## Branches
 
 `main`: last verified baseline; `development`: verified integrated work; `feature/<description>` from development; `hotfix/<description>` from main. Pending tooling/device gates use draft PRs into development. Never promote unverified application changes to main.
 
-No dependency installation, automatic fetching or container pulls are authorized in this work session.
+The owner authorized Android test dependencies and Phase1 project packages/Docker images. SDK upgrades and production deployment remain outside this authorization.
+
+## Current work
+
+See [implementation status](docs/IMPLEMENTATION_STATUS.md) for every phase checkbox, executed checks, exact blockers and commit references. The private harness runbook is [DEVICE_TESTS.md](docs/DEVICE_TESTS.md). Use `--no-pub` for local Flutter checks; installed dependencies are already locked.
+
+Task3 email authentication is accepted and integrated into development. The default Flutter entry is auth; use `-t lib/main_phase0.dart` for the isolated experiment. See [auth device tests](docs/AUTH_DEVICE_TESTS.md).
+
+Device-feedback fixes and the requested profile-details entry are tracked in [focused Android retest](docs/DEVICE_UI_RETEST.md). Full profile photo/verification completion remains separate plan work.
+
+Profile/privacy and optional review retest: [docs/TASK4_DEVICE_TESTS.md](docs/TASK4_DEVICE_TESTS.md). Real photo/CNIC uploads remain Task8; this build never reports a complete profile from details alone.
+
+Task5 ingestion is accepted and merged into development. Task6 matching and concise Home use API1.5.0 on feature/encounter-discovery. See [Task6 device tests](docs/TASK6_DEVICE_TESTS.md) and implementation status for evidence and remaining runtime gates. Main remains unchanged.
+
+Requested profile UI updates: [focused device retest](docs/PROFILE_UI_RETEST.md). Creation now has one Next action; Verification and owner/peer profiles use the revised layouts. Task6 draft PR6 remains pending owner results.

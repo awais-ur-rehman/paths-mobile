@@ -1,0 +1,5 @@
+#include "Generated.xcconfig"
+
+APS_ENVIRONMENT=production
+
+#include "ProviderAuth.xcconfig"

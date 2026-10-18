@@ -1,0 +1,1 @@
+trial_id,device_alias,device_model,os_version,minutes,scenario,mode,ground_truth,app_verdict,tp,fp,fn,samples_accepted,samples_rejected,longest_gap_seconds,baseline_battery_pp,capture_battery_pp,permission_observation,notes

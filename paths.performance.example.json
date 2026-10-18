@@ -1,0 +1,6 @@
+{
+  "PATHS_RUN_FULL_JOURNEY": true,
+  "PATHS_VERIFY_ACTIVE_TRACKING": true,
+  "PATHS_TEST_EMAIL": "disposable-account-you-control@example.invalid",
+  "PATHS_TEST_PASSWORD": "replace-with-a-private-disposable-account-password"
+}

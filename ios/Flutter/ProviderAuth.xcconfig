@@ -1,0 +1,4 @@
+// Override these public identifiers in the ignored local file after OAuth setup.
+PATHS_GOOGLE_IOS_CLIENT_ID=
+PATHS_GOOGLE_REVERSED_CLIENT_ID=com.paths.mobile.oauth-unconfigured
+#include? "ProviderAuth.local.xcconfig"

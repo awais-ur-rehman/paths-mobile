@@ -1,0 +1,55 @@
+# Phase 0 code review
+
+A separate read-only reviewer inspected the full source against Task1. The author inspected its findings and changed:
+
+- Canonical two-phone matching: remove pair-of-pairs scan; bounded time-window sweep. Dense nonmatching regression and temporal/distance boundaries pass in Node.
+- Backend leases: retain stop epoch watermarks; bind stop to session+epoch; prevent late stop revoking a newer lease and stop-before-lease resurrection.
+- Android service: generation-bound destruction and in-place restart prevent an old foreground service from purging a new tracker session.
+- Native stop: send lease-scoped remote stop; retry from Flutter on resume. Apply local status before optional network refresh and show remote-pending state offline.
+- iOS permission: await Always authorization with a bounded wait; report Settings/retry state if OS defers it. Reject unsupported/incomplete transport configuration explicitly.
+- Native callbacks: reject outdated session generation, pre-session fixes and foreground-only callbacks while hidden; stream current native statuses and samples to Dart.
+- Queue reads prune expired encrypted bytes; reads/writes never return >200 or >15-minute fixes. Suspended OS execution cannot promise an exact disk deletion deadline; this limit is recorded, not silently waived.
+- Integration test now includes actual sample delivery, populated-queue purge and a30-second pause-observation window. This test is explicitly skipped without opt-in and awaits the owner's physical-device run.
+- Layout regression: compact/200% header overflow fixed; tests cover7 widths at2 text scales. Bundled fonts loaded for readable golden evidence.
+
+Executed checks and exact scope are recorded in IMPLEMENTATION_STATUS.md. Native source compilation/type checking is weaker than an assembled and exercised device build. Background delivery, battery, precision/recall, OS notification behavior, key invalidation, disk failure, queued-control recovery after process death and iOS runtime remain unproven. Do not merge the draft PR or advance the Phase0 gate from inspection alone.
+
+Follow-up inspection also fixed endpoint URI validation (empty root paths are valid), guaranteed active-test cleanup on timeout via registered teardown, refreshed service generation on reused background start commands, and prevented permission-revoked Activity resume from throwing a native startup exception. Two API transport regressions cover the exact runbook URL and scoped stop payload.
+
+## Task3 source review
+
+A fresh read-only reviewer inspected backend authentication/retention/outbox/SMTP/guards/migrations, mobile storage/repository/refresh/Cubit/router/screens/tests and the admin contract diff. Four important findings were confirmed and fixed with regressions: expired signup resend after worker retention, 429/500/503 refresh preserving saved credentials, cleanup failures keeping authentication blocked, and stale refresh parsing/storage errors not invalidating newer sessions. Signup retention also clears superseded password hashes; cleanup attempts secure deletion even if preference persistence fails and requires retry before restoration. No second reviewer pass is claimed.
+
+Author reran the relevant complete suites after fixes. Review and tests do not establish native secure-storage reliability under OS faults, signed iOS behavior, OS autofill, email-client handoff, Gmail delivery or device usability. Those limits remain in IMPLEMENTATION_STATUS.md and the mobile AUTH_DEVICE_TESTS.md gate.
+
+## Device-feedback source review
+
+A fresh read-only reviewer inspected the auth presentation/routing/components, native splash, profile repository/Cubit and backend profile details/contract changes. It identified a premature success toast when retrying a failed edit after an earlier successful save. A regression reproduced the incorrect pending-success message; the listener now requires a new completed save revision. Source review did not establish visual/OS/runtime results or deferred photo/verification behavior. Author tests and visual/build evidence are reported separately in IMPLEMENTATION_STATUS.md.
+
+Final arrow regression: successful navigation previously reset its controller before route disposal, snapping the circle back left. The callback now reports route handoff, keeping the button disabled at the right endpoint; failed persistence resets it for retry. Successful handoff, failure/retry and reduced-motion tests pass in the88-test suite.
+
+
+## Task4 whole-branch review
+
+One fresh read-only review covered source, schema, DTOs, generated clients, transaction/session boundaries, navigation, lifecycle and tests. Important finding: adult users could enter optional review before saving details, skip to an own-profile404 and have no setup recovery. A real404 fixture reproduces the missing action (red); Back to profile setup now recovers (green). Full115 Flutter tests pass after correction. No second reviewer pass was requested or claimed.
+
+Review exclusions and rulings: real selection/processing/private storage/media FKs/object erasure/cleanup remain Task8; full profileComplete/Home/permission education/posts are not part of this slice; cross-user encounter eligibility remains Task6 with current default denial; reviewer decisions/attribution/notifications remain Task11; processing polling/document removal await the actual Task8 adapter; physical OS/rendering/performance cannot be proved by source inspection. These exclusions match the task plan and are retained as dependencies, not silently dropped requirements. Native Android and unsigned iOS compilation subsequently passed; runtime claims remain separate.
+
+
+## Task5 branch review
+
+One fresh read-only review covered backend lease/session authorization, migration/deletion paths, ingestion/dedup, retention/outbox, Flutter control serialization/lifecycle, both native uploaders and API generation. It found one Important issue: auth-session deletion cascaded to samples but left their matching outbox parents outside retention. A real PostgreSQL regression reproduced the orphan; bounded user-first cleanup now removes aged orphan matching intents. Fresh orphan entries are retained only within the same24h window. The regression and full integration suite pass after correction. No second reviewer pass is claimed.
+
+Author regressions also exposed an older slow pause adopting a newer enable generation; pause now captures its generation before awaiting native purge. The full Flutter suite passes. Integration test files share a schema and now run serially to avoid migration timeout/fixture interference, while explicit within-test concurrency cases remain enabled. This follows a failed full run under concurrent native build load; the subsequent complete suite passes without widening application timeouts.
+
+Review exclusions: physical OS prompts, background/locked/kill delivery, power management and battery need owner evidence; Task6 supplies matching/Home; Task8 supplies real media/CNIC processing; Task11 supplies administrative review. Compilation and source inspection do not establish runtime scheduling, load capacity or store approval. Matching intents are deliberately pending until Task6, then discarded with expired observations; no matcher success is fabricated.
+
+## Task6 branch review
+
+One fresh read-only whole-branch review covered backend locks/transactions/retention/privacy/contracts and mobile navigation/cancellation/native map ownership, plus generated admin changes. It requested a fix for peer route replacement retaining the old cubit; it also found map pagination resetting center and active-session intent deduplication expiring during outbox cleanup. Reproduced all three with failing tests, then keyed peer lifecycle by user ID, retained center during append, and excluded retained session intents from orphan cleanup. Targeted and complete suites pass after fixes. No second reviewer pass is claimed.
+
+Author inspection also added measured movement rejection, masked pending/declined peer review status, fixed Recent center selection and explicit integer Swagger typing, and tested separate bounded migration DDL timeouts. Runtime exclusions: physical map/attribution/permission/background behavior, field accuracy/battery, signed iOS and missing native dependency. Push/relationships are Task7 and real media Task8. See IMPLEMENTATION_STATUS.md for evidence and prerequisites.
+
+## Profile UI feedback review
+
+One fresh read-only reviewer inspected all feedback changes against the supplied reference and behavior. Four findings were reproduced by failing widget regressions and fixed: cover header vertically centering, owner summary errors hiding account controls, stale pending verification without refresh, and server-only upload availability ignoring the missing local adapter. Header is now bounded at the top; loading/error shells retain options/back; pull refresh updates real status; local and server readiness are combined. No second reviewer pass is claimed. Author tests also cover dropdown focus/validation/system-back/open-menu disposal, failed save retry navigation, large text and existing location-menu access. Source inspection and goldens do not prove phone gestures, real media, native platform scheduling or signed iOS rendering.
