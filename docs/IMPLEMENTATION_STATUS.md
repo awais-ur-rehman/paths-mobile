@@ -738,3 +738,25 @@ Backend application7f93a3a, strict measurement105b73b, API1.11.0. Fixes cover ow
 - **Qualification prerequisite:** native4vCPU/8GB deployment baseline/soak unavailable. The measured Linux harness exposes2CPUs; the Mac database is emulated. Additional CPU is not assumed to make the gate pass.
 
 All Task13 PRs remain draft into development. Main unchanged; no Task14. Local backend runtime refreshed from the cached verified image, readiness200, private config/data and rollback image preserved. No external deployment or new local dependency installation.
+
+
+## Shared incremental matching — 2026-10-18
+
+**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Main is unchanged; no Task 14. All three PRs remain draft.
+
+| Work | Status | Evidence |
+| --- | --- | --- |
+| Full pipeline measurements | Verified | Synthetic-only stage, queue, source-commit, CPU/WAL and plan reports; `55cfe41` |
+| Exact observation projection | Verified | Raw samples retained; distinct matching history, expiry and deletion regressions; `01f23f8` |
+| Shared incremental matching | Implemented; regression verified | Durable source batches, canonical 500-pair chunks, grant maps, bounded proof reads, two chunks/global wakeup, per-batch replanning; `f56532e` through `a484cf2` |
+| Native capacity | In progress; gate failed | Final run `39139807060`: 5,000 samples, 44,850 pairs, 300 sockets, drained; API/chat passed; encounter p95 **37,160.129 ms** failed the 5,000 ms limit |
+| Required native 4vCPU/8GB baseline/soak | Blocked | Runner unavailable; measured CI runner has 2 CPUs; local PostGIS is emulated |
+| Remaining push/device/field gates | Not started / awaiting device test | Registered-device synthetic push pressure, battery/coverage, frames/image memory, accessibility/reference acceptance and iOS runtime/APNs |
+
+Checks: **192 integration**, **47 unit**, **13 Phase 0** and **4 load-metric** tests passed at `2fbfb36`; lint/types/build/contract and cached offline image build passed. The final diagnostic-label fix `a484cf2` passed 3 focused unit and 14 shared integration checks plus lint/types/build. Backend CI `39139807054` passed on `a484cf2`. Admin/mobile application code is unchanged; previous browser/Flutter/native evidence remains historical.
+
+All five final runtime recovery faults passed at `2fbfb36`: worker crash 33.517 s, post-commit/pre-ACK matching replay 34.086 s, queue loss 31.497 s, database restart 4.912 s and SMTP outage 9.718 s. Replay preserved effects and eventual source completion. Isolated services were stopped without deleting volumes. Review fixed lost wakeups, rollback batch draining, repeated discovery/proof scans and the subsequent timing-label regression; final read-only review found no further actionable issue in the label fix.
+
+**Qualification remains open:** shared matching is slower than the 19,928.782 ms owner control in this workload. Passing streak is zero; cold discovery also exceeded the application query deadline in a separate probe. Proof/evidence/atomic-inbox costs need further work. No threshold, constraint or authorization rule was weakened. The application remains on the owner default. No owner data/device or vendor service was faulted; no local dependency/tool/image downloads occurred.
+
+Backend [draft PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) contains the full measurements in `docs/task13-incremental-measurements.md` and checklist in `docs/superpowers/plans/2026-10-18-incremental-matching.md`. Earlier failed runs remain recorded.
