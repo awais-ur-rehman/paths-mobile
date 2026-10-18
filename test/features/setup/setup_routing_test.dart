@@ -242,12 +242,30 @@ Future<void> stop(
 }
 
 void main() {
+  testWidgets('Chats tab remains reachable after completed setup', (
+    tester,
+  ) async {
+    final app = await start(
+      tester,
+      SetupAdapter(),
+      Progress()..seen.add('11111111-1111-4111-8111-111111111111'),
+    );
+    await tester.tap(find.byIcon(Icons.chat_bubble_outline));
+    await tester.pumpAndSettle();
+    expect(app.router.routeInformationProvider.value.uri.path, '/chats');
+    expect(find.text('Chats'), findsWidgets);
+    await stop(tester, app.sync, app.tracker);
+  });
   for (final complete in [true, false]) {
     testWidgets(
       'review route remains reachable during and after setup ($complete)',
       (tester) async {
         final adapter = SetupAdapter()..complete = complete;
-        final app = await start(tester, adapter, Progress()..seen.add('11111111-1111-4111-8111-111111111111'));
+        final app = await start(
+          tester,
+          adapter,
+          Progress()..seen.add('11111111-1111-4111-8111-111111111111'),
+        );
         app.router.push('/reviews');
         await tester.pumpAndSettle();
         expect(find.text('Reviews'), findsOneWidget);

@@ -212,12 +212,14 @@ GoRouter createAuthRouter(
                       if (locations != null) '/setup/permissions',
                       if (encounters != null) '/home',
                       if (relationships != null) '/likes',
+                      if (chats != null) '/chats',
                       if (notifications != null) '/notifications',
                       if (notifications != null) '/reviews',
                       if (notifications != null) '/settings/notifications',
                       if (safety != null) '/settings/blocked',
-                      if (encounters != null && path.startsWith('/profiles/') ||
-                          path.startsWith('/chats/'))
+                      if ((encounters != null &&
+                              path.startsWith('/profiles/')) ||
+                          (chats != null && path.startsWith('/chats/')))
                         path,
                     ].contains(path)
                     ? path
