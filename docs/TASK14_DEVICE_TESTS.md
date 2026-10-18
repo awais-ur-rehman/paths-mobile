@@ -1,10 +1,33 @@
 # Task14: provider authentication
 
-Status: code and local checks in progress; real provider acceptance is pending. Test `feature/provider-auth` in all three repositories, at the exact commit hashes listed in `docs/IMPLEMENTATION_STATUS.md` and the phase report. Main is unchanged. Task13 capacity qualification remains open despite its authorized development merge.
+Status: Google Android configuration and local build checks are ready; real provider acceptance is pending. Test `feature/provider-auth` in all three repositories, at the exact commit hashes listed in `docs/IMPLEMENTATION_STATUS.md` and the phase report. Main is unchanged. Task13 capacity qualification remains open despite its authorized development merge.
 
 ## Prerequisites — configuration, not a test pass
 
-No Google OAuth IDs are configured in the inspected backend environment. Apple Developer/Sign in with Apple is confirmed not configured. Google and Apple controls stay hidden until their backend configuration is complete and supported by this build. Email sign-in remains available.
+Google Android is configured in the existing `paths-awais` project. Backend metadata reports Google enabled and Apple disabled; its health endpoint reports API1.12.0. The External OAuth app remains in Testing, with `awaisjarral37@gmail.com` saved as the test user and only OpenID/email/profile scopes. Apple and Google iOS setup remain pending. Email sign-in remains available.
+
+## Current Android phone test — 2026-10-18
+
+Use `feature/provider-auth`; the setup commit is identified in the handoff report. The already-built APK uses `http://127.0.0.1:8080` plus the existing ignored push options. No new install/setup prerequisite is known for this Android test: the registered debug certificate matches the actual APK, and the local API/worker are healthy. Google changes can take five minutes to several hours to propagate according to the console.
+
+From `paths-mobile`, the owner runs (the agent does not operate the phone):
+
+```sh
+adb -s 13111JEC204217 reverse tcp:8080 tcp:8080
+/Users/awaisurrehman/Documents/flutter_sdk/flutter/bin/flutter run -d 13111JEC204217 --no-pub --use-application-binary=build/app/outputs/apk/debug/app-debug.apk
+```
+
+1. Open login and tap Google. Cancel once, then retry. Expect one chooser, a quiet cancellation and no new session on cancel.
+2. Select `awaisjarral37@gmail.com`. If it already belongs to your email/password Paths account, expect a request to sign in and link; no automatic merge. Sign in by email, open profile menu → Sign-in methods, then reauthenticate and add Google. Expect the same profile/photos/account. If it is a new account, accept terms and complete the usual age/profile flow.
+3. Sign out and use Google again. Expect the same account. Close/reopen Paths and confirm its secure session restores.
+4. Disconnect internet and retry Google. Expect a dismissible error with no false success; reconnect and retry. Check that repeated taps do not open multiple choosers.
+
+Return the failed step, timestamp, exact Paths error/reference, whether the chooser opened and whether this was linking or returning sign-in. Do not share ID tokens, authorization codes, secrets or full provider response bodies. Additional Task14 security/accessibility scenarios are below. A second new Google identity requires adding its email to the test audience first; it was not configured during this owner-only setup.
+
+Rebuilt offline:274tasks passed. APK/compiler kernel comparison passed:76,099,904bytes, SHA256 `8e8670be4182ff26f9ab47e0511393a29b7b86b9ca65a13d8043218c8aaf09a0`. APK certificate verification passed. These checks do not prove real provider login; PRs remain draft until owner acceptance.
+
+## Configuration reference for other environments
+
 
 1. Follow backend `docs/runbooks/provider-auth.md` for Google Web/Android/iOS clients, consent testing users and optional Apple team/key/capability. Use the existing Google Cloud/Firebase project; do not enable billing or Firebase Authentication for this integration.
 2. Put backend IDs and the Apple private key only in ignored backend `.env.local`. The backend needs the **Web** client ID as its Google audience, not the Android/iOS ID. Add the Android debug/release public client IDs to backend `GOOGLE_ANDROID_CLIENT_IDS`; the signed native presenter is checked against that explicit allowlist. An Android OAuth client for `com.paths.mobile` must match the certificate actually signing this APK. Use the cached Gradle command below with `:app:signingReport` to inspect certificate fingerprints; those fingerprints are public, the keystore/password is private.
