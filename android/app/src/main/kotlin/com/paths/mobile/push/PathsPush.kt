@@ -76,7 +76,7 @@ object PathsPush {
   val event=data["eventId"]?:return;val binding=data["bindingId"]?:return
   try{UUID.fromString(event);UUID.fromString(binding)}catch(_:IllegalArgumentException){return}
   val kind=data["kind"]?:return
-  val body=when(kind){"encounter"->"You crossed paths with someone.";"request_received"->"You have a connection request.";"request_accepted"->"Your connection request was accepted.";else->return}
+  val body=when(kind){"message"->"You have a new message.";"encounter"->"You crossed paths with someone.";"request_received"->"You have a connection request.";"request_accepted"->"Your connection request was accepted.";else->return}
   val p=prefs(context)
   if(!p.getBoolean("enabled",false)||binding!=p.getString("binding",null)||!granted(context))return
   val seen=p.getString("seen","")!!.split(',').filter{it.isNotEmpty()}

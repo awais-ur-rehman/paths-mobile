@@ -1,3 +1,5 @@
+import 'features/chat/data/chat_realtime.dart';
+import 'features/chat/data/http_chat_repository.dart';
 import 'features/setup/domain/setup_progress.dart';
 import 'core/storage/setup_progress.dart';
 import 'features/media/domain/media_repository.dart';
@@ -68,6 +70,9 @@ class _PathsAppState extends State<PathsApp> {
   SetupProgressStore? setupProgress;
   PhotoPicker? photoPicker;
   PostRepository? posts;
+  ChatRealtime? realtime;
+  HttpChatRepository? chats;
+  StreamSubscription<AuthState>? chatAuth;
   PushClient? push;
   NotificationRepository? notifications;
   StreamSubscription<AuthState>? pushAuth;
@@ -106,6 +111,11 @@ class _PathsAppState extends State<PathsApp> {
           destination.targetId != null) {
         navigation!.push(
           '/profiles/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
+        );
+      } else if (destination.destination == 'conversation' &&
+          destination.targetId != null) {
+        navigation!.push(
+          '/chats/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
         );
       } else {
         navigation!.push('/notifications');
@@ -176,6 +186,22 @@ class _PathsAppState extends State<PathsApp> {
         setupProgress = widget.setupProgress ?? PlatformSetupProgress();
         posts = PostRepository(profiles as AuthenticatedApi);
       }
+      if (profiles is HttpAuthRepository) {
+        realtime = ChatRealtime(
+          origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
+          token: profiles.realtimeToken,
+        );
+        chats = HttpChatRepository(profiles, realtime!.events);
+        chatAuth = cubit!.stream.listen((state) {
+          realtime!.configure(
+            state.stage == AuthStage.authenticated &&
+                    state.account?.adultChecked == true &&
+                    state.account?.restricted == false
+                ? state.account!.id
+                : null,
+          );
+        });
+      }
       navigation = createAuthRouter(
         cubit!,
         refresh!,
@@ -186,6 +212,7 @@ class _PathsAppState extends State<PathsApp> {
         media: media,
         picker: photoPicker,
         posts: posts,
+        chats: chats,
         notifications: notifications,
         push: push,
         relationships: profiles is AuthenticatedApi
@@ -212,8 +239,13 @@ class _PathsAppState extends State<PathsApp> {
           }
         }());
       }
+      realtime?.foreground(
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
+      );
       lifecycle = AppLifecycleListener(
+        onHide: () => realtime?.foreground(false),
         onResume: () {
+          realtime?.foreground(true);
           if (cubit?.state.stage == AuthStage.authenticated) {
             unawaited(cubit!.refreshSession());
             unawaited(_pushResume());
@@ -228,6 +260,8 @@ class _PathsAppState extends State<PathsApp> {
   @override
   void dispose() {
     lifecycle?.dispose();
+    unawaited(chatAuth?.cancel());
+    unawaited(realtime?.close());
     unawaited(pushAuth?.cancel());
     unawaited(pushEvents?.cancel());
     unawaited(push?.dispose());

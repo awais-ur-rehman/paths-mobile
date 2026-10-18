@@ -5,11 +5,12 @@ class DiscoveryShell extends StatelessWidget {
   const DiscoveryShell({
     required this.shell,
     this.hasLikes = false,
+    this.hasChats = false,
     this.onCamera,
     super.key,
   });
   final StatefulNavigationShell shell;
-  final bool hasLikes;
+  final bool hasLikes, hasChats;
   final VoidCallback? onCamera;
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -17,7 +18,7 @@ class DiscoveryShell extends StatelessWidget {
     bottomNavigationBar: NavigationBar(
       selectedIndex:
           shell.currentIndex +
-          (onCamera != null && shell.currentIndex == (hasLikes ? 2 : 1)
+          (onCamera != null && shell.currentIndex >= (hasLikes ? 2 : 1)
               ? 1
               : 0),
       onDestinationSelected: (index) {
@@ -46,6 +47,12 @@ class DiscoveryShell extends StatelessWidget {
           const NavigationDestination(
             icon: Icon(Icons.add_a_photo_outlined),
             label: 'Camera',
+          ),
+        if (hasChats)
+          const NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Chats',
           ),
         const NavigationDestination(
           icon: Icon(Icons.person_outline),

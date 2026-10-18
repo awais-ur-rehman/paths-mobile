@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase4 Task8 protected media; implemented, awaiting Android device evidence**. API contract: `1.7.0`; experiment contract `phase0.v1`.
+Current phase: **Phase4 Task9 text chat; implemented and locally verified, awaiting owner two-device evidence**. API contract: `1.8.0`; experiment contract `phase0.v1`.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -571,3 +571,42 @@ Owner authorized project creation and notification setup on Spark without billin
 ## Owner image acceptance and Task9 authorization — 2026-10-18
 
 Owner confirms images work on their physical Android phone and authorizes pending PR merges and Task9. Fresh218 Flutter tests pass. This acceptance covers image functionality; physical FCM/APNs delivery, iOS runtime and quantitative field checks remain separate evidence. Main stays unchanged. Task9 starts after development integration, with owner approval for required Socket.IO dependencies.
+
+## Task9 started — 2026-10-18
+
+Owner accepted R2 image behavior and authorized pending merges plus Task9. Mobile PR8 merged as fa8636b; backend PR9 as17ad1f0 and PR10 as c97def4. Main unchanged. Branch feature/text-chat from development. Cache-resolved Socket.IO Flutter client3.1.6 added; Task9 plan is docs/task9-chat-plan.md. Text chat, reconnect/access revocation, unread and lifecycle checks are in progress; device gate remains pending. Real push/iOS and R2 recovery-copy retirement retain separate evidence requirements.
+
+
+## Task 9 text chat — 2026-10-18
+
+Status: implemented and locally verified; awaiting owner physical-device tests. Branch `feature/text-chat`, PR target `development`. Task 10 and main promotion remain gated. Owner accepted the R2 images; backend PR9/10 and mobile PR8 are merged into development. Backend merge checkpoints `17ad1f0` / `c97def4`; mobile `fa8636b`. No working-release claim or main promotion.
+
+Plan checklist (06_IMPLEMENTATION_PLAN.md Task 9):
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Pre-accept/spoof/>4000 denial and same-client-ID single insert | verified locally | backend chat.spec.ts; server validation and transaction/idempotency tests |
+| Consistent locks for send vs block/disconnect/delete; no unauthorized post-commit delivery | verified locally | concurrent integration races, rollback test and real Socket.IO delivery reauthorization |
+| REST persistence, server-owned sockets, cursor catch-up, ACK after commit | verified locally | chat service/gateway/migrations; proxy + live worker synthetic check |
+| Chat list/thread, lazy history, failed retry, unread and disconnected read-only history | implemented; automated checks verified; awaiting device test | Flutter chat Bloc/screens and generated API1.8 |
+| Missed/duplicate/out-of-order recovery; removed conversations clear from caches | automated checks verified; awaiting two-device recovery test | backend cursors, Flutter transport/Bloc/removal/account-epoch/route-visibility tests |
+| Manual two-device airplane-mode recovery | awaiting device test | TASK9_DEVICE_TESTS.md; no result invented |
+| Physical iOS and real FCM/APNs delivery | blocked by separate runtime/setup prerequisites | unsigned iOS compilation is not runtime evidence; APNs remains unconfigured |
+
+API contract 1.8.0, raw OpenAPI SHA256: `4730d17914e48f17ff8425d4bc36ea8cad92e006911bb62a6265312e8e533060`. All three raw copies match, both client generators updated. Backend source `17a076c` (storage `e16d4cb`, service/socket tests `a9952e5`, generic alerts/outbox/live check `c6308ac`). Mobile source `e3393cc` (sync/retry `23ab75a`). Admin source `acf827c` (initial contract `70ed288`). Later commits record the handoff/evidence only.
+
+Checks actually executed:
+
+- Backend ESLint/typecheck/build; 36 unit + 13 retained feasibility + 101 isolated PostgreSQL/Valkey integration cases pass. The 11 new chat cases include real Socket.IO authorization and post-block suppression. Fresh synthetic live check passes through Caddy, API, durable worker, PG listener and socket; retries insert once, history/read/disconnect work. Temporary identities removed. No messages sent from the owner's account.
+- Mobile analyzer has no issues; 231 Flutter tests pass, including 13 new chat cases. Full suite rerun passes after the covered-response read regression and readiness version correction.11 Python tooling tests pass. Android offline Debug assembly passes 235 tasks; APK kernel 75,364,960 bytes, SHA256 93661a7b09d6b1ba5ee3d609842a575c5099fd54656c7ee756a12e9d83d88394 matches compiler output. Unsigned generic iphoneos Debug builds with cached resolved packages and automatic resolution disabled. Neither platform was operated on a physical device by the agent.
+- Admin ESLint/typecheck, 2 transport tests, Vite build and 3 installed-browser cases pass. No new admin workflow belongs to this task. Contract generation/drift and branch whitespace checks pass.
+
+Review findings addressed: covered routes now combine route and app visibility before syncing/marking read; delayed connection.updated hints reauthorize the current pair while own removal tombstones remain deliverable; the existing bounded 30-day processed message-intent cleanup is centralized in the tested notification retention routine, including already-read intents without inbox cards. A full-suite fixture assumption that its probe always fit within the first 50 outbox rows was fixed using bounded dispatch and uniquely owned test queues; production batch size unchanged. Socket listener loss closes clients and blocks new handshakes until listening resumes; clients repair through REST. Private message text is never included in socket/push envelopes or logs.
+
+Earlier attempts blocked by sandbox loopback permissions were rerun successfully with local access. One new route test initially lacked a resumed app lifecycle; explicit lifecycle setup and a real initial-visibility fix were applied, then focused/full suites passed. Whole npm-cache image transfer was cancelled; a 32,970,705-byte cache of 324 lockfile-pinned tarballs built the local runtime with network disabled, adding 17 server packages. Dart dependencies also resolved from existing offline cache. No SDK, tool, emulator or service image downloaded. Current API/worker use the local image with migrations 0011/0012 and retain R2/Gmail/Firebase configuration.
+
+Pending: owner Task 9 physical Android/second-session tests before merge/Task 10; separately iOS physical signing/runtime, real Android push/APNs validation and quantitative Phase 0 release evidence. R2 recovery copies remain read-only until the documented recovery deadline and retirement; no storage volume was deleted. No known failed local check remains. Inspection/builds cannot establish OS background recovery, real push delivery or user-visible multi-device behavior. See TASK9_DEVICE_TESTS.md for commands, expected outcomes and redacted failure evidence.
+
+Follow-up review reproduced a response completing under a covered route without advancing read state on return; a post-frame visibility check and regression fix it. Readiness and OpenAPI now share a backend version constant; a real HTTP integration regression and updated frontend fixtures verify 1.8.0. Final 101 backend integration and 231 Flutter tests pass after these fixes. Android and unsigned iOS were rebuilt sequentially after the final mobile source change; kernel evidence above is from that exact APK. Live readiness returns 200 / 1.8.0.
+
+Published draft PRs: [backend #11](https://github.com/awais-ur-rehman/paths-backend/pull/11), [mobile #9](https://github.com/awais-ur-rehman/paths-mobile/pull/9), [admin #9](https://github.com/awais-ur-rehman/paths-admin/pull/9). All target development. Source checkpoints above are pushed; this evidence commit will also be pushed. Required physical tests remain pending; do not merge Task 9 or proceed through its dependent gate.

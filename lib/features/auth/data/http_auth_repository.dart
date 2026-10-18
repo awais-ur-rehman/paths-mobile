@@ -758,6 +758,16 @@ final class HttpAuthRepository
     ),
   );
 
+  Future<String> realtimeToken() async {
+    final owner = accountId;
+    await request('GET', '/v1/me/session');
+    final token = _coordinator.tokens?.accessToken;
+    if (owner == null || owner != accountId || token == null) {
+      throw const AuthFailure('cancelled');
+    }
+    return token;
+  }
+
   @override
   String? get currentTrackingAccountId => _session?.account.id;
   TrackingControl _trackingControl(TrackingControlDto dto) =>
