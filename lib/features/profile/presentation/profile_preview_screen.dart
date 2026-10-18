@@ -51,14 +51,32 @@ class _PreviewOwner extends StatefulWidget {
 
 class _PreviewOwnerState extends State<_PreviewOwner> {
   late final cubit = ProfilePreviewCubit(widget.repository, widget.userId);
+  AppLifecycleListener? lifecycle;
+  bool? visible;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ModalRoute.isCurrentOf(context) ?? true;
+    if (visible == false && current) unawaited(cubit.load());
+    visible = current;
+  }
+
   @override
   void initState() {
     super.initState();
+    lifecycle = AppLifecycleListener(
+      onResume: () {
+        if (visible != false && !cubit.state.loading) {
+          unawaited(cubit.load());
+        }
+      },
+    );
     unawaited(cubit.load());
   }
 
   @override
   void dispose() {
+    lifecycle?.dispose();
     unawaited(cubit.close());
     super.dispose();
   }
@@ -69,44 +87,54 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
       context: context,
       showDragHandle: true,
       builder: (sheet) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.verified_outlined),
-              title: const Text('Verification'),
-              onTap: () {
-                Navigator.pop(sheet);
-                context.go('/setup/verification?return=profile');
-              },
-            ),
-            if (widget.onLocationSetup != null)
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               ListTile(
-                leading: const Icon(Icons.location_on_outlined),
-                title: const Text('Location & permissions'),
+                leading: const Icon(Icons.verified_outlined),
+                title: const Text('Verification'),
                 onTap: () {
                   Navigator.pop(sheet);
-                  widget.onLocationSetup!();
+                  context.go('/setup/verification?return=profile');
                 },
               ),
-            if (widget.onBlockedAccounts != null)
+              if (widget.onLocationSetup != null)
+                ListTile(
+                  leading: const Icon(Icons.location_on_outlined),
+                  title: const Text('Location & permissions'),
+                  onTap: () {
+                    Navigator.pop(sheet);
+                    widget.onLocationSetup!();
+                  },
+                ),
+              if (widget.onBlockedAccounts != null)
+                ListTile(
+                  leading: const Icon(Icons.block),
+                  title: const Text('Blocked accounts'),
+                  onTap: () {
+                    Navigator.pop(sheet);
+                    widget.onBlockedAccounts!();
+                  },
+                ),
               ListTile(
-                leading: const Icon(Icons.block),
-                title: const Text('Blocked accounts'),
+                leading: const Icon(Icons.fact_check_outlined),
+                title: const Text('Reviews'),
                 onTap: () {
                   Navigator.pop(sheet);
-                  widget.onBlockedAccounts!();
+                  context.push('/reviews');
                 },
               ),
-            ListTile(
-              leading: const Icon(Icons.logout_rounded),
-              title: const Text('Sign out'),
-              onTap: () {
-                Navigator.pop(sheet);
-                unawaited(auth.logout());
-              },
-            ),
-          ],
+              ListTile(
+                leading: const Icon(Icons.logout_rounded),
+                title: const Text('Sign out'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  unawaited(auth.logout());
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,6 @@
+import 'package:go_router/go_router.dart';
+
+import '../../reviews/presentation/review_screen.dart';
 import '../../safety/presentation/message_evidence_picker.dart';
 import '../../safety/presentation/report_sheet.dart';
 import '../../safety/domain/safety_repository.dart';
@@ -196,6 +199,25 @@ class _ThreadOwnerState extends State<_ThreadOwner> {
           },
           child: Column(
             children: [
+              BlocSelector<ChatBloc, ChatState, String?>(
+                selector: (state) =>
+                    state.error?.code == 'CONTENT_REVIEW_REQUIRED'
+                    ? state.pending.where((p) => p.failed).lastOrNull?.text
+                    : null,
+                builder: (context, text) => text == null
+                    ? const SizedBox.shrink()
+                    : TextButton(
+                        onPressed: () => context.push(
+                          '/reviews',
+                          extra: ReviewDraft(
+                            kind: 'message',
+                            content: text,
+                            conversationId: widget.configuration.conversationId,
+                          ),
+                        ),
+                        child: const Text('Request review'),
+                      ),
+              ),
               Expanded(
                 child: BlocBuilder<ChatBloc, ChatState>(
                   buildWhen: (a, b) =>

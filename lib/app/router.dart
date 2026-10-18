@@ -1,3 +1,5 @@
+import '../features/reviews/data/http_review_repository.dart';
+import '../features/reviews/presentation/review_screen.dart';
 import '../features/safety/domain/safety_repository.dart';
 import '../features/safety/presentation/blocked_accounts_screen.dart';
 import '../features/chat/domain/chat_repository.dart';
@@ -160,6 +162,7 @@ GoRouter createAuthRouter(
             ![
               '/setup/resume',
               '/setup/profile',
+              if (notifications != null) '/reviews',
               '/media/avatar',
               if (setupDestination == SetupDestination.verification)
                 '/media/cnic_front',
@@ -191,6 +194,7 @@ GoRouter createAuthRouter(
                       if (encounters != null) '/home',
                       if (relationships != null) '/likes',
                       if (notifications != null) '/notifications',
+                      if (notifications != null) '/reviews',
                       if (notifications != null) '/settings/notifications',
                       if (safety != null) '/settings/blocked',
                       if (encounters != null && path.startsWith('/profiles/') ||
@@ -484,6 +488,16 @@ GoRouter createAuthRouter(
         ),
       if (notifications != null)
         GoRoute(
+          path: '/reviews',
+          builder: (context, route) => ReviewScreen(
+            repository: HttpReviewRepository(notifications.api),
+            draft: route.extra is ReviewDraft
+                ? route.extra as ReviewDraft
+                : null,
+          ),
+        ),
+      if (notifications != null)
+        GoRoute(
           path: '/notifications',
           builder: (context, _) => NotificationScreen(
             repository: notifications,
@@ -505,6 +519,11 @@ GoRouter createAuthRouter(
                 await context.push(
                   '/chats/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
                 );
+              } else if (destination.destination == 'review') {
+                await context.push('/reviews');
+                if (account == notifications.accountId) {
+                  await notifications.read(id);
+                }
               } else {
                 PathsToast.show(
                   context,

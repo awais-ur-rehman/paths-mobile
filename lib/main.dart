@@ -121,6 +121,9 @@ class _PathsAppState extends State<PathsApp> {
         navigation!.push(
           '/chats/${Uri.encodeComponent(destination.targetId!)}?notification=${Uri.encodeComponent(id)}',
         );
+      } else if (destination.destination == 'review') {
+        await navigation!.push('/reviews');
+        if (account == notifications!.accountId) await notifications!.read(id);
       } else {
         navigation!.push('/notifications');
       }

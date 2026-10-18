@@ -96,7 +96,9 @@ class _InboxState extends State<NotificationScreen> {
             for (final item in state.items)
               ListTile(
                 leading: Icon(
-                  item.kind == 'encounter'
+                  item.kind == 'review'
+                      ? Icons.fact_check_outlined
+                      : item.kind == 'encounter'
                       ? Icons.alt_route
                       : Icons.person_add_outlined,
                 ),

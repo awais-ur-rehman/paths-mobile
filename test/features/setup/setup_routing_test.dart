@@ -242,6 +242,20 @@ Future<void> stop(
 }
 
 void main() {
+  for (final complete in [true, false]) {
+    testWidgets(
+      'review route remains reachable during and after setup ($complete)',
+      (tester) async {
+        final adapter = SetupAdapter()..complete = complete;
+        final app = await start(tester, adapter, Progress()..seen.add('11111111-1111-4111-8111-111111111111'));
+        app.router.push('/reviews');
+        await tester.pumpAndSettle();
+        expect(find.text('Reviews'), findsOneWidget);
+        await stop(tester, app.sync, app.tracker);
+      },
+    );
+  }
+
   testWidgets(
     'a completed returning account opens Home rather than profile creation',
     (tester) async {

@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Task 10 accepted by owner; waiting for full-app retest**. API 1.9.0; main remains unchanged. Task 11 has not started.
+Current phase: **Phase 5 Task 11 implemented and locally verified; awaiting owner testing and pilot staffing**. API 1.10.0. Main/development unchanged for Task 11; hosting deferred.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -114,12 +114,12 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 11: Admin portal and review workflow
 
-- [ ] Test reviewer/moderator/admin permission matrix and unauthenticated CNIC access denied. — **not started**
-- [ ] Implement staff provisioning/MFA/session/CSRF; shadcn shell, server-paginated lists and typed clients. — **not started**
-- [ ] Implement protected no-store CNIC viewer, claim/version conflict, approve/decline and notification. — **not started**
-- [ ] Implement image safety-review queue and text-filter escalation/appeals, with required pilot staffing. — **not started**
-- [ ] Implement deactivation/reactivation, reports and redacted audits; no unrestricted private-message browser. — **not started**
-- [ ] Verify mobile-width admin usability, keyboard navigation and sensitive-content no-cache behavior. — **not started**
+- [x] Test reviewer/moderator/admin permission matrix and unauthenticated CNIC access denied. — **verified — 18 staff integration cases include role matrix and unauthenticated document denial**
+- [x] Implement staff provisioning/MFA/session/CSRF; shadcn shell, server-paginated lists and typed clients. — **verified locally — provision/recovery, MFA replay/attempts, session expiry, CSRF and typed paginated portal**
+- [x] Implement protected no-store CNIC viewer, claim/version conflict, approve/decline and notification. — **verified locally — exclusive/expired claims, version conflicts, audited no-store bytes and atomic updates**
+- [ ] Implement image safety-review queue and text-filter escalation/appeals, with required pilot staffing. — **implemented and locally verified; blocked — actual pilot staffing/coverage has not been supplied**
+- [x] Implement deactivation/reactivation, reports and redacted audits; no unrestricted private-message browser. — **verified locally — reasoned status/report actions, redacted audit and scoped submitted evidence**
+- [x] Verify mobile-width admin usability, keyboard navigation and sensitive-content no-cache behavior. — **verified locally — Chrome at 320/390/1280px, keyboard/Escape and expired-session object URL cleanup; owner browser acceptance pending**
 
 ## Phase 6 — deletion, robustness and load
 
@@ -658,3 +658,26 @@ Published draft PRs: [backend #12](https://github.com/awais-ur-rehman/paths-back
 The owner tested Task 10 on their physical phone, confirmed it looks good and authorized merging backend PR12, mobile PR10 and admin PR10 into development. This acceptance supersedes the earlier draft/device-pending handoff status. No additional per-step, multi-device, iOS or push-delivery measurements are inferred. Main remains unchanged.
 
 The owner explicitly requested waiting while they test the full app again. Task 11 and all further development are on hold; do not start the next task until asked. Existing separate release-evidence gaps remain documented above.
+
+## Task 11 start — 2026-10-18
+
+Owner resumed the next task after accepting Task 10. Hosting remains deferred. Branch `feature/admin-review` from development. Task 11 checklist, policy defaults and interfaces are tracked in task11-admin-plan.md; no device/operational acceptance is inferred.
+
+## Task 11 verification and handover — 2026-10-18
+
+Implementation on `feature/admin-review`, API 1.10.0. No Task11 merge or main promotion. [Owner test instructions](testing/task11-admin-review.md) and [scope/decision ledger](task11-admin-plan.md).
+
+- Backend: build/lint; 38 unit +13 feasibility; full isolated PostGIS/Valkey integration 131 passed (18 staff cases). Final malformed-cursor regression re-run recorded in evidence.
+- Admin: six transport tests, build/lint, nine installed-Chrome browser tests passed; screenshots inspected at 320 and 1280px. Browser tests use isolated mock HTTP responses, not real CNIC.
+- Mobile: analyzer clean; full Flutter suite 256 passed; four focused review tests cover intent retries, duplicate taps, account changes and cancellation. Python verification-tool tests 11 passed. Offline Android APK build and matching kernel passed; cached unsigned iOS build passed. No phone/emulator or iOS runtime testing performed.
+- Live local checks: migration0014 applied after private backup; existing R2/SMTP/push config retained; restart/persistence/non-root/shutdown verification passed with full Compose overrides; real local staff MFA → synthetic appeal → approval → member update passed and synthetic member was removed. Owner staff credentials/MFA are ignored private files documented in the runbook.
+- Fresh whole-branch review fixed: superseded image appeal approval, setup Reviews redirects, audit chronology, stale profile/verification refresh, enrollment cleanup on rollback. Additional inspection fixed completed-image viewer access, request cancellation, browser fetch receiver and cursor validation.
+- Pending: owner browser/Android acceptance; named pilot reviewers and coverage; real push delivery evidence and iOS/APNs runtime. Earlier phase field/battery/accuracy evidence and Task12 erasure remain separate open gates. No new unavailable package/tool prerequisite blocked these code checks.
+
+Draft PRs into development (owner acceptance pending):
+
+- Backend: https://github.com/awais-ur-rehman/paths-backend/pull/13 — implementation/status head83a3859 before this link-only update.
+- Admin: https://github.com/awais-ur-rehman/paths-admin/pull/11 — implementation/status head506dda5 before this link-only update.
+- Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/11 — implementation/status head8fe78ee before this link-only update.
+
+All use feature/admin-review. No Task11 merge or main promotion. GitHub checks are separate from the local evidence above; inspect the current PR check state. The local staff portal is running at http://127.0.0.1:5173.

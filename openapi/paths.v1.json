@@ -1,6 +1,1166 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/me/content-appeals": {
+      "post": {
+        "operationId": "ContentReviewController_submit",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "content-review"
+        ]
+      }
+    },
+    "/v1/me/review-updates": {
+      "get": {
+        "operationId": "ContentReviewController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewUpdatePageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "content-review"
+        ]
+      }
+    },
+    "/v1/admin/auth/login": {
+      "post": {
+        "operationId": "AdminController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffLoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffChallengeDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/auth/mfa": {
+      "post": {
+        "operationId": "AdminController_mfa",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffMfaInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/session": {
+      "get": {
+        "operationId": "AdminController_session",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffSessionDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/auth/logout": {
+      "post": {
+        "operationId": "AdminController_logout",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/verifications": {
+      "get": {
+        "operationId": "AdminController_verifications",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/media": {
+      "get": {
+        "operationId": "AdminController_media",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/reports": {
+      "get": {
+        "operationId": "AdminController_reports",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/appeals": {
+      "get": {
+        "operationId": "AdminController_appeals",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/users": {
+      "get": {
+        "operationId": "AdminController_users",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/audit": {
+      "get": {
+        "operationId": "AdminController_audit",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/staff": {
+      "get": {
+        "operationId": "AdminController_staff",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "pending",
+              "type": "string",
+              "enum": [
+                "pending",
+                "approved",
+                "declined",
+                "open",
+                "resolved",
+                "active",
+                "deactivated",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaffPageDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/staff/{id}": {
+      "post": {
+        "operationId": "AdminController_changeStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StaffChangeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}": {
+      "get": {
+        "operationId": "AdminController_verification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}/claim": {
+      "post": {
+        "operationId": "AdminController_claimVerification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}/decision": {
+      "post": {
+        "operationId": "AdminController_decideVerification",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/verifications/{id}/document/{side}": {
+      "get": {
+        "operationId": "AdminController_document",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "side",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/media/{id}/claim": {
+      "post": {
+        "operationId": "AdminController_claimMedia",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminRowDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/media/{id}/content": {
+      "get": {
+        "operationId": "AdminController_image",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/media/{id}/decision": {
+      "post": {
+        "operationId": "AdminController_decideMedia",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/reports/{id}": {
+      "get": {
+        "operationId": "AdminController_report",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/reports/{id}/image": {
+      "get": {
+        "operationId": "AdminController_reportImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/appeals/{id}/image": {
+      "get": {
+        "operationId": "AdminController_appealImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/reports/{id}/action": {
+      "post": {
+        "operationId": "AdminController_act",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportActionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/users/{id}/{action}": {
+      "post": {
+        "operationId": "AdminController_status",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChangeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/appeals/{id}": {
+      "get": {
+        "operationId": "AdminController_appeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealDetailDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/v1/admin/appeals/{id}/decision": {
+      "post": {
+        "operationId": "AdminController_decideAppeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcknowledgedDto"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
     "/v1/blocks": {
       "get": {
         "operationId": "SafetyController_list",
@@ -2429,7 +3589,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "contact": {}
   },
   "tags": [],
@@ -2443,6 +3603,634 @@
       }
     },
     "schemas": {
+      "AppealInput": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "bio",
+              "caption",
+              "message",
+              "image"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "clientId",
+          "kind",
+          "content",
+          "explanation"
+        ]
+      },
+      "ReportReceiptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "ReviewUpdateDto": {
+        "type": "object",
+        "properties": {
+          "resourceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "verification",
+              "image",
+              "report",
+              "appeal",
+              "warning"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "resourceId",
+          "id",
+          "kind",
+          "status",
+          "reason",
+          "createdAt"
+        ]
+      },
+      "ReviewUpdatePageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewUpdateDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "StaffLoginInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "StaffChallengeDto": {
+        "type": "object",
+        "properties": {
+          "mfaRequired": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mfaRequired"
+        ]
+      },
+      "StaffMfaInput": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "StaffSessionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "reviewer",
+              "moderator",
+              "admin"
+            ]
+          },
+          "documentAccess": {
+            "type": "boolean"
+          },
+          "csrfToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "documentAccess",
+          "csrfToken"
+        ]
+      },
+      "AcknowledgedDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "AdminRowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedUntil": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "version",
+          "ownerId",
+          "claimedBy",
+          "claimedUntil"
+        ]
+      },
+      "AdminPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRowDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "AuditRowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "staffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "staffId",
+          "createdAt"
+        ]
+      },
+      "AuditPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditRowDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "StaffRowDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "reviewer",
+              "moderator",
+              "admin"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "documentAccess": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "enabled",
+          "documentAccess"
+        ]
+      },
+      "StaffPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StaffRowDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "StaffChangeInput": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "reviewer",
+              "moderator",
+              "admin"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "documentAccess": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "role",
+          "enabled",
+          "documentAccess"
+        ]
+      },
+      "VerificationDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedUntil": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string"
+          },
+          "hasBack": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "version",
+          "ownerId",
+          "claimedBy",
+          "claimedUntil",
+          "name",
+          "username",
+          "dateOfBirth",
+          "hasBack",
+          "reason"
+        ]
+      },
+      "ReviewDecisionInput": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "decline"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "decision",
+          "reason"
+        ]
+      },
+      "ReportDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedUntil": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "postId": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "version",
+          "ownerId",
+          "claimedBy",
+          "claimedUntil",
+          "kind",
+          "category",
+          "details",
+          "evidence",
+          "postId",
+          "reason"
+        ]
+      },
+      "ReportActionInput": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "dismiss",
+              "warn",
+              "remove_post",
+              "deactivate"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "action",
+          "reason"
+        ]
+      },
+      "StatusChangeInput": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "AppealDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "claimedUntil": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          },
+          "assetId": {
+            "type": "string",
+            "nullable": true
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "createdAt",
+          "version",
+          "ownerId",
+          "claimedBy",
+          "claimedUntil",
+          "kind",
+          "content",
+          "explanation",
+          "assetId",
+          "reason"
+        ]
+      },
       "BlockedAccountDto": {
         "type": "object",
         "properties": {
@@ -2633,24 +4421,6 @@
           "subjectId",
           "kind",
           "category"
-        ]
-      },
-      "ReportReceiptDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "received"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "status"
         ]
       },
       "ConversationDto": {
@@ -3069,7 +4839,8 @@
               "encounter",
               "request_received",
               "request_accepted",
-              "message"
+              "message",
+              "review"
             ]
           },
           "title": {
@@ -3125,6 +4896,7 @@
             "enum": [
               "profile",
               "conversation",
+              "review",
               "unavailable"
             ]
           },
@@ -3484,7 +5256,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.9.0"
+              "1.10.0"
             ]
           }
         },
@@ -3734,20 +5506,6 @@
         },
         "required": [
           "refreshToken"
-        ]
-      },
-      "AcknowledgedDto": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "ok"
-            ]
-          }
-        },
-        "required": [
-          "status"
         ]
       },
       "ResetInput": {
