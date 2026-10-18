@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase 6 Task 12 account erasure; implemented, awaiting Android device testing and owner restore sign-off**. Task11 accepted and merged to development; main unchanged. API contract **1.11.0**.
+Current phase: **Phase 6 Task13 load, security, battery and UI hardening; in progress**. Task12 phone/restore acceptance received and PRs merged; main unchanged. API contract1.11.0.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -130,10 +130,12 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 - [x] Test FK constraints after deletion, another unrelated conversation unaffected, and staff audit anonymization without copied subject PII. — **verified — FK integrity, unrelated conversation and anonymized audit tests pass**
 - [x] Implement immediate barrier/revocation, encrypted independent manifest, external object/provider purge and bounded DB cascades. — **implemented and locally verified — immediate barrier, encrypted independent journal, durable retry, R2/recovery purge and bounded cascades; social providers remain Task14**
 - [x] Inject failures after each stage; retry completes without losing manifest or recreating assets. — **verified — checkpoint, storage failure, rollback, duplicate/concurrent erasure and recovery regressions pass**
-- [ ] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **implemented; automated checks verified; awaiting device test — password/receipt/cleanup and public OTP recovery/offline/browser tests pass**
-- [ ] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **implemented and locally verified; awaiting owner restore sign-off — actual isolated pre-deletion pg_dump restored/suppressed, managed backup expiry and restore barrier tested**
-- [ ] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **implemented; awaiting counterpart device test — server revocation generation/reconnect tests and screenshot/backup disclosures verified locally**
+- [x] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **implemented; automated checks verified; awaiting device test — password/receipt/cleanup and public OTP recovery/offline/browser tests pass**
+- [x] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **implemented and locally verified; awaiting owner restore sign-off — actual isolated pre-deletion pg_dump restored/suppressed, managed backup expiry and restore barrier tested**
+- [x] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **implemented; awaiting counterpart device test — server revocation generation/reconnect tests and screenshot/backup disclosures verified locally**
 
+
+Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged. Earlier pending labels describe pre-acceptance evidence. Separate iOS runtime and production operational prerequisites remain open.
 
 ### Task 13: Load, security, battery and UI hardening
 
@@ -701,3 +703,8 @@ All use `feature/account-erasure` → `development`, draft pending owner Android
 - paths-mobile: `c476846`, [draft PR](https://github.com/awais-ur-rehman/paths-mobile/pull/12).
 
 Main is unchanged. No Task12 PR has been merged and Task13 has not started. Follow docs/testing/task12-erasure.md on these feature branches. Later cross-reference commits change documentation only; native builds correspond to the implementation commits recorded in the evidence.
+
+
+## Task13 start —2026-10-18
+
+Task12 accepted and merged: backendbf871a93, admin808b2694, mobile1ddc4498. Current feature branch `feature/pilot-hardening`; see [plan/ledger](task13-hardening-plan.md). All six Task13 checklist items are in progress or pending; no load, outage, battery or frame targets are claimed.
