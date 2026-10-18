@@ -27,17 +27,36 @@ class _PrivateImageState extends State<PrivateImage> {
   ui.Image? _image;
   CancelToken? _token;
   int _generation = 0;
+  bool _visible = false, _foreground = true;
   late final AppLifecycleListener _lifecycle;
   @override
   void initState() {
     super.initState();
     widget.repository.addListener(_invalidate);
     _lifecycle = AppLifecycleListener(
-      onPause: _clear,
-      onHide: _clear,
-      onResume: _invalidate,
+      onPause: () {
+        _foreground = false;
+        _clear();
+      },
+      onHide: () {
+        _foreground = false;
+        _clear();
+      },
+      onResume: () {
+        _foreground = true;
+        _invalidate();
+      },
     );
-    unawaited(_load());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible != _visible) {
+      _visible = visible;
+      _invalidate();
+    }
   }
 
   void _clear() {
@@ -51,14 +70,16 @@ class _PrivateImageState extends State<PrivateImage> {
 
   void _invalidate() {
     _clear();
-    if (widget.repository.accountId != null) unawaited(_load());
+    if (_visible && _foreground && widget.repository.accountId != null) {
+      unawaited(_load());
+    }
   }
 
   Future<void> _load() async {
     final generation = ++_generation,
         account = widget.repository.accountId,
         token = _token = CancelToken();
-    if (account == null) return;
+    if (account == null || !_visible || !_foreground) return;
     try {
       final bytes = await widget.repository.bytes(
         widget.assetId,
@@ -102,7 +123,9 @@ class _PrivateImageState extends State<PrivateImage> {
       old.repository.removeListener(_invalidate);
       widget.repository.addListener(_invalidate);
     }
-    if (old.assetId != widget.assetId || old.repository != widget.repository) {
+    if (old.assetId != widget.assetId ||
+        old.repository != widget.repository ||
+        old.thumbnail != widget.thumbnail) {
       _invalidate();
     }
   }
