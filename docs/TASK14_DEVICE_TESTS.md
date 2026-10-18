@@ -1,6 +1,6 @@
 # Task14: provider authentication
 
-Status: Google Android configuration and local build checks are ready; real provider acceptance is pending. Test `feature/provider-auth` in all three repositories, at the exact commit hashes listed in `docs/IMPLEMENTATION_STATUS.md` and the phase report. Main is unchanged. Task13 capacity qualification remains open despite its authorized development merge.
+Status: owner confirmed Google sign-in worked on physical Android. Apple/iOS setup and validation remain pending. New navigation/location fixes require the focused walkthrough in `docs/NAVIGATION_LOCATION_DEVICE_TESTS.md`. Test `feature/provider-auth` in all three repositories, at the exact commit hashes listed in `docs/IMPLEMENTATION_STATUS.md` and the phase report. Main is unchanged. Task13 capacity qualification remains open despite its authorized development merge.
 
 ## Prerequisites — configuration, not a test pass
 
