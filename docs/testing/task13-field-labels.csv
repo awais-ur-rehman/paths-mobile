@@ -1,0 +1,11 @@
+scenario,mode,expected,observed
+same street qualifying co-presence,foreground,yes,pending
+same street qualifying co-presence,locked,yes,pending
+adjacent cafes different groups,foreground,no,pending
+different floors,locked,no,pending
+stationary same table,foreground,yes,pending
+fast crossing under20seconds,foreground,no,pending
+approximate permission downgrade,locked,no,pending
+qualifying observations offline then reconnect within15minutes,foreground,yes,pending
+crossing while force stopped,locked,no,pending
+new qualifying crossing after manual reopen,foreground,yes,pending

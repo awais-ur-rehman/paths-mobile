@@ -90,3 +90,7 @@ Profile handoff regression image: original1×1 RGBA PNG generated with Python st
 ## Task 11 staff workspace
 
 Reuses existing original Paths vector symbol/logo and bundled Inter. No new visual asset downloads or people images. Admin RHF/Zod MIT notices are retained in paths-admin/docs/licenses; these are code dependencies, not image assets.
+
+## Task 13 hardening
+
+No new production visual assets. Existing Paths branding, fonts and reference goldens are reused. The inline one-pixel RGBA PNG in mobile `test/features/media/private_image_lifecycle_test.dart` is original test-only artwork generated with Python standard-library PNG chunks/zlib; project-owned, no attribution required. It contains no people or personal data.

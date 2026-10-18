@@ -139,12 +139,13 @@ Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged
 
 ### Task 13: Load, security, battery and UI hardening
 
-- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **not started**
-- [ ] Test Valkey restart, worker crash, database restart, upload cancellation and SMTP/push outage; recover committed work. — **not started**
-- [ ] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **not started**
-- [ ] Repeat battery/coverage experiment using production integration, not only the Phase0 harness. — **not started**
-- [ ] Profile rebuilds/map offscreen behavior/image memory; fix demonstrated regressions. — **not started**
-- [ ] Complete accessibility/text-scale/reference screenshot comparisons and update honest product limitations. — **not started**
+- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **in progress — full clustered workload measured; latency/drain gate pending; see testing/task13-evidence.md**
+- [x] Test Valkey restart, worker crash, database restart, upload cancellation and SMTP/push outage; recover committed work. — **verified locally — four isolated service faults and upload/push transport regressions passed; real vendor/APNs evidence remains separate**
+- [x] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **verified locally — complete151-test backend integration suite including quotas, replay, CSRF, media and redaction passed**
+- [ ] Repeat battery/coverage experiment using production integration, not only the Phase0 harness. — **awaiting device test — production journey, eight-hour battery tooling and labeled coverage template implemented; no field results claimed**
+- [ ] Profile rebuilds/map offscreen behavior/image memory; fix demonstrated regressions. — **implemented and partly verified — hidden image/map regressions pass; native frame/RSS/rebuild profiling awaits owner**
+- [ ] Complete accessibility/text-scale/reference screenshot comparisons and update honest product limitations. — **partly verified —276 Flutter tests/goldens and15 browser cases passed; native accessibility/reference acceptance pending**
+
 
 ## Phase 7 — final feature: Google and Apple authentication
 
@@ -708,3 +709,9 @@ Main is unchanged. No Task12 PR has been merged and Task13 has not started. Foll
 ## Task13 start —2026-10-18
 
 Task12 accepted and merged: backendbf871a93, admin808b2694, mobile1ddc4498. Current feature branch `feature/pilot-hardening`; see [plan/ledger](task13-hardening-plan.md). All six Task13 checklist items are in progress or pending; no load, outage, battery or frame targets are claimed.
+
+## Task 13 local verification and pending gates — 2026-10-18
+
+Feature `feature/pilot-hardening`, API1.11.0. See [executed checks, review fixes, measured limits and source commits](testing/task13-evidence.md). All six checklist items are accounted for above. Task13 remains in progress: dense-load latency/drain gates and owner production battery/coverage/frame/memory/accessibility evidence are pending. The profile harness compiles, but has not run on a device. No Task14 start or main promotion.
+
+Task12 acceptance supersedes its older historical pending labels. No package/tool prerequisite remains for executed local checks. Owner phone/iOS runtime, deployment hardware capacity, APNs/live push and other release prerequisites cannot be inferred from code inspection or builds.
