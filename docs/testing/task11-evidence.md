@@ -37,3 +37,11 @@ Implementation commits before status-only handover:
 - paths-mobile: `8f6bf5d22459ed0812fc9a45a210d7b22c6c8ea9` (`feature/admin-review`)
 
 See task11-admin-review.md for exact owner commands, private enrollment locations, expected outcomes, failure observations and staffing gate. No phone/emulator was operated; actual push delivery, signed iOS runtime/APNs and prior field metrics remain pending. No paid cloud resource was created.
+
+Draft PRs into development (owner acceptance pending):
+
+- Backend: https://github.com/awais-ur-rehman/paths-backend/pull/13 — implementation/status head83a3859 before this link-only update.
+- Admin: https://github.com/awais-ur-rehman/paths-admin/pull/11 — implementation/status head506dda5 before this link-only update.
+- Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/11 — implementation/status head8fe78ee before this link-only update.
+
+All use feature/admin-review. No Task11 merge or main promotion. GitHub checks are separate from the local evidence above; inspect the current PR check state. The local staff portal is running at http://127.0.0.1:5173.

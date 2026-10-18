@@ -673,3 +673,11 @@ Implementation on `feature/admin-review`, API 1.10.0. No Task11 merge or main pr
 - Live local checks: migration0014 applied after private backup; existing R2/SMTP/push config retained; restart/persistence/non-root/shutdown verification passed with full Compose overrides; real local staff MFA → synthetic appeal → approval → member update passed and synthetic member was removed. Owner staff credentials/MFA are ignored private files documented in the runbook.
 - Fresh whole-branch review fixed: superseded image appeal approval, setup Reviews redirects, audit chronology, stale profile/verification refresh, enrollment cleanup on rollback. Additional inspection fixed completed-image viewer access, request cancellation, browser fetch receiver and cursor validation.
 - Pending: owner browser/Android acceptance; named pilot reviewers and coverage; real push delivery evidence and iOS/APNs runtime. Earlier phase field/battery/accuracy evidence and Task12 erasure remain separate open gates. No new unavailable package/tool prerequisite blocked these code checks.
+
+Draft PRs into development (owner acceptance pending):
+
+- Backend: https://github.com/awais-ur-rehman/paths-backend/pull/13 — implementation/status head83a3859 before this link-only update.
+- Admin: https://github.com/awais-ur-rehman/paths-admin/pull/11 — implementation/status head506dda5 before this link-only update.
+- Mobile: https://github.com/awais-ur-rehman/paths-mobile/pull/11 — implementation/status head8fe78ee before this link-only update.
+
+All use feature/admin-review. No Task11 merge or main promotion. GitHub checks are separate from the local evidence above; inspect the current PR check state. The local staff portal is running at http://127.0.0.1:5173.
