@@ -1,3 +1,4 @@
+import '../../reviews/presentation/review_screen.dart';
 import '../../media/presentation/media_scope.dart';
 import '../../media/presentation/private_image.dart';
 
@@ -280,6 +281,18 @@ class _ProfileFormState extends State<_ProfileForm> {
             validator: (v) => (v?.runes.length ?? 0) > 300
                 ? 'Use up to 300 characters.'
                 : null,
+          ),
+          BlocSelector<ProfileCubit, ProfileState, bool>(
+            selector: (state) => state.error?.code == 'CONTENT_REVIEW_REQUIRED',
+            builder: (context, review) => review
+                ? TextButton(
+                    onPressed: () => context.push(
+                      '/reviews',
+                      extra: ReviewDraft(kind: 'bio', content: bio.text),
+                    ),
+                    child: const Text('Request review'),
+                  )
+                : const SizedBox.shrink(),
           ),
           const SizedBox(height: 12),
           SwitchListTile(

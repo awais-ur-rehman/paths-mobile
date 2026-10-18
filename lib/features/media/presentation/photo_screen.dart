@@ -1,3 +1,7 @@
+import 'package:go_router/go_router.dart';
+
+import '../../reviews/presentation/review_screen.dart';
+
 import 'dart:async';
 
 import 'raw_photo.dart';
@@ -175,6 +179,18 @@ class _PhotoScreenState extends State<PhotoScreen> {
                             decoration: const InputDecoration(
                               hintText: 'Add a caption (optional)',
                             ),
+                          ),
+                        if (publish?.state.error?.code ==
+                            'CONTENT_REVIEW_REQUIRED')
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/reviews',
+                              extra: ReviewDraft(
+                                kind: 'caption',
+                                content: caption.text,
+                              ),
+                            ),
+                            child: const Text('Request review'),
                           ),
                         if (state.busy)
                           Center(

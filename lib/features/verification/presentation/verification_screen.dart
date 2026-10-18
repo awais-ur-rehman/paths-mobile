@@ -44,14 +44,23 @@ class _VerificationOwner extends StatefulWidget {
 
 class _VerificationOwnerState extends State<_VerificationOwner> {
   late final cubit = VerificationCubit(widget.repository, widget.documents);
+  AppLifecycleListener? lifecycle;
   @override
   void initState() {
     super.initState();
+    lifecycle = AppLifecycleListener(
+      onResume: () {
+        if (!cubit.state.busy && !cubit.state.uploading) {
+          unawaited(cubit.load());
+        }
+      },
+    );
     unawaited(cubit.load());
   }
 
   @override
   void dispose() {
+    lifecycle?.dispose();
     unawaited(cubit.close());
     super.dispose();
   }
