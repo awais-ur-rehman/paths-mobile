@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase 6 Task 12 account erasure; implemented, awaiting Android device testing and owner restore sign-off**. Task11 accepted and merged to development; main unchanged. API contract **1.11.0**.
+Current phase: **Phase 6 Task13 load, security, battery and UI hardening; in progress**. Task12 phone/restore acceptance received and PRs merged; main unchanged. API contract1.11.0.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -130,19 +130,22 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 - [x] Test FK constraints after deletion, another unrelated conversation unaffected, and staff audit anonymization without copied subject PII. — **verified — FK integrity, unrelated conversation and anonymized audit tests pass**
 - [x] Implement immediate barrier/revocation, encrypted independent manifest, external object/provider purge and bounded DB cascades. — **implemented and locally verified — immediate barrier, encrypted independent journal, durable retry, R2/recovery purge and bounded cascades; social providers remain Task14**
 - [x] Inject failures after each stage; retry completes without losing manifest or recreating assets. — **verified — checkpoint, storage failure, rollback, duplicate/concurrent erasure and recovery regressions pass**
-- [ ] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **implemented; automated checks verified; awaiting device test — password/receipt/cleanup and public OTP recovery/offline/browser tests pass**
-- [ ] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **implemented and locally verified; awaiting owner restore sign-off — actual isolated pre-deletion pg_dump restored/suppressed, managed backup expiry and restore barrier tested**
-- [ ] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **implemented; awaiting counterpart device test — server revocation generation/reconnect tests and screenshot/backup disclosures verified locally**
+- [x] Implement in-app reauth/delete/receipt and external email-OTP deletion path; validate offline request does not show false success. — **implemented; automated checks verified; awaiting device test — password/receipt/cleanup and public OTP recovery/offline/browser tests pass**
+- [x] Implement backup expiry/suppression ledger; restore a pre-deletion backup in isolation and prove deleted data is removed before serving traffic. — **implemented and locally verified; awaiting owner restore sign-off — actual isolated pre-deletion pg_dump restored/suppressed, managed backup expiry and restore barrier tested**
+- [x] Verify counterpart cache invalidation on reconnect and disclosure of screenshots/backup timing limits. — **implemented; awaiting counterpart device test — server revocation generation/reconnect tests and screenshot/backup disclosures verified locally**
 
+
+Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged. Earlier pending labels describe pre-acceptance evidence. Separate iOS runtime and production operational prerequisites remain open.
 
 ### Task 13: Load, security, battery and UI hardening
 
-- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **not started**
-- [ ] Test Valkey restart, worker crash, database restart, upload cancellation and SMTP/push outage; recover committed work. — **not started**
-- [ ] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **not started**
-- [ ] Repeat battery/coverage experiment using production integration, not only the Phase0 harness. — **not started**
-- [ ] Profile rebuilds/map offscreen behavior/image memory; fix demonstrated regressions. — **not started**
-- [ ] Complete accessibility/text-scale/reference screenshot comparisons and update honest product limitations. — **not started**
+- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **in progress — dense processing now completes and drains; five-second encounter gate still pending; see testing/task13-evidence.md**
+- [x] Test Valkey restart, worker crash, database restart, upload cancellation and SMTP/push outage; recover committed work. — **verified locally — four isolated service faults and upload/push transport regressions passed; real vendor/APNs evidence remains separate**
+- [x] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **verified locally — complete172-test backend integration suite including quotas, replay, CSRF, media and redaction passed**
+- [ ] Repeat battery/coverage experiment using production integration, not only the Phase0 harness. — **awaiting device test — production journey, eight-hour battery tooling and labeled coverage template implemented; no field results claimed**
+- [ ] Profile rebuilds/map offscreen behavior/image memory; fix demonstrated regressions. — **implemented and partly verified — hidden image/map regressions pass; native frame/RSS/rebuild profiling awaits owner**
+- [ ] Complete accessibility/text-scale/reference screenshot comparisons and update honest product limitations. — **partly verified —276 Flutter tests/goldens and15 browser cases passed; native accessibility/reference acceptance pending**
+
 
 ## Phase 7 — final feature: Google and Apple authentication
 
@@ -701,3 +704,59 @@ All use `feature/account-erasure` → `development`, draft pending owner Android
 - paths-mobile: `c476846`, [draft PR](https://github.com/awais-ur-rehman/paths-mobile/pull/12).
 
 Main is unchanged. No Task12 PR has been merged and Task13 has not started. Follow docs/testing/task12-erasure.md on these feature branches. Later cross-reference commits change documentation only; native builds correspond to the implementation commits recorded in the evidence.
+
+
+## Task13 start —2026-10-18
+
+Task12 accepted and merged: backendbf871a93, admin808b2694, mobile1ddc4498. Current feature branch `feature/pilot-hardening`; see [plan/ledger](task13-hardening-plan.md). All six Task13 checklist items are in progress or pending; no load, outage, battery or frame targets are claimed.
+
+## Task 13 local verification and pending gates — 2026-10-18
+
+Feature `feature/pilot-hardening`, API1.11.0. See [executed checks, review fixes, measured limits and source commits](testing/task13-evidence.md). All six checklist items are accounted for above. Task13 remains in progress: dense-load latency/drain gates and owner production battery/coverage/frame/memory/accessibility evidence are pending. The profile harness compiles, but has not run on a device. No Task14 start or main promotion.
+
+Task12 acceptance supersedes its older historical pending labels. No package/tool prerequisite remains for executed local checks. Owner phone/iOS runtime, deployment hardware capacity, APNs/live push and other release prerequisites cannot be inferred from code inspection or builds.
+
+## Published Task 13 review branches
+
+All use `feature/pilot-hardening` → `development`, draft pending the open capacity/device gates. Published implementation/evidence checkpoints before this link update:
+
+| Repository | Checkpoint | Draft PR |
+| --- | --- | --- |
+| Backend | `1496c86` | [PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) |
+| Admin | `4513d01` | [PR13](https://github.com/awais-ur-rehman/paths-admin/pull/13) |
+| Mobile | `b01a564` (application `4caff48`, journey `f308894`) | [PR13](https://github.com/awais-ur-rehman/paths-mobile/pull/13) |
+
+Owner instructions: paths-mobile `docs/testing/task13-device.md`. Native builds correspond to the code checkpoints in the evidence; subsequent link commits change documentation only. Local checks passed within their stated scope. GitHub CI is a separate live check and is not inferred from local results. Main is unchanged; Task13 remains open and Task14 has not started.
+
+## Dense processing follow-up —2026-10-18
+
+Backend application7f93a3a, strict measurement105b73b, API1.11.0. Fixes cover owner snapshots, bounded peer pages, completed-observation coalescing, typed proof references, shared read locks, nonblocking pair subsets and bounded busy retries. See [complete evidence](testing/task13-evidence.md) and [ledger](task13-hardening-plan.md).
+
+- **Verified:**172 backend integration;42unit/13Phase0/4metrics; lint/type/build/contract; four final isolated recovery faults. Final backend CI39133554221 passed. Admin/mobile code did not change during this follow-up; prior native/browser results remain explicitly historical.
+- **Load in progress:** strict native run39133554208 verified5000 accepted,44,850 distinct pairs,300 sockets, zero backlog; APIp95<=136.48ms and chatp951176.66ms. Encounterp9525431.67ms **failed** the5000ms gate. Load workflow remains failing; do not mark complete based on successful ingestion or backend CI.
+- **Awaiting device/field tests:** production battery/coverage, frames/rebuilds/map/image memory, accessibility/reference acceptance and iOS runtime/APNs evidence. No phone operated, no results invented.
+- **Qualification prerequisite:** native4vCPU/8GB deployment baseline/soak unavailable. The measured Linux harness exposes2CPUs; the Mac database is emulated. Additional CPU is not assumed to make the gate pass.
+
+All Task13 PRs remain draft into development. Main unchanged; no Task14. Local backend runtime refreshed from the cached verified image, readiness200, private config/data and rollback image preserved. No external deployment or new local dependency installation.
+
+
+## Shared incremental matching — 2026-10-18
+
+**Task 13: in progress.** API contract **1.11.0**; branch `feature/pilot-hardening`. Main is unchanged; no Task 14. All three PRs remain draft.
+
+| Work | Status | Evidence |
+| --- | --- | --- |
+| Full pipeline measurements | Verified | Synthetic-only stage, queue, source-commit, CPU/WAL and plan reports; `55cfe41` |
+| Exact observation projection | Verified | Raw samples retained; distinct matching history, expiry and deletion regressions; `01f23f8` |
+| Shared incremental matching | Implemented; regression verified | Durable source batches, canonical 500-pair chunks, grant maps, bounded proof reads, two chunks/global wakeup, per-batch replanning; `f56532e` through `a484cf2` |
+| Native capacity | In progress; gate failed | Final run `39139807060`: 5,000 samples, 44,850 pairs, 300 sockets, drained; API/chat passed; encounter p95 **37,160.129 ms** failed the 5,000 ms limit |
+| Required native 4vCPU/8GB baseline/soak | Blocked | Runner unavailable; measured CI runner has 2 CPUs; local PostGIS is emulated |
+| Remaining push/device/field gates | Not started / awaiting device test | Registered-device synthetic push pressure, battery/coverage, frames/image memory, accessibility/reference acceptance and iOS runtime/APNs |
+
+Checks: **192 integration**, **47 unit**, **13 Phase 0** and **4 load-metric** tests passed at `2fbfb36`; lint/types/build/contract and cached offline image build passed. The final diagnostic-label fix `a484cf2` passed 3 focused unit and 14 shared integration checks plus lint/types/build. Backend CI `39139807054` passed on `a484cf2`. Admin/mobile application code is unchanged; previous browser/Flutter/native evidence remains historical.
+
+All five final runtime recovery faults passed at `2fbfb36`: worker crash 33.517 s, post-commit/pre-ACK matching replay 34.086 s, queue loss 31.497 s, database restart 4.912 s and SMTP outage 9.718 s. Replay preserved effects and eventual source completion. Isolated services were stopped without deleting volumes. Review fixed lost wakeups, rollback batch draining, repeated discovery/proof scans and the subsequent timing-label regression; final read-only review found no further actionable issue in the label fix.
+
+**Qualification remains open:** shared matching is slower than the 19,928.782 ms owner control in this workload. Passing streak is zero; cold discovery also exceeded the application query deadline in a separate probe. Proof/evidence/atomic-inbox costs need further work. No threshold, constraint or authorization rule was weakened. The application remains on the owner default. No owner data/device or vendor service was faulted; no local dependency/tool/image downloads occurred.
+
+Backend [draft PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) contains the full measurements in `docs/task13-incremental-measurements.md` and checklist in `docs/superpowers/plans/2026-10-18-incremental-matching.md`. Earlier failed runs remain recorded.
