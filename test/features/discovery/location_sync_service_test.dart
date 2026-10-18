@@ -83,6 +83,10 @@ class CapturingTracker extends TestTracker {
     granted: granted,
     precise: granted,
     backgroundAllowed: backgroundGranted,
+    backgroundEnabled:
+        policy?.background == true &&
+        status != TrackingStatus.paused &&
+        status != TrackingStatus.stopped,
     servicesEnabled: true,
   );
   @override

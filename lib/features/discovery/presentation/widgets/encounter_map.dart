@@ -17,15 +17,17 @@ bool validMapStyle(String value) {
 class EncounterMap extends StatefulWidget {
   const EncounterMap({
     required this.items,
-    required this.latitude,
-    required this.longitude,
+    this.latitude,
+    this.longitude,
     required this.styleUrl,
+    this.showUserLocation = false,
     required this.onAreaSelected,
     required this.onUnavailable,
     super.key,
   });
   final List<Encounter> items;
-  final double latitude, longitude;
+  final double? latitude, longitude;
+  final bool showUserLocation;
   final String styleUrl;
   final ValueChanged<String> onAreaSelected;
   final VoidCallback onUnavailable;
@@ -36,7 +38,8 @@ class EncounterMap extends StatefulWidget {
 class _EncounterMapState extends State<EncounterMap> {
   MapLibreMapController? _controller;
   Timer? _timeout;
-  bool _ready = false, _failed = false;
+  bool _ready = false, _failed = false, _centeredOnUser = false;
+  LatLng? _userPosition;
   int _generation = 0;
   Future<void> _tail = Future.value();
   @override
@@ -55,6 +58,40 @@ class _EncounterMapState extends State<EncounterMap> {
   void _tap(Circle circle) {
     final area = circle.data?['areaId'];
     if (mounted && area is String) widget.onAreaSelected(area);
+  }
+
+  void _userLocation(UserLocation location) {
+    if (!widget.showUserLocation ||
+        _centeredOnUser ||
+        DateTime.now().difference(location.timestamp).abs() >
+            const Duration(minutes: 2)) {
+      return;
+    }
+    final point = location.position;
+    if (!point.latitude.isFinite ||
+        !point.longitude.isFinite ||
+        point.latitude.abs() > 90 ||
+        point.longitude.abs() > 180) {
+      return;
+    }
+    _userPosition = point;
+    _centerUser();
+  }
+
+  void _centerUser() {
+    final point = _userPosition, controller = _controller;
+    if (!_ready || _centeredOnUser || point == null || controller == null) {
+      return;
+    }
+    _centeredOnUser = true;
+    unawaited(
+      controller
+          .animateCamera(CameraUpdate.newLatLngZoom(point, 15))
+          .catchError((Object _) {
+            _unavailable();
+            return false;
+          }),
+    );
   }
 
   void _render() {
@@ -96,6 +133,10 @@ class _EncounterMapState extends State<EncounterMap> {
   void didUpdateWidget(covariant EncounterMap oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.items != widget.items) _render();
+    if (!widget.showUserLocation) {
+      _userPosition = null;
+      _centeredOnUser = false;
+    }
   }
 
   @override
@@ -114,14 +155,15 @@ class _EncounterMapState extends State<EncounterMap> {
     }
     // MapLibreMap owns and disposes its controller/platform view. This wrapper owns only listeners and timeout.
     return Semantics(
-      label: 'Approximate encounter areas. Profiles are also available in list view.',
+      label: 'Your location and approximate crossed-path areas.',
       child: MapLibreMap(
         styleString: widget.styleUrl,
         initialCameraPosition: CameraPosition(
-          target: LatLng(widget.latitude, widget.longitude),
-          zoom: 13,
+          target: LatLng(widget.latitude ?? 0, widget.longitude ?? 0),
+          zoom: widget.latitude == null || widget.longitude == null ? 2 : 13,
         ),
-        myLocationEnabled: false,
+        myLocationEnabled: widget.showUserLocation,
+        onUserLocationUpdated: _userLocation,
         myLocationTrackingMode: MyLocationTrackingMode.none,
         attributionButtonPosition: AttributionButtonPosition.bottomRight,
         onMapCreated: (controller) {
@@ -133,6 +175,7 @@ class _EncounterMapState extends State<EncounterMap> {
           if (!mounted) return;
           _ready = true;
           _timeout?.cancel();
+          _centerUser();
           _render();
         },
       ),

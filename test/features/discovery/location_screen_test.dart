@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:paths_mobile/core/platform/location_tracker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +16,47 @@ import '../auth/auth_screens_test.dart' show tap;
 import 'location_sync_service_test.dart';
 
 void main() {
+  testWidgets('background choice stays visible when GPS quality is poor', (
+    tester,
+  ) async {
+    final tracker = CapturingTracker();
+    final sync = LocationSyncService(
+      FixtureLocationRepository(),
+      tracker,
+      MemoryTrackingControls(),
+      'https://api.example.invalid',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        builder: (_, child) => PathsToastHost(child: child!),
+        home: LocationSetupScreen(sync: sync),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tap(tester, 'Enable location');
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+    expect(tracker.policy?.background, true);
+    tracker.statuses.add(TrackingStatus.inaccurate);
+    await tester.pumpAndSettle();
+    expect(find.text('Background sharing on'), findsOneWidget);
+    expect(find.text('Waiting for a clearer GPS signal.'), findsOneWidget);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      true,
+    );
+    await tap(tester, 'Pause sharing');
+    expect(tracker.count, 0);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      false,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+    await sync.close();
+    await tracker.dispose();
+  });
   setUpAll(() async {
     for (final e in {
       'Inter': 'assets/fonts/Inter-Variable.ttf',
@@ -72,14 +114,14 @@ void main() {
       await tester.pumpAndSettle();
       await tap(tester, 'Location & permissions');
       expect(
-        find.textContaining('exact location on its server'),
+        find.textContaining('Others see approximate areas'),
         findsOneWidget,
       );
       expect(tracker.starts, 0);
-      await tap(tester, 'Enable while using Paths');
+      await tap(tester, 'Enable location');
       expect(tracker.starts, 1);
       expect(data.grants, 1);
-      await tap(tester, 'Not now — back to profile');
+      await tap(tester, 'Done');
       expect(tracker.starts, 1);
       expect(find.text('Fixture User, 26'), findsOneWidget);
       await tester.tap(find.byTooltip('Profile options'));
@@ -138,10 +180,10 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.ensureVisible(find.text('Not now — back to profile'));
+        await tester.ensureVisible(find.text('Done'));
         expect(tester.takeException(), isNull);
         expect(data.grants, 0);
-        await tap(tester, 'Not now — back to profile');
+        await tap(tester, 'Done');
         expect(find.text('Profile destination'), findsOneWidget);
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
@@ -171,12 +213,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tap(tester, 'Enable while using Paths');
+      await tap(tester, 'Enable location');
       tracker.count = 15;
       data.offline = true;
-      await tap(tester, 'Pause and clear updates');
+      await tap(tester, 'Pause sharing');
       expect(tracker.count, 0);
-      expect(find.textContaining('Server pause is pending'), findsOneWidget);
+      expect(find.text('Paused · waiting to sync'), findsOneWidget);
       expect(store.pending, true);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();

@@ -429,7 +429,7 @@ void main() {
     },
   );
   testWidgets(
-    'incomplete setup cannot bypass guards and continues through optional review and education',
+    'incomplete setup cannot bypass guards and optional review continues to Home',
     (tester) async {
       final adapter = SetupAdapter()
             ..complete = false
@@ -463,22 +463,9 @@ void main() {
         '/setup/verification',
       );
       await tap(tester, 'Skip');
-      expect(
-        app.router.routeInformationProvider.value.uri.path,
-        '/setup/permissions',
-      );
-      expect(progress.seen, isEmpty);
-      progress.failWrite = true;
-      await tap(tester, 'Continue');
-      expect(
-        app.router.routeInformationProvider.value.uri.path,
-        '/setup/permissions',
-      );
-      expect(progress.seen, isEmpty);
-      progress.failWrite = false;
-      await tap(tester, 'Continue');
       expect(app.router.routeInformationProvider.value.uri.path, '/home');
-      expect(progress.seen, contains('11111111-1111-4111-8111-111111111111'));
+      // Permission education is now a compact Home prompt, never an onboarding gate.
+      expect(progress.seen, isEmpty);
       await stop(tester, app.sync, app.tracker);
     },
   );

@@ -269,7 +269,7 @@ GoRouter createAuthRouter(
             progress: setupProgress,
             owner: cubit.state.account!.id,
             currentAccount: () => cubit.state.account?.id,
-            requirePermissionEducation: locations != null,
+            requirePermissionEducation: false,
             onDestination: (destination) {
               setupDestination = destination;
               final next = destination == SetupDestination.home

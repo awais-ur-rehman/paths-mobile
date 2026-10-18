@@ -79,126 +79,88 @@ class _LocationOwnerState extends State<_LocationOwner> {
       listener: (context, state) =>
           PathsToast.show(context, state.error!.message),
       child: AuthScaffold(
-        title: 'Cross paths on your terms',
-        subtitle: 'Location sharing is optional. You can pause it whenever you like. Enabling on this phone replaces sharing from another device.',
-        onBack: () => context.go(
-          widget.onContinue == null ? '/profile' : '/setup/profile?edit=1',
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Paths uses your exact location on its server to detect people you cross paths with. Other members see approximate encounter areas, not your exact location.',
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Observations are kept for up to 24 hours. Offline updates stay encrypted on this phone for up to 15 minutes. Pausing clears waiting updates and stops collection.',
-            ),
-            const SizedBox(height: 24),
-            BlocSelector<
-              LocationCubit,
-              LocationState,
-              (TrackingStatus, bool, TrackingPermissions?, int)
-            >(
-              selector: (s) =>
-                  (s.status, s.pendingStop, s.permissions, s.queued),
-              builder: (context, value) {
-                final label = value.$2
-                    ? 'Paused on this phone. Server pause is pending until Paths reconnects.'
-                    : switch (value.$1) {
-                        TrackingStatus.active => 'Sharing while Paths is open',
-                        TrackingStatus.background =>
-                          'Background sharing enabled',
-                        TrackingStatus.inaccurate => 'Reduced accuracy',
-                        TrackingStatus.offline => 'Offline — waiting to send',
-                        TrackingStatus.permissionNeeded =>
-                          'Location permission needed',
-                        TrackingStatus.unavailable =>
-                          'Location sharing needs attention',
-                        _ => 'Location sharing is paused',
-                      };
-                return DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDF4FF),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          label,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        if (value.$3?.servicesEnabled == false)
-                          const Text(
-                            'Turn on device location services to enable sharing.',
-                          ),
-                        if (value.$3?.granted == true &&
-                            value.$3?.precise == false)
-                          const Text(
-                            'Approximate permission reduces encounter detection. Your profile remains available.',
-                          ),
-                        if (value.$3?.granted == false &&
-                            value.$3?.canRequestForeground == false)
-                          const Text(
-                            'Allow location in device settings. Paths will not repeat the permission prompt.',
-                          ),
-                        Text('Pending updates: ${value.$4}'),
-                      ],
+        title: 'Location',
+        subtitle:
+            'Find people you cross paths with. Others see approximate areas.',
+        onBack: _continue,
+        child: BlocBuilder<LocationCubit, LocationState>(
+          builder: (context, state) {
+            final permissions = state.permissions;
+            final sharing =
+                !state.pendingStop &&
+                [
+                  TrackingStatus.active,
+                  TrackingStatus.background,
+                  TrackingStatus.inaccurate,
+                  TrackingStatus.offline,
+                ].contains(state.status);
+            final settings =
+                permissions?.servicesEnabled == false ||
+                permissions?.precise == false && permissions?.granted == true ||
+                permissions?.granted == false &&
+                    permissions?.canRequestForeground == false;
+            final label = state.pendingStop
+                ? 'Paused · waiting to sync'
+                : permissions?.servicesEnabled == false
+                ? 'Device location is off'
+                : permissions?.granted == true && permissions?.precise == false
+                ? 'Approximate location'
+                : sharing
+                ? (permissions?.backgroundEnabled == true
+                      ? 'Background sharing on'
+                      : 'Sharing while using Paths')
+                : 'Sharing paused';
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.titleMedium),
+                if (state.status == TrackingStatus.inaccurate &&
+                    permissions?.precise == true) ...[
+                  const SizedBox(height: 8),
+                  const Text('Waiting for a clearer GPS signal.'),
+                ],
+                if (state.status == TrackingStatus.offline) ...[
+                  const SizedBox(height: 8),
+                  const Text('Offline · updates will retry.'),
+                ],
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: state.busy
+                      ? null
+                      : sharing
+                      ? cubit.pause
+                      : () => cubit.enable(false),
+                  child: state.busy
+                      ? const PathsLoader(size: 28, color: Colors.white)
+                      : Text(sharing ? 'Pause sharing' : 'Enable location'),
+                ),
+                if (permissions?.granted == true) ...[
+                  const SizedBox(height: 16),
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Background sharing'),
+                    subtitle: const Text(
+                      'Keep finding paths when you leave the app. Uses more battery.',
                     ),
+                    value: sharing && permissions?.backgroundEnabled == true,
+                    onChanged: state.busy ? null : cubit.enable,
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-            BlocSelector<LocationCubit, LocationState, bool>(
-              selector: (s) => s.busy,
-              builder: (context, busy) => FilledButton(
-                onPressed: busy ? null : () => cubit.enable(false),
-                child: busy
-                    ? const PathsLoader(size: 28, color: Colors.white)
-                    : const Text('Enable while using Paths'),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Background sharing needs a separate choice. Android shows an ongoing notification; iOS needs Always location access. Delivery is best effort and may stop with permission changes, power saving or a force-stop.',
-            ),
-            const SizedBox(height: 12),
-            BlocSelector<LocationCubit, LocationState, bool>(
-              selector: (s) => s.busy,
-              builder: (context, busy) => OutlinedButton(
-                onPressed: busy ? null : () => cubit.enable(true),
-                child: const Text('Enable background sharing'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed: cubit.pause,
-              child: const Text('Pause and clear updates'),
-            ),
-            TextButton(
-              onPressed: cubit.refresh,
-              child: const Text('Refresh status and retry'),
-            ),
-            TextButton(
-              onPressed: cubit.openSettings,
-              child: const Text('Open device settings'),
-            ),
-            TextButton(
-              onPressed: continuing ? null : _continue,
-              child: continuing
-                  ? const PathsLoader(size: 24)
-                  : Text(
-                      widget.onContinue == null
-                          ? 'Not now — back to profile'
-                          : 'Continue',
-                    ),
-            ),
-          ],
+                ],
+                if (settings)
+                  TextButton(
+                    onPressed: state.busy ? null : cubit.openSettings,
+                    child: const Text('Open device settings'),
+                  ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: continuing || state.busy ? null : _continue,
+                  child: continuing
+                      ? const PathsLoader(size: 24)
+                      : Text(widget.onContinue == null ? 'Done' : 'Continue'),
+                ),
+              ],
+            );
+          },
         ),
       ),
     ),
