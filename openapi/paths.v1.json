@@ -1,6 +1,263 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/v1/blocks": {
+      "get": {
+        "operationId": "SafetyController_list",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockedPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/blocks/{id}": {
+      "post": {
+        "operationId": "SafetyController_block",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      },
+      "delete": {
+        "operationId": "SafetyController_unblock",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlockReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/reports/post-evidence": {
+      "post": {
+        "operationId": "SafetyController_prepare",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportEvidenceInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportEvidenceDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/reports/messages/{id}": {
+      "get": {
+        "operationId": "SafetyController_reportable",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "revision",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "after",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportMessagesPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/v1/reports": {
+      "post": {
+        "operationId": "SafetyController_report",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportReceiptDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
     "/v1/conversations": {
       "get": {
         "operationId": "ChatController_list",
@@ -2172,7 +2429,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.8.0",
+    "version": "1.9.0",
     "contact": {}
   },
   "tags": [],
@@ -2186,6 +2443,216 @@
       }
     },
     "schemas": {
+      "BlockedAccountDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "name"
+        ]
+      },
+      "BlockedPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BlockedAccountDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "BlockReceiptDto": {
+        "type": "object",
+        "properties": {
+          "blocked": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "blocked"
+        ]
+      },
+      "ReportEvidenceInput": {
+        "type": "object",
+        "properties": {
+          "clientGrantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "clientGrantId",
+          "subjectId",
+          "contentId"
+        ]
+      },
+      "ReportEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "validForSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 900
+          },
+          "grantId": {
+            "type": "string"
+          },
+          "expiresAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "validForSeconds",
+          "grantId",
+          "expiresAt"
+        ]
+      },
+      "ChatMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "senderId": {
+            "type": "string"
+          },
+          "clientMessageId": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "text": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "conversationId",
+          "senderId",
+          "clientMessageId",
+          "sequence",
+          "text",
+          "createdAt"
+        ]
+      },
+      "ReportMessagesPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatMessageDto"
+            }
+          },
+          "nextCursor": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "ReportInput": {
+        "type": "object",
+        "properties": {
+          "evidenceGrantId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientReportId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "subjectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "profile",
+              "post",
+              "message"
+            ]
+          },
+          "contentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "suspected_minor",
+              "threats",
+              "harassment",
+              "impersonation",
+              "sexual_exploitation",
+              "other"
+            ]
+          },
+          "details": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "clientReportId",
+          "subjectId",
+          "kind",
+          "category"
+        ]
+      },
+      "ReportReceiptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
       "ConversationDto": {
         "type": "object",
         "properties": {
@@ -2252,41 +2719,6 @@
           "revision",
           "items",
           "nextCursor"
-        ]
-      },
-      "ChatMessageDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "conversationId": {
-            "type": "string"
-          },
-          "senderId": {
-            "type": "string"
-          },
-          "clientMessageId": {
-            "type": "string"
-          },
-          "sequence": {
-            "type": "integer"
-          },
-          "text": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "conversationId",
-          "senderId",
-          "clientMessageId",
-          "sequence",
-          "text",
-          "createdAt"
         ]
       },
       "ChatHistoryDto": {
@@ -3052,7 +3484,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.8.0"
+              "1.9.0"
             ]
           }
         },

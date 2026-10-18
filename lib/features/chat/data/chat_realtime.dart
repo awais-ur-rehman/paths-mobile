@@ -18,6 +18,10 @@ final class ChatRealtime {
   int _epoch = 0, _attempt = 0;
   String? _account;
   final _seen = <String>{};
+  void refresh() {
+    if (!_closed) _events.add(const ChatSignal());
+  }
+
   void configure(String? account) {
     if (_closed) return;
     if (_account == account) return;
@@ -71,7 +75,7 @@ final class ChatRealtime {
       socket.onConnect((_) {
         if (!_current(epoch)) return;
         _attempt = 0;
-        _events.add(const ChatSignal());
+        _events.add(const ChatSignal(type: 'reconnected'));
       });
       socket.on('event', (dynamic raw) {
         if (!_current(epoch) || raw is! Map) return;
@@ -89,6 +93,7 @@ final class ChatRealtime {
           'connection.updated',
           'conversation.removed',
           'account.restricted',
+          'profile.access_changed',
         }.contains(type)) {
           return;
         }

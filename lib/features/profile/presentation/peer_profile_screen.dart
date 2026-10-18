@@ -1,3 +1,7 @@
+import '../../safety/presentation/report_sheet.dart';
+import '../../safety/domain/safety_repository.dart';
+import '../../safety/presentation/safety_scope.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -71,50 +75,61 @@ class _PeerOwnerState extends State<_PeerOwner> {
   );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.white,
-    body: BlocListener<ProfilePreviewCubit, ProfilePreviewState>(
-      bloc: cubit,
-      listenWhen: (before, after) =>
-          before.profile == null && after.profile != null,
-      listener: (_, _) => widget.configuration.onOpened?.call(),
-      child: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
+  Widget build(BuildContext context) => SafetyRefresh(
+    onChanged: () => unawaited(cubit.load()),
+    child: Scaffold(
+      backgroundColor: Colors.white,
+      body: BlocListener<ProfilePreviewCubit, ProfilePreviewState>(
         bloc: cubit,
-        builder: (context, state) {
-          if (state.loading) return _withBack(const PathsLoader());
-          final profile = state.profile;
-          if (profile == null) {
-            return _withBack(
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    state.error?.offline == true
-                        ? 'You’re offline'
-                        : 'Profile unavailable',
-                  ),
-                  if (state.error?.offline == true)
-                    TextButton(
-                      onPressed: cubit.load,
-                      child: const Text('Retry'),
+        listenWhen: (before, after) =>
+            before.profile == null && after.profile != null,
+        listener: (_, _) => widget.configuration.onOpened?.call(),
+        child: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
+          bloc: cubit,
+          builder: (context, state) {
+            if (state.loading) return _withBack(const PathsLoader());
+            final profile = state.profile;
+            if (profile == null) {
+              return _withBack(
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      state.error?.offline == true
+                          ? 'You’re offline'
+                          : 'Profile unavailable',
                     ),
-                ],
-              ),
+                    if (state.error?.offline == true)
+                      TextButton(
+                        onPressed: cubit.load,
+                        child: const Text('Retry'),
+                      ),
+                  ],
+                ),
+              );
+            }
+            return ProfileSurface(
+              profile: profile,
+              action: widget.configuration.relationships == null
+                  ? null
+                  : RelationshipControls(
+                      key: ValueKey(widget.configuration.userId),
+                      repository: widget.configuration.relationships!,
+                      target: widget.configuration.userId,
+                      onChat: widget.configuration.onChat,
+                    ),
+              menu: SafetyScope.maybeOf(context) == null
+                  ? null
+                  : ProfileOptionsButton(
+                      onPressed: () => showSafetyActions(
+                        context,
+                        SafetyTarget(widget.configuration.userId),
+                      ),
+                    ),
+              onBack: widget.configuration.onBack,
             );
-          }
-          return ProfileSurface(
-            profile: profile,
-            action: widget.configuration.relationships == null
-                ? null
-                : RelationshipControls(
-                    key: ValueKey(widget.configuration.userId),
-                    repository: widget.configuration.relationships!,
-                    target: widget.configuration.userId,
-                    onChat: widget.configuration.onChat,
-                  ),
-            onBack: widget.configuration.onBack,
-          );
-        },
+          },
+        ),
       ),
     ),
   );

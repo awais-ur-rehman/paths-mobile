@@ -1,6 +1,6 @@
 # Implementation status
 
-Current phase: **Phase4 Task9 text chat; implemented and locally verified, awaiting owner two-device evidence**. API contract: `1.8.0`; experiment contract `phase0.v1`.
+Current phase: **Task 10 accepted by owner; waiting for full-app retest**. API 1.9.0; main remains unchanged. Task 11 has not started.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
 
@@ -96,21 +96,21 @@ Main is a documentation baseline, not a working release. Phase0 integration into
 
 ### Task 9: Text chat, reconnect and access revocation
 
-- [ ] Test send before accept denied; sender spoof denied; text>4000 denied; same client ID inserts once. — **not started**
-- [ ] Test concurrent block/disconnect/delete vs send using consistent locks; no unauthorized post-commit delivery. — **not started**
-- [ ] Implement REST persistence, server-assigned sockets and cursor catch-up; ACK only after commit. — **not started**
-- [ ] Implement chat list/thread, lazy history, pending/failed retry, unread state and read-only disconnected history. — **not started**
-- [ ] Test disconnect/reconnect with missed/duplicate/out-of-order events; deleted conversation removed from caches on sync. — **not started**
+- [x] Test send before accept denied; sender spoof denied; text>4000 denied; same client ID inserts once. — **verified locally; Task 9 accepted by owner — see acceptance entry below**
+- [x] Test concurrent block/disconnect/delete vs send using consistent locks; no unauthorized post-commit delivery. — **verified locally; Task 9 accepted by owner — see acceptance entry below**
+- [x] Implement REST persistence, server-assigned sockets and cursor catch-up; ACK only after commit. — **verified locally; Task 9 accepted by owner — see acceptance entry below**
+- [x] Implement chat list/thread, lazy history, pending/failed retry, unread state and read-only disconnected history. — **verified locally; Task 9 accepted by owner — see acceptance entry below**
+- [x] Test disconnect/reconnect with missed/duplicate/out-of-order events; deleted conversation removed from caches on sync. — **verified locally; Task 9 accepted by owner — see acceptance entry below**
 
 ## Phase 5 — moderation and admin
 
 
 ### Task 10: Blocking/reporting and restricted account lifecycle
 
-- [ ] Test block removes both saves, cancels requests, stops sends, excludes discovery and revokes private media; unblock restores nothing automatically. — **not started**
-- [ ] Implement report categories, scoped evidence and acknowledgment; privacy-aware evidence deletion hooks. — **not started**
-- [ ] Implement deactivation/reactivation status guard, session revoke and queue suppression. — **not started**
-- [ ] Add support/delete access for restricted users and suspected-underage escalation flow. — **not started**
+- [x] Test block removes both saves, cancels requests, stops sends, excludes discovery and revokes private media; unblock restores nothing automatically. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Implement report categories, scoped evidence and acknowledgment; privacy-aware evidence deletion hooks. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Implement deactivation/reactivation status guard, session revoke and queue suppression. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
+- [x] Add support/delete access for restricted users and suspected-underage escalation flow. — **verified locally; owner accepted Task 10 on their phone — see acceptance entry below**
 
 ### Task 11: Admin portal and review workflow
 
@@ -610,3 +610,51 @@ Pending: owner Task 9 physical Android/second-session tests before merge/Task 10
 Follow-up review reproduced a response completing under a covered route without advancing read state on return; a post-frame visibility check and regression fix it. Readiness and OpenAPI now share a backend version constant; a real HTTP integration regression and updated frontend fixtures verify 1.8.0. Final 101 backend integration and 231 Flutter tests pass after these fixes. Android and unsigned iOS were rebuilt sequentially after the final mobile source change; kernel evidence above is from that exact APK. Live readiness returns 200 / 1.8.0.
 
 Published draft PRs: [backend #11](https://github.com/awais-ur-rehman/paths-backend/pull/11), [mobile #9](https://github.com/awais-ur-rehman/paths-mobile/pull/9), [admin #9](https://github.com/awais-ur-rehman/paths-admin/pull/9). All target development. Source checkpoints above are pushed; this evidence commit will also be pushed. Required physical tests remain pending; do not merge Task 9 or proceed through its dependent gate.
+
+## Task 9 owner acceptance and Task 10 start — 2026-10-18
+
+Owner confirms Task 9 works on their physical Android phone and authorizes merging its PRs and starting Task 10. Backend PR11, mobile PR9 and admin PR9 merged into development (c3de54d,23f7c51,a29191e). Backend/admin hosted checks passed; mobile local231 tests/native builds and owner acceptance were the gate. No additional two-device or iOS measurements are inferred. Current branch feature/safety-controls. See task10-safety-plan.md for every applicable checklist and explicit Task11/12 dependencies.
+
+## Task 10 safety controls — 2026-10-18
+
+Status: **implemented and locally verified; awaiting device test**. Phase 5 remains open. Branch `feature/safety-controls`, target `development`; main unchanged. API **1.9.0**, raw OpenAPI SHA256 `b935cfab611b1eb4c201e599f9f46dd37743d7a1a5aab014b6fd03e5a98d7f05`; all three copies match.
+
+Checklist coverage:
+
+- **Verified locally:** bilateral blocks remove both saves, cancel pending/accepted requests, block connections, revoke chat/private media/discovery and remove old encounters. Idempotent retries and inverse operations serialize on canonical user/pair locks. Unblock removes only the actor's block, restores no connection/save and requires new samples captured after the final unblock for encounter eligibility.
+- **Verified locally:** profile/post/one-selected-message reports, six categories, optional bounded details, actor/body-bound idempotency and reference acknowledgment. Subject/content ownership and member access are checked on the server. Member-only historical-message selection remains available from Blocked accounts; it does not reenable chat. Identifying evidence/grants cascade on reporter/subject/content deletion; category/day totals retain no identifiers.
+- **Verified locally:** status transitions revoke old sessions, leases and push registrations; pause tracking and suppress pre-restriction queued notifications even after reactivation. Reactivation requires fresh login and explicit tracking consent. Internal service records reason and matched underage report, with no unprotected staff endpoint.
+- **Implemented, automated UI checks verified; awaiting device test:** concise report/block controls in profile/chat/post, report receipt, blocked list/unblock, retry/offline/cancellation/account-switch guards, mounted-view/resume/reconnect invalidation, restricted support/appeal and Request deletion help. Self-service erasure is Task 12; staff RBAC, report triage and status UI are Task 11. These dependent tasks remain not started.
+- **Verified locally:** suspected-minor/threat/exploitation reports enter urgent review. An unverified report never automatically restricts another account. Evidence-confirmed underage restriction requires the matching report through the internal moderation operation.
+
+Checks executed and final results:
+
+| Check | Result |
+| --- | --- |
+| Backend `npm run build`, `npm run lint`, `npm test` | Pass; 36 unit and 13 feasibility tests |
+| Backend `npm run test:integration` | Pass; 113 isolated PostgreSQL/PostGIS integration tests |
+| Backend `node --env-file=.env.local dist/scripts/verify-safety.js` | Pass through live proxy/API/worker/socket; temporary synthetic accounts only, cleaned up |
+| Backend `npm run stack:verify` | Pass restart/persistence/non-root/graceful shutdown; expected connection-loss warning during DB restart; full R2/push overrides restored afterward |
+| Mobile `flutter analyze --no-pub`, `flutter test --no-pub` | Pass; no analyzer issues, 250 tests |
+| Mobile `python3 -m unittest discover -s test/tools` | Pass; 11 tooling tests |
+| Admin lint/test/build and installed Playwright `npm run test:e2e` | Pass; 2 transport tests, 3 browser cases |
+| Android offline Gradle `:app:assembleDebug` | Pass; 235 tasks; no device operated |
+| Android `python3 tools/check_android_kernel.py` | Pass; compiler/staged/APK match, 75,465,832 bytes; SHA256 `1ff51b8bf5c21170448b678985dbefd5d729186885d759f4ffcf166672d1fdf7` |
+| iOS cached `xcodebuild`, unsigned generic physical target, automatic resolution disabled | Build succeeded; signing/runtime/APNs remain pending |
+| Review and complete branch whitespace check | Review findings addressed; final diff checked |
+
+Review fixes: final-unblock capture boundary prevents queued during-block samples restoring encounters; canonical version-row locks avoid inverse status deadlocks; reconnect/resume revalidate mounted views and private media; post reporting uses an actor/subject/post-bound 15-minute server capability prepared while access exists. Blocking never waits for evidence preparation. Capability expiry uses a monotonic client deadline; uncertain report retries first reuse the exact original body, then renew only if the server confirms an expired/uncommitted attempt. A blocked/removed post offers explicit member-report fallback. Failed preparation/quota/expiry cannot prevent a block. Focused tests cover these cases and the full suites pass after fixes. Fresh read-only review found no remaining issue in those fixes; inspection is not device evidence.
+
+Early test runs caught an outdated restricted-screen label and reconnect event expectation, a premature account-switch fixture and an invalid image fixture; corrected before the passing runs above. Sandbox-only socket/cache attempts were rerun with the required local access. No new dependency or asset download was required.
+
+Source checkpoints: backend `64a42e5` (storage/API/status), `3d21cc0` (tests/live check); mobile `4f0b3a5` (safety forms), `684a41f` (integration/invalidation), `cb0d545` (tests); admin `d1b969f` (contract/readiness). Later whitespace/evidence commits do not change app behavior. Local migration 0013 applied; private R2, Gmail and Firebase configuration retained. No real account was restricted or reported by automated tests. Original encrypted local-media recovery volume remains read-only; no volume deletion.
+
+Pending prerequisites: owner physical Android acceptance for Task 10; separate signed iOS runtime evidence, Android FCM delivery/tap evidence and APNs setup; quantitative Phase 0 field metrics remain release evidence. No unavailable package/tool blocked the checks listed above. Builds cannot prove OS/device behavior. See TASK10_DEVICE_TESTS.md for exact commands, expected outcomes and redacted failure evidence. Do not merge Task 10 or start Task 11 before owner acceptance.
+
+Published draft PRs: [backend #12](https://github.com/awais-ur-rehman/paths-backend/pull/12), [mobile #10](https://github.com/awais-ur-rehman/paths-mobile/pull/10), [admin #10](https://github.com/awais-ur-rehman/paths-admin/pull/10). All target development. Feature source and test evidence are pushed; owner Task 10 acceptance remains pending. Main unchanged.
+
+## Task 10 owner acceptance — 2026-10-18
+
+The owner tested Task 10 on their physical phone, confirmed it looks good and authorized merging backend PR12, mobile PR10 and admin PR10 into development. This acceptance supersedes the earlier draft/device-pending handoff status. No additional per-step, multi-device, iOS or push-delivery measurements are inferred. Main remains unchanged.
+
+The owner explicitly requested waiting while they test the full app again. Task 11 and all further development are on hold; do not start the next task until asked. Existing separate release-evidence gaps remain documented above.

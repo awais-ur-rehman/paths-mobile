@@ -1,3 +1,5 @@
+import 'features/safety/data/http_safety_repository.dart';
+import 'features/safety/presentation/safety_scope.dart';
 import 'features/chat/data/chat_realtime.dart';
 import 'features/chat/data/http_chat_repository.dart';
 import 'features/setup/domain/setup_progress.dart';
@@ -72,6 +74,8 @@ class _PathsAppState extends State<PathsApp> {
   PostRepository? posts;
   ChatRealtime? realtime;
   HttpChatRepository? chats;
+  HttpSafetyRepository? safety;
+  StreamSubscription? safetyEvents;
   StreamSubscription<AuthState>? chatAuth;
   PushClient? push;
   NotificationRepository? notifications;
@@ -186,12 +190,31 @@ class _PathsAppState extends State<PathsApp> {
         setupProgress = widget.setupProgress ?? PlatformSetupProgress();
         posts = PostRepository(profiles as AuthenticatedApi);
       }
+      if (profiles is AuthenticatedApi) {
+        safety = HttpSafetyRepository(
+          profiles as AuthenticatedApi,
+          onAccessChanged: () async {
+            await media?.purge();
+            realtime?.refresh();
+          },
+        );
+      }
       if (profiles is HttpAuthRepository) {
         realtime = ChatRealtime(
           origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
           token: profiles.realtimeToken,
         );
         chats = HttpChatRepository(profiles, realtime!.events);
+        safetyEvents = realtime!.events.listen((signal) {
+          if (!mounted) return;
+          if (signal.type == 'conversation.removed' ||
+              signal.type == 'profile.access_changed' ||
+              signal.type == 'reconnected') {
+            unawaited(media?.purge());
+            safety?.invalidate();
+            if (signal.type != 'reconnected') realtime?.refresh();
+          }
+        });
         chatAuth = cubit!.stream.listen((state) {
           realtime!.configure(
             state.stage == AuthStage.authenticated &&
@@ -213,6 +236,7 @@ class _PathsAppState extends State<PathsApp> {
         picker: photoPicker,
         posts: posts,
         chats: chats,
+        safety: safety,
         notifications: notifications,
         push: push,
         relationships: profiles is AuthenticatedApi
@@ -261,6 +285,8 @@ class _PathsAppState extends State<PathsApp> {
   void dispose() {
     lifecycle?.dispose();
     unawaited(chatAuth?.cancel());
+    unawaited(safetyEvents?.cancel());
+    unawaited(safety?.close());
     unawaited(realtime?.close());
     unawaited(pushAuth?.cancel());
     unawaited(pushEvents?.cancel());
@@ -336,14 +362,17 @@ class _PathsAppState extends State<PathsApp> {
                   PathsToast.show(context, notice, tone: ToastTone.success);
                 }
               },
-              child: media == null
-                  ? child!
-                  : MediaScope(
-                      media: media!,
-                      picker: photoPicker!,
-                      posts: posts!,
-                      child: child!,
-                    ),
+              child: SafetyScope(
+                repository: safety,
+                child: media == null
+                    ? child!
+                    : MediaScope(
+                        media: media!,
+                        picker: photoPicker!,
+                        posts: posts!,
+                        child: child!,
+                      ),
+              ),
             ),
           ),
         ),

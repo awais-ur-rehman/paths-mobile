@@ -1,3 +1,5 @@
+import '../../safety/presentation/safety_scope.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -148,138 +150,144 @@ class _HomeOwnerState extends State<_HomeOwner> {
   }
 
   @override
-  Widget build(BuildContext context) => BlocProvider.value(
-    value: bloc,
-    child: Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final gutter = PathsTokens.gutter(constraints.maxWidth);
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 720),
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    final done = bloc.stream
-                        .where((s) => !s.loading)
-                        .take(1)
-                        .drain<void>();
-                    bloc.add(const RefreshEncounters());
-                    await done;
-                  },
-                  child: CustomScrollView(
-                    key: const PageStorageKey('encounter-list'),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverPadding(
-                        padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const PathsWordmark(width: 116),
-                                  const Spacer(),
-                                  if (widget.configuration.onNotifications !=
-                                      null)
-                                    IconButton(
-                                      tooltip: "Notifications",
-                                      onPressed:
-                                          widget.configuration.onNotifications,
-                                      icon: const Icon(
-                                        Icons.notifications_outlined,
+  Widget build(BuildContext context) => SafetyRefresh(
+    onChanged: () => bloc.add(const InvalidateEncounters()),
+    child: BlocProvider.value(
+      value: bloc,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final gutter = PathsTokens.gutter(constraints.maxWidth);
+              return Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 720),
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      final done = bloc.stream
+                          .where((s) => !s.loading)
+                          .take(1)
+                          .drain<void>();
+                      bloc.add(const RefreshEncounters());
+                      await done;
+                    },
+                    child: CustomScrollView(
+                      key: const PageStorageKey('encounter-list'),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        SliverPadding(
+                          padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 8),
+                          sliver: SliverToBoxAdapter(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const PathsWordmark(width: 116),
+                                    const Spacer(),
+                                    if (widget.configuration.onNotifications !=
+                                        null)
+                                      IconButton(
+                                        tooltip: "Notifications",
+                                        onPressed: widget
+                                            .configuration
+                                            .onNotifications,
+                                        icon: const Icon(
+                                          Icons.notifications_outlined,
+                                        ),
                                       ),
-                                    ),
-                                  _locationButton(),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Crossed paths',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium,
-                              ),
-                              const SizedBox(height: 16),
-                              EncounterFiltersBar(
-                                styleUrl: widget.configuration.mapStyleUrl,
-                                showMap: _showMap,
-                                mapFailed: _mapFailed,
-                                onToggleMap: () => setState(() {
-                                  _showMap = _mapFailed ? true : !_showMap;
-                                  _mapFailed = false;
-                                }),
-                              ),
-                            ],
+                                    _locationButton(),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'Crossed paths',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium,
+                                ),
+                                const SizedBox(height: 16),
+                                EncounterFiltersBar(
+                                  styleUrl: widget.configuration.mapStyleUrl,
+                                  showMap: _showMap,
+                                  mapFailed: _mapFailed,
+                                  onToggleMap: () => setState(() {
+                                    _showMap = _mapFailed ? true : !_showMap;
+                                    _mapFailed = false;
+                                  }),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      if (_showMap &&
-                          !_mapFailed &&
-                          TickerMode.valuesOf(context).enabled)
-                        BlocSelector<
-                          EncounterBloc,
-                          EncounterState,
-                          (List<Encounter>, double?, double?)
-                        >(
-                          selector: (s) =>
-                              (s.items, s.centerLatitude, s.centerLongitude),
-                          builder: (context, value) {
-                            if (value.$2 == null || value.$3 == null) {
-                              return const SliverToBoxAdapter(
-                                child: SizedBox.shrink(),
-                              );
-                            }
-                            return SliverPadding(
-                              padding: EdgeInsets.fromLTRB(
-                                gutter,
-                                8,
-                                gutter,
-                                16,
-                              ),
-                              sliver: SliverToBoxAdapter(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(28),
-                                  child: SizedBox(
-                                    height: 280,
-                                    child: EncounterMap(
-                                      key: ValueKey('${value.$2}:${value.$3}'),
-                                      items: value.$1,
-                                      latitude: value.$2!,
-                                      longitude: value.$3!,
-                                      styleUrl:
-                                          widget.configuration.mapStyleUrl,
-                                      onAreaSelected: _area,
-                                      onUnavailable: () {
-                                        if (mounted) {
-                                          setState(() {
-                                            _mapFailed = true;
-                                            _showMap = false;
-                                          });
-                                        }
-                                      },
+                        if (_showMap &&
+                            !_mapFailed &&
+                            TickerMode.valuesOf(context).enabled)
+                          BlocSelector<
+                            EncounterBloc,
+                            EncounterState,
+                            (List<Encounter>, double?, double?)
+                          >(
+                            selector: (s) =>
+                                (s.items, s.centerLatitude, s.centerLongitude),
+                            builder: (context, value) {
+                              if (value.$2 == null || value.$3 == null) {
+                                return const SliverToBoxAdapter(
+                                  child: SizedBox.shrink(),
+                                );
+                              }
+                              return SliverPadding(
+                                padding: EdgeInsets.fromLTRB(
+                                  gutter,
+                                  8,
+                                  gutter,
+                                  16,
+                                ),
+                                sliver: SliverToBoxAdapter(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(28),
+                                    child: SizedBox(
+                                      height: 280,
+                                      child: EncounterMap(
+                                        key: ValueKey(
+                                          '${value.$2}:${value.$3}',
+                                        ),
+                                        items: value.$1,
+                                        latitude: value.$2!,
+                                        longitude: value.$3!,
+                                        styleUrl:
+                                            widget.configuration.mapStyleUrl,
+                                        onAreaSelected: _area,
+                                        onUnavailable: () {
+                                          if (mounted) {
+                                            setState(() {
+                                              _mapFailed = true;
+                                              _showMap = false;
+                                            });
+                                          }
+                                        },
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
+                        EncounterResults(
+                          relationships: widget.configuration.relationships,
+                          gutter: gutter,
+                          mapFailed: _mapFailed,
+                          onProfile: (id) => unawaited(_openProfile(id)),
+                          onLocationSetup: widget.configuration.onLocationSetup,
                         ),
-                      EncounterResults(
-                        relationships: widget.configuration.relationships,
-                        gutter: gutter,
-                        mapFailed: _mapFailed,
-                        onProfile: (id) => unawaited(_openProfile(id)),
-                        onLocationSetup: widget.configuration.onLocationSetup,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     ),

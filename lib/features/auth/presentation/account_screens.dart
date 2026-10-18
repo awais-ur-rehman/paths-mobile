@@ -83,7 +83,7 @@ class RestrictedAccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AuthScaffold(
     title: 'Your account is restricted',
-    subtitle: 'You can contact support or request help with deleting your account. Signing in does not remove the restriction.',
+    subtitle: 'Contact support to appeal or request deletion.',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -141,7 +141,7 @@ class SupportActions extends StatelessWidget {
               },
             ),
           ),
-          child: const Text('Ask support about deletion'),
+          child: const Text('Request deletion help'),
         ),
         const Text(
           'This opens an email request. Your account is not deleted by tapping the button.',

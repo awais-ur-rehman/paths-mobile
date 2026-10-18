@@ -12,6 +12,10 @@ final class RefreshEncounters extends EncounterEvent {
   const RefreshEncounters();
 }
 
+final class InvalidateEncounters extends EncounterEvent {
+  const InvalidateEncounters();
+}
+
 final class MoreEncounters extends EncounterEvent {
   const MoreEncounters();
 }
@@ -46,6 +50,10 @@ final class EncounterState {
 
 class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
   EncounterBloc(this.repository) : super(EncounterState()) {
+    on<InvalidateEncounters>((event, emit) async {
+      emit(EncounterState(mode: state.mode, radiusKm: state.radiusKm));
+      await _load(emit);
+    });
     on<RefreshEncounters>((event, emit) => _load(emit));
     on<MoreEncounters>((event, emit) => _load(emit, more: true));
     on<EncounterFilterChanged>((event, emit) async {

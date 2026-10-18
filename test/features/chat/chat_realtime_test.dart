@@ -36,7 +36,7 @@ void main() {
       origin: 'http://127.0.0.1:${server.port}',
       token: () async => 'fixture-access-token',
     );
-    final connected = realtime.events.firstWhere((e) => e.type == 'sync');
+    final connected = realtime.events.firstWhere((e) => e.type == 'reconnected');
     realtime.configure('owner');
     await connected.timeout(const Duration(seconds: 5));
     final socket = await upgraded.future;
