@@ -715,3 +715,15 @@ Task12 accepted and merged: backendbf871a93, admin808b2694, mobile1ddc4498. Curr
 Feature `feature/pilot-hardening`, API1.11.0. See [executed checks, review fixes, measured limits and source commits](testing/task13-evidence.md). All six checklist items are accounted for above. Task13 remains in progress: dense-load latency/drain gates and owner production battery/coverage/frame/memory/accessibility evidence are pending. The profile harness compiles, but has not run on a device. No Task14 start or main promotion.
 
 Task12 acceptance supersedes its older historical pending labels. No package/tool prerequisite remains for executed local checks. Owner phone/iOS runtime, deployment hardware capacity, APNs/live push and other release prerequisites cannot be inferred from code inspection or builds.
+
+## Published Task 13 review branches
+
+All use `feature/pilot-hardening` → `development`, draft pending the open capacity/device gates. Published implementation/evidence checkpoints before this link update:
+
+| Repository | Checkpoint | Draft PR |
+| --- | --- | --- |
+| Backend | `1496c86` | [PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) |
+| Admin | `4513d01` | [PR13](https://github.com/awais-ur-rehman/paths-admin/pull/13) |
+| Mobile | `b01a564` (application `4caff48`, journey `f308894`) | [PR13](https://github.com/awais-ur-rehman/paths-mobile/pull/13) |
+
+Owner instructions: paths-mobile `docs/testing/task13-device.md`. Native builds correspond to the code checkpoints in the evidence; subsequent link commits change documentation only. Local checks passed within their stated scope. GitHub CI is a separate live check and is not inferred from local results. Main is unchanged; Task13 remains open and Task14 has not started.

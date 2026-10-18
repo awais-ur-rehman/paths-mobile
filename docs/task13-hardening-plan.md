@@ -7,7 +7,7 @@ Baseline: 06_IMPLEMENTATION_PLAN.md Task13, PRD section6, TRD sections3/4/12 and
 - [x] Security: expand real authorization/ID enumeration, quotas, replay, CSRF, media and redaction regressions. Fix demonstrated defects, keep fixture/measurement details out of normal user flows.
 - [ ] Device: production tracking battery/coverage experiment and full-journey integration harness, private config, aggregate frame/image measurements. Owner runs physical phones; no fabricated eight-hour or accuracy results.
 - [ ] UI: map offscreen lifecycle, focused rebuild/image memory regressions, accessibility200percent/width/keyboard/contrast/reduced motion, reference renders. Fix measured defects, avoid broad redesign.
-- [ ] Verification/review: existing local toolchain, complete suites/builds; one fresh whole-branch review/fix; per-repo evidence/status, feature pushes and draft PRs pending device gates. Do not startTask14.
+- [x] Verification/review: existing local toolchain, complete suites/builds; one fresh whole-branch review/fix; per-repo evidence/status, feature pushes and draft PRs pending device gates. Do not startTask14.
 
 Ruling: use the existing clean checkouts on feature/pilot-hardening, as in accepted prior tasks, to preserve private local setup and caches. No Node/Flutter package installation or new worktree is needed; main is untouched. Cost if wrong: branch-local changes are reviewable and reversible.
 Ruling: isolated cached Docker services and synthetic members for fault/load work; never restart or erase the owner's current database/cache/R2 data. Preserve results outside disposable fixture volumes. Cost if wrong: local benchmarks are not production capacity proof.

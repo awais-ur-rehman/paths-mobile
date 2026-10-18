@@ -78,3 +78,15 @@ No phone/emulator was operated. Owner must run the profile journey, native map/i
 Later evidence/link commits change documentation only. All feature work stays in draft PRs into development; no Task13 merge or main promotion before applicable gates pass.
 
 Local owner-test runtime: previous backend image retained as `paths-backend:task12-verified`; cached Task13 image applied with the existing R2/push/test Compose overlays. Services are healthy and proxy readiness returned HTTP200. Existing private environment files, keys, data and recovery volumes were retained. This was local test preparation, not an external deployment. Synthetic hardening containers/network were stopped; named fixture volumes and ignored reports remain.
+
+## Published Task 13 review branches
+
+All use `feature/pilot-hardening` → `development`, draft pending the open capacity/device gates. Published implementation/evidence checkpoints before this link update:
+
+| Repository | Checkpoint | Draft PR |
+| --- | --- | --- |
+| Backend | `1496c86` | [PR15](https://github.com/awais-ur-rehman/paths-backend/pull/15) |
+| Admin | `4513d01` | [PR13](https://github.com/awais-ur-rehman/paths-admin/pull/13) |
+| Mobile | `b01a564` (application `4caff48`, journey `f308894`) | [PR13](https://github.com/awais-ur-rehman/paths-mobile/pull/13) |
+
+Owner instructions: paths-mobile `docs/testing/task13-device.md`. Native builds correspond to the code checkpoints in the evidence; subsequent link commits change documentation only. Local checks passed within their stated scope. GitHub CI is a separate live check and is not inferred from local results. Main is unchanged; Task13 remains open and Task14 has not started.
