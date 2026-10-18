@@ -139,9 +139,9 @@ Owner acceptance2026-10-18: phone tests and restore checks passed; Task12 merged
 
 ### Task 13: Load, security, battery and UI hardening
 
-- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **in progress — full clustered workload measured; latency/drain gate pending; see testing/task13-evidence.md**
+- [ ] Test 50 samples/sec sustained, 200/sec burst, 300 socket clients, all candidates in one area; measure query plans/locks and outbox lag. — **in progress — dense processing now completes and drains; five-second encounter gate still pending; see testing/task13-evidence.md**
 - [x] Test Valkey restart, worker crash, database restart, upload cancellation and SMTP/push outage; recover committed work. — **verified locally — four isolated service faults and upload/push transport regressions passed; real vendor/APNs evidence remains separate**
-- [x] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **verified locally — complete151-test backend integration suite including quotas, replay, CSRF, media and redaction passed**
+- [x] Run authorization enumeration, rate-limit, token replay, CSRF, private-media and secrets/log-redaction checks. — **verified locally — complete172-test backend integration suite including quotas, replay, CSRF, media and redaction passed**
 - [ ] Repeat battery/coverage experiment using production integration, not only the Phase0 harness. — **awaiting device test — production journey, eight-hour battery tooling and labeled coverage template implemented; no field results claimed**
 - [ ] Profile rebuilds/map offscreen behavior/image memory; fix demonstrated regressions. — **implemented and partly verified — hidden image/map regressions pass; native frame/RSS/rebuild profiling awaits owner**
 - [ ] Complete accessibility/text-scale/reference screenshot comparisons and update honest product limitations. — **partly verified —276 Flutter tests/goldens and15 browser cases passed; native accessibility/reference acceptance pending**
@@ -727,3 +727,14 @@ All use `feature/pilot-hardening` → `development`, draft pending the open capa
 | Mobile | `b01a564` (application `4caff48`, journey `f308894`) | [PR13](https://github.com/awais-ur-rehman/paths-mobile/pull/13) |
 
 Owner instructions: paths-mobile `docs/testing/task13-device.md`. Native builds correspond to the code checkpoints in the evidence; subsequent link commits change documentation only. Local checks passed within their stated scope. GitHub CI is a separate live check and is not inferred from local results. Main is unchanged; Task13 remains open and Task14 has not started.
+
+## Dense processing follow-up —2026-10-18
+
+Backend application7f93a3a, strict measurement105b73b, API1.11.0. Fixes cover owner snapshots, bounded peer pages, completed-observation coalescing, typed proof references, shared read locks, nonblocking pair subsets and bounded busy retries. See [complete evidence](testing/task13-evidence.md) and [ledger](task13-hardening-plan.md).
+
+- **Verified:**172 backend integration;42unit/13Phase0/4metrics; lint/type/build/contract; four final isolated recovery faults. Final backend CI39133554221 passed. Admin/mobile code did not change during this follow-up; prior native/browser results remain explicitly historical.
+- **Load in progress:** strict native run39133554208 verified5000 accepted,44,850 distinct pairs,300 sockets, zero backlog; APIp95<=136.48ms and chatp951176.66ms. Encounterp9525431.67ms **failed** the5000ms gate. Load workflow remains failing; do not mark complete based on successful ingestion or backend CI.
+- **Awaiting device/field tests:** production battery/coverage, frames/rebuilds/map/image memory, accessibility/reference acceptance and iOS runtime/APNs evidence. No phone operated, no results invented.
+- **Qualification prerequisite:** native4vCPU/8GB deployment baseline/soak unavailable. The measured Linux harness exposes2CPUs; the Mac database is emulated. Additional CPU is not assumed to make the gate pass.
+
+All Task13 PRs remain draft into development. Main unchanged; no Task14. Local backend runtime refreshed from the cached verified image, readiness200, private config/data and rollback image preserved. No external deployment or new local dependency installation.
