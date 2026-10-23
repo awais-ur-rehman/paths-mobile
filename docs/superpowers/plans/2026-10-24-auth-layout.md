@@ -34,7 +34,7 @@ Files: provider_button.dart, provider_auth_sheet.dart, scoped auth form theme; a
 
 - [x] Run full Flutter tests, analyze and installed-tooling tests; inspect complete diff and fix actual issues. Obtain fresh whole-change review.
 - [x] Build ARM64 debug offline, compare staged/compiler/APK kernel and inspect bundled logo/provider resources. No iOS build.
-- [ ] Record actual evidence and Android install/test instructions, push updated draft PR, retain phone acceptance gate. No merge or main promotion.
+- [x] Record actual evidence and Android install/test instructions, push updated draft PR, retain phone acceptance gate. No merge or main promotion.
 
 ## Execution ledger
 

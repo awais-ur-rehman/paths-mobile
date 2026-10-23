@@ -946,7 +946,7 @@ Current phase/task: screen-by-screen authentication UI, implemented and locally 
 | Android ARM64 APK and bundled assets | Verified | Offline debug build21s, 274 tasks:24 executed/250 up-to-date. Kernel/compiler/APK comparison passed; official round Google bytes match source, old pill absent, new auth copy compiled and engine ARM64 only |
 | Android native UI/provider/autofill appearance | Awaiting device test | docs/AUTH_UI_DEVICE_TESTS.md; no phone/emulator operated |
 | iOS build/runtime | Not run / runtime validation pending | Owner explicitly excluded iOS builds this round; implementation preserved. Earlier missing Xcode destination remains unresolved; no iOS result inferred from Android |
-| Push and draft handoff | In progress | Existing mobile PR16 targets development; retain draft and main unchanged pending owner phone acceptance |
+| Push and draft handoff | Verified; awaiting device test | Source/evidence pushed through4c9ff6b to feature/logo-refresh. Mobile PR16 targets development and remains draft; main unchanged pending owner phone acceptance. GitHub reported no checks yet at handoff; local results above are the executed evidence |
 
 Final kernel: **76,139,616 bytes**, SHA256 `71400d110aeff05161b55df10a46901aedccb8648c4a73e0892c2edcf9647ad2`. APK SHA256 `6775dba6ffb0c81abf8309ef853e304a1d51d93610bae8bd8a27b45955728419`. Actual APK: `build/app/outputs/apk/debug/app-debug.apk`. Local backend readiness returned ok / contract1.12.0. No dependencies or SDKs installed; official Google artwork fetched under the visual-assets exception and recorded in docs/ASSETS.md.
 
