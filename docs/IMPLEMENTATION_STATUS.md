@@ -870,3 +870,19 @@ Backend nativeCI39154572320/39154869416/39155026735 passed at their respective i
 Owner explicitly requested merging the open PRs and promoting all current work to main for continued testing, overriding the earlier requirement to wait for the encounter load gate. This promotion does not qualify Task13 or represent a verified performance release. Final measured source df64321 passed chatp95=531.834ms and failed encounterp95=36,652.463ms against5,000ms; all5,000samples/44,850pairs/300sockets/API/drain passed. Existing218integration/56unit/13feasibility/4metric and5recovery results remain the evidence for that source; documentation updates do not rerun those tests.
 
 Proceed through normal feature→development and development→main PR merges, preserving published history and branch protections. Keep the failed load measurements and outstanding native baseline/soak/field/push/iOS gates open. No UI change, deployment or device operation is included. UI work and further owner testing are deferred to the next session.
+
+
+## UI pass1 — logo refresh, 23 October 2026
+
+Current work: owner requested an elegant, subtle replacement logo using the linked logo-design skill, followed by app integration. API contract remains1.12.0. Branch: feature/logo-refresh, from development.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Read requested skill / inspect current brand and consumers | Verified | Read remote SKILL.md and redesign/construction/testing/library references; inspected existing SVG/exporter/Flutter painter/loader and admin uses |
+| Three original concepts / refinement | Implemented; visual checks verified | design/logo-refresh contains V1/V2 vectors, outlined bundled Inter wordmarks and comparison; recommendation B—Open P |
+| Asset validation | Verified |12SVGs parsed,31PNGs decoded; inspected actual16/24/32/64px, reversed/mirror/rotation/blur views using existing Sharp/Pillow |
+| Direction selection | Awaiting owner choice | Requested skill explicitly requires a concept checkpoint before final asset kit/integration |
+| App, splash, launcher, loader and admin integration | Not started; depends on selection | Production assets/code remain unchanged; no runtime/native rendering result claimed |
+| Device/build gate | Pending integration | No phone/emulator operated; no Flutter build or application tests rerun for concept-only work |
+
+No dependency, SDK, font or plugin installation. Read the skill over HTTPS and kept three reference-library study SVGs temporarily outside the repositories; only original concept artwork is committed. Draft asset sources/licensing are in docs/ASSETS.md. Existing encounter performance qualification remains open and is unaffected by this design work.

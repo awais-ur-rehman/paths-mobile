@@ -102,3 +102,16 @@ No new production visual assets. Existing Paths branding, fonts and reference go
 The Apple control uses the cached `sign_in_with_apple` package's standard button (8.2.0, MIT code license; Apple mark remains subject to Apple's Sign in with Apple design rules). No separate Apple logo asset was copied. Both controls retain their provider names and comparable size. Native signed-device presentation remains to be checked.
 
 Google sign-in artwork SHA-256: `d260d50a14d8f7deb03025e8ceb644577a8798e127fe203a959cd6cebf145e4e`.
+
+
+## Logo refresh concepts — 23 October 2026
+
+Draft artwork only; current bundled app/admin branding is unchanged pending owner direction selection.
+
+| Asset | Purpose | Source / generation | License / attribution | Location |
+| --- | --- | --- | --- | --- |
+| Passing, Open P and Between V1/V2 SVGs | Original logo directions for owner review | Original cubic geometry; methodology from https://github.com/kaankiziltug/logo-design-skill; no reference-library logo copied | Project symbol artwork; no third-party symbol attribution | design/logo-refresh/*-v1.svg, *-v2.svg |
+| Outlined Paths wordmark in concept lockups | Evaluate symbol/type proportions | Existing bundled Inter variable font, weight460, outlined with local CoreText; adjusted spacing | Inter SIL OFL1.1; retain assets/fonts/Inter-OFL.txt | design/logo-refresh/*-lockup-*.svg |
+| concepts.png and PNG render checks | Comparison, small-size and monochrome inspection | Existing local Sharp/librsvg and Pillow; no new dependency | Same artwork/font terms | design/logo-refresh/*.png |
+
+Design brief, examined references, actual checks and integration tasks are recorded in design/logo-refresh/README.md. These comparison tiles are not final Android/iOS launcher assets.
