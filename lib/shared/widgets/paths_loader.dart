@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'paths_brand.dart';
 
-/// The two original Paths curves are drawn as vectors, with a traveller on each.
+/// The approved Open P route, with a traveller following its open contour.
 class PathsLoader extends StatefulWidget {
   const PathsLoader({this.size = 40, this.color, super.key});
   final double size;
@@ -46,9 +46,9 @@ class _PathsLoaderState extends State<PathsLoader>
         child: SizedBox.square(
           dimension: widget.size,
           child: CustomPaint(
-            painter: _CrossingPainter(
+            painter: _RoutePainter(
               controller,
-              widget.color ?? const Color(0xFF147DCE),
+              widget.color ?? const Color(0xFF101418),
             ),
           ),
         ),
@@ -57,35 +57,32 @@ class _PathsLoaderState extends State<PathsLoader>
   );
 }
 
-class _CrossingPainter extends CustomPainter {
-  _CrossingPainter(this.progress, this.color) : super(repaint: progress);
+class _RoutePainter extends CustomPainter {
+  _RoutePainter(this.progress, this.color) : super(repaint: progress);
   final Animation<double> progress;
   final Color color;
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.scale(size.width / 128, size.height / 128);
-    final curves = createPathsCurves();
+    canvas.scale(size.width / 256, size.height / 256);
+    final curve = createPathsRoute();
     final base = Paint()
       ..color = color.withValues(alpha: .22)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
+      ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
-    for (var i = 0; i < curves.length; i++) {
-      canvas.drawPath(curves[i], base);
-      final metric = curves[i].computeMetrics().first;
-      final t = (progress.value + i * .5) % 1;
-      final trailStart = math.max(0.0, t - .2);
-      canvas.drawPath(
-        metric.extractPath(metric.length * trailStart, metric.length * t),
-        base..color = color,
-      );
-      base.color = color.withValues(alpha: .22);
-      final position = metric.getTangentForOffset(metric.length * t)!.position;
-      canvas.drawCircle(position, 7, Paint()..color = color);
-    }
+    canvas.drawPath(curve, base);
+    final metric = curve.computeMetrics().first;
+    final t = progress.value;
+    final trailStart = math.max(0.0, t - .2);
+    canvas.drawPath(
+      metric.extractPath(metric.length * trailStart, metric.length * t),
+      base..color = color,
+    );
+    final position = metric.getTangentForOffset(metric.length * t)!.position;
+    canvas.drawCircle(position, 12, Paint()..color = color);
   }
 
   @override
-  bool shouldRepaint(covariant _CrossingPainter old) =>
+  bool shouldRepaint(covariant _RoutePainter old) =>
       old.color != color || old.progress != progress;
 }

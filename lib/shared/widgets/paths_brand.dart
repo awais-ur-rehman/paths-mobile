@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 
-// Geometry matches the editable Paths SVG sources in assets/brand.
-List<Path> createPathsCurves() => [
-  Path()
-    ..moveTo(32, 96)
-    ..cubicTo(32, 58, 96, 70, 96, 32),
-  Path()
-    ..moveTo(32, 32)
-    ..cubicTo(32, 70, 96, 58, 96, 96),
-];
+import 'generated/paths_geometry.dart';
+export 'generated/paths_geometry.dart' show createPathsRoute;
 
 class PathsWordmark extends StatelessWidget {
   const PathsWordmark({
@@ -18,12 +11,13 @@ class PathsWordmark extends StatelessWidget {
   });
   final double width;
   final Color color;
+
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'Paths',
     child: SizedBox(
       width: width,
-      height: width * 128 / 408,
+      height: width * 256 / 650,
       child: CustomPaint(painter: _BrandPainter(color, true)),
     ),
   );
@@ -32,11 +26,12 @@ class PathsWordmark extends StatelessWidget {
 class PathsSymbol extends StatelessWidget {
   const PathsSymbol({
     this.size = 72,
-    this.color = const Color(0xFF147DCE),
+    this.color = const Color(0xFF101418),
     super.key,
   });
   final double size;
   final Color color;
+
   @override
   Widget build(BuildContext context) => Semantics(
     label: 'Paths',
@@ -51,45 +46,30 @@ class _BrandPainter extends CustomPainter {
   const _BrandPainter(this.color, this.wordmark);
   final Color color;
   final bool wordmark;
+  static final _route = createPathsRoute();
+  static final _lettering = createPathsLettering();
+
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.width / (wordmark ? 408 : 128), size.height / 128);
+    canvas.scale(size.width / (wordmark ? 650 : 256), size.height / 256);
     final stroke = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
+      ..strokeWidth = pathsSymbolStrokeWidth
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
-    for (final curve in createPathsCurves()) {
-      canvas.drawPath(curve, stroke);
-    }
+    canvas.save();
     if (wordmark) {
-      final letters = Path()
-        ..moveTo(155, 86)
-        ..lineTo(155, 42)
-        ..lineTo(173, 42)
-        ..cubicTo(198, 42, 198, 66, 173, 66)
-        ..lineTo(155, 66)
-        ..moveTo(211, 86)
-        ..lineTo(227, 42)
-        ..lineTo(243, 86)
-        ..moveTo(217, 72)
-        ..lineTo(237, 72)
-        ..moveTo(255, 42)
-        ..lineTo(287, 42)
-        ..moveTo(271, 42)
-        ..lineTo(271, 86)
-        ..moveTo(300, 42)
-        ..lineTo(300, 86)
-        ..moveTo(332, 42)
-        ..lineTo(332, 86)
-        ..moveTo(300, 64)
-        ..lineTo(332, 64)
-        ..moveTo(376, 47)
-        ..cubicTo(352, 32, 341, 59, 363, 64)
-        ..cubicTo(389, 71, 376, 96, 349, 82);
-      canvas.drawPath(letters, stroke..strokeWidth = 6);
+      canvas.translate(pathsSymbolOffset.dx, pathsSymbolOffset.dy);
+      canvas.scale(pathsSymbolScale);
+    }
+    canvas.drawPath(_route, stroke);
+    canvas.restore();
+    if (wordmark) {
+      canvas.translate(pathsWordmarkOffset.dx, pathsWordmarkOffset.dy);
+      canvas.scale(pathsWordmarkScale);
+      canvas.drawPath(_lettering, Paint()..color = color);
     }
     canvas.restore();
   }
