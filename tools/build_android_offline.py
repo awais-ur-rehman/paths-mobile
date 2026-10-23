@@ -26,7 +26,9 @@ if not defines.get('PATHS_API_ORIGIN'):
 encoded = ','.join(base64.b64encode((key+'='+str(value).lower() if isinstance(value, bool) else key+'='+str(value)).encode()).decode() for key, value in defines.items())
 root = Path(__file__).resolve().parents[1]
 # Never print the defines: local files may also contain private service options.
-subprocess.run([str(Path(args.gradle).resolve()), '--offline', '--no-daemon',
+result = subprocess.run([str(Path(args.gradle).resolve()), '--offline', '--no-daemon',
     '-Pandroid.builder.sdkDownload=false', '-I', '../tools/offline-android.init.gradle',
     '-Ptarget=lib/main.dart', '-Pdart-defines='+encoded, ':app:assembleDebug'],
-    cwd=root/'android', check=True)
+    cwd=root/'android', check=False)
+if result.returncode:
+    parser.exit(result.returncode, 'Android build failed; app configuration omitted. See Gradle output above.\n')
