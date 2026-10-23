@@ -927,3 +927,31 @@ Current implementation: `cc32efd` (Flutter) / `bbc384e` (native/exports), plus `
 - iOS generic unsigned build **blocked**: Xcode reports its generic iOS26.5 destination unavailable, exit70, including a retry outside sandbox cache restrictions. Catalog validation is not a compile/runtime pass. No phone or emulator was operated.
 
 Draft PRs: [mobile16](https://github.com/awais-ur-rehman/paths-mobile/pull/16), [admin16](https://github.com/awais-ur-rehman/paths-admin/pull/16). Main is unchanged. Owner next action: use `docs/LOGO_DEVICE_TESTS.md` to install the verified APK while retaining data, then check launcher/splash/headers/loader/notification artwork. No existing backend performance gate is closed by this brand update.
+
+
+## UI pass 2 — authentication forms, 24 October 2026
+
+Current phase/task: screen-by-screen authentication UI, implemented and locally verified; awaiting Android device test. Owner accepted the Open P direction and requested the supplied form/reference layout with existing Paths colors. Branch `feature/logo-refresh`; API contract **1.12.0**, unchanged. Source commits: `06858ef` (shared forms/confirmation), `0385c34` (provider controls/artwork/visual tests). No backend/admin application change in this pass. Earlier concept-selection and logo-direction checkpoints are superseded by owner acceptance; the combined auth appearance gate remains pending.
+
+| Applicable item | Status | Files / evidence |
+| --- | --- | --- |
+| Center P without wordmark; centered short title/description; scoped pill fields/buttons | Implemented; automated checks verified | auth_widgets.dart, auth_form_theme.dart; login/signup/recovery visual fixtures and symbol positioning tests |
+| Signup, reset and password reveal consistency | Implemented; automated checks verified | credential_screens.dart, password_field.dart, reset_screen.dart; mismatched confirmation blocks requests, corrected confirmation sends once, independent reveal state and controller disposal |
+| OTP, age and profile setup fields | Implemented; automated checks verified | otp_screen.dart, account_screens.dart, profile_setup_screen.dart; existing signup/OTP/adult/profile routing tests pass |
+| Required consent and policy links | Implemented; automated checks verified | auth_consent.dart; 48px checkbox target, retained edits, independent link access, policy visit does not auto-accept |
+| Circular supported-provider controls and provider setup | Implemented; automated checks verified | provider_button.dart, provider_auth_sheet.dart, official round Google SVG/PNG; keyboard/disabled semantics, capability and busy gates retained. Apple remains deferred, not advertised as available |
+| Keyboard, narrow layout and large text | Automated checks verified; awaiting device test | Existing and new 320/390/768 layouts; actual large-font label truncation reproduced and fixed with floating labels/compact inset at large text |
+| Full automated verification | Verified | 311 Flutter tests passed without golden updates on final source; flutter analyze --no-pub clean; 15 tooling tests passed; git diff --check passed |
+| Fresh whole-change review | Verified within source-review scope | No critical/important functional defect found; accidental nested provider-email shadow removed. Temporary rendering diagnostics removed before final checks |
+| Android ARM64 APK and bundled assets | Verified | Offline debug build21s, 274 tasks:24 executed/250 up-to-date. Kernel/compiler/APK comparison passed; official round Google bytes match source, old pill absent, new auth copy compiled and engine ARM64 only |
+| Android native UI/provider/autofill appearance | Awaiting device test | docs/AUTH_UI_DEVICE_TESTS.md; no phone/emulator operated |
+| iOS build/runtime | Not run / runtime validation pending | Owner explicitly excluded iOS builds this round; implementation preserved. Earlier missing Xcode destination remains unresolved; no iOS result inferred from Android |
+| Push and draft handoff | In progress | Existing mobile PR16 targets development; retain draft and main unchanged pending owner phone acceptance |
+
+Final kernel: **76,139,616 bytes**, SHA256 `71400d110aeff05161b55df10a46901aedccb8648c4a73e0892c2edcf9647ad2`. APK SHA256 `6775dba6ffb0c81abf8309ef853e304a1d51d93610bae8bd8a27b45955728419`. Actual APK: `build/app/outputs/apk/debug/app-debug.apk`. Local backend readiness returned ok / contract1.12.0. No dependencies or SDKs installed; official Google artwork fetched under the visual-assets exception and recorded in docs/ASSETS.md.
+
+Review/check fixes: a large-font Confirm password label was clipped and the initial compact consent target was40px; both were reproduced by failing tests and corrected. First configured Google golden initially raced image decoding; explicit asset precaching fixed the harness. Shared location/verification goldens were deliberately updated for the centered P header. An apparently missing verification P was investigated rather than accepted: cropped output contains629 ink pixels, and a live rendered pixel assertion verifies the symbol; no production painter workaround was required. Final full suite reran without updating goldens.
+
+Material decisions: use existing OTP recovery rather than adding reset links; preserve persistent secure sessions rather than adding a decorative Remember me checkbox; retain supported Google/Apple filtering rather than add unsupported Facebook. Login remains the signed-out root with no inert Back button; signup/recovery/challenges retain functional navigation. Shared AuthScaffold styling intentionally reaches setup forms while unrelated app controls keep their current theme.
+
+Phone instructions and acceptance steps: docs/AUTH_UI_DEVICE_TESTS.md. Existing encounter load qualification remains open; this UI pass does not rerun or close backend performance gates.

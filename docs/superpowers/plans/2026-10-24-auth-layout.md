@@ -19,21 +19,21 @@
 ### Task 1: Shared form layout and credentials
 
 Files: auth_widgets.dart, credential_screens.dart, reset_screen.dart, otp_screen.dart, account_screens.dart; profile_setup_screen.dart uses the shared input treatment. Tests: auth_screens_test.dart plus focused layout/confirmation tests.
-- [ ] Add signup-confirmation rejection/acceptance and password-reveal tests; observe expected failures before implementation.
-- [ ] Implement centered symbol/header, scoped pill fields/buttons and concise account/consent controls. Add signup confirmation and reuse reveal fields in reset. Preserve existing auth contracts.
-- [ ] Update flow selectors for the deliberate copy changes, exercise keyboard/large text and review login/signup/recovery/OTP/age/setup rendered goldens. Commit coherent shared-layout and form changes.
+- [x] Add signup-confirmation rejection/acceptance and password-reveal tests; observe expected failures before implementation.
+- [x] Implement centered symbol/header, scoped pill fields/buttons and concise account/consent controls. Add signup confirmation and reuse reveal fields in reset. Preserve existing auth contracts.
+- [x] Update flow selectors for the deliberate copy changes, exercise keyboard/large text and review login/signup/recovery/OTP/age/setup rendered goldens. Commit coherent shared-layout and form changes.
 
 ### Task 2: Circular provider controls
 
 Files: provider_button.dart, provider_auth_sheet.dart, scoped auth form theme; assets/auth source/export, pubspec.yaml, docs/ASSETS.md. Tests: provider_auth_sheet_test.dart and new provider button interaction tests.
-- [ ] Add accessible provider selection and disabled/keyboard-focus tests and observe missing behavior.
-- [ ] Bundle official Google round artwork, use existing public AppleLogoPainter, lay out supported options in one centered row/Wrap, retain SDK/config gates and busy handling. Apply consistent styling to provider setup/recovery forms.
-- [ ] Run provider tests and inspect rendered configured-provider golden; commit.
+- [x] Add accessible provider selection and disabled/keyboard-focus tests and observe missing behavior.
+- [x] Bundle official Google round artwork, use existing public AppleLogoPainter, lay out supported options in one centered row/Wrap, retain SDK/config gates and busy handling. Apply consistent styling to provider setup/recovery forms.
+- [x] Run provider tests and inspect rendered configured-provider golden; commit.
 
 ### Task 3: Verification and handoff
 
-- [ ] Run full Flutter tests, analyze and installed-tooling tests; inspect complete diff and fix actual issues. Obtain fresh whole-change review.
-- [ ] Build ARM64 debug offline, compare staged/compiler/APK kernel and inspect bundled logo/provider resources. No iOS build.
+- [x] Run full Flutter tests, analyze and installed-tooling tests; inspect complete diff and fix actual issues. Obtain fresh whole-change review.
+- [x] Build ARM64 debug offline, compare staged/compiler/APK kernel and inspect bundled logo/provider resources. No iOS build.
 - [ ] Record actual evidence and Android install/test instructions, push updated draft PR, retain phone acceptance gate. No merge or main promotion.
 
 ## Execution ledger
