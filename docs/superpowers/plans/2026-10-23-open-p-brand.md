@@ -10,7 +10,7 @@
 ## Global constraints
 
 - Preserve the selected geometry, ink/white/blue palette, outlined Inter lettering and its existing SIL OFL notice.
-- No dependency/SDK/font/image installation, emulator, phone operation or unrelated UI/backend changes.
+- No SDK/font/image installation, emulator, phone operation or unrelated UI/backend changes. Existing owner authorization covers cache downloads of the pinned Android build/test dependencies; do not change versions.
 - Reuse the clean feature/logo-refresh branches; no additional worktree, so existing private config and offline caches remain available.
 - Keep PRs draft pending owner appearance check; do not infer iOS runtime evidence from Android.
 
@@ -39,3 +39,8 @@ Selected B is integrated in commits bbc384e (exports/native) and cc32efd (Flutte
 The first offline Android build exposed missing pinned Kotlin plugin artifacts. A separate regression reproduced configuration leaking through Python's failed subprocess exception; commit 8d95b84 removes that traceback and preserves the exit status. The focused regression passes. The authorized Android dependency cache fill does not change package versions or install an SDK. Generic unsigned iOS compilation is blocked by the selected Xcode iOS 26.5 platform being absent; catalog dimensions and opacity checks passed, but no compile or runtime pass is claimed.
 
 Re-exported from the committed masters with installed Sharp/Pillow and cached Dart; generated geometry and all tracked asset outputs were unchanged. Final focused checks passed: 2 native parity/safe-area tests and the build-failure privacy regression. Final tooling suite executed 15 tests: 13 passed, 2 failed because the required cached Kotlin compiler 2.4.0 is absent, not because Kotlin policy assertions ran and failed. Admin CI run 40007338338 passed; admin PR16 is draft.
+
+After the exact compiler/coroutines prerequisites were resolved and Swift module-cache access was allowed, all 15 tooling tests passed (8.698s). The earlier 2 prerequisite failures are resolved. Android full compilation remains in progress; iOS generic-destination blocker remains.
+
+
+Final Android result: fully offline ARM64 build passed in 14s (274 tasks); compiler/staged/APK kernel comparison passed, packaged launcher pixels equal the approved PNG, native P resources and ARM64 ABI confirmed. Final 15 tooling tests passed. Cache support committed as 70b5c34: original vendor POM/JAR only, restricted to app module; included-SDK repository-policy error caught and corrected by actual build. Git diff check passed, generated report excluded. Mobile/admin draft PR16 retain the owner appearance gate; iOS generic destination remains unavailable, so the final gate checkbox stays open. Device commands use adb installation of the verified APK and preserve app data.

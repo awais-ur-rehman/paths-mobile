@@ -1,6 +1,6 @@
 # Open P appearance check
 
-Branch: `feature/logo-refresh`. Approved artwork: **B — Open P**. Implementation commits: `bbc384e` (native/exports), `cc32efd` (Flutter). API contract: 1.12.0, unchanged. Main remains unchanged and PRs remain draft until this check.
+Branch: `feature/logo-refresh`. Approved artwork: **B — Open P**. Implementation commits: `bbc384e` (native/exports), `cc32efd` (Flutter), `70b5c34` (offline cache support). API contract: 1.12.0, unchanged. Main remains unchanged and PRs remain draft until this check.
 
 ## Prerequisites
 
