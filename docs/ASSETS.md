@@ -2,12 +2,14 @@
 
 ## Original identity
 
-Two rounded crossing paths form the Paths symbol. Custom vector lettering forms the primary wordmark. Original Paths project artwork created in this session; no reference-app marks or photos reused. Rights reserved to the project owner; no third-party attribution required for this artwork. Editable SVG sources and reproducible Pillow exporter are retained in paths-mobile/tools/export_brand.py. No stock or generated people are presented as members.
+The owner selected **Open P (concept B)** on 23 October 2026. A single open-ended P route replaces the earlier crossing/hourglass mark. Original Paths symbol geometry is project artwork with no third-party symbol attribution. The title-case wordmark uses outlined bundled Inter at weight 460 with adjusted spacing; retain its existing SIL Open Font License 1.1 notice. No reference-app mark or reference-library trademark was copied.
+
+Editable masters: assets/brand/source/paths-symbol.svg and paths-logo.svg. tools/export_brand.py uses existing local Sharp/librsvg and Pillow to generate SVG/PNG, Flutter vector paths, Android resources, iOS catalogs and admin assets. No new renderer package is installed. Native sizing is intentionally different from general UI artwork to respect platform masks.
 
 | Asset | Purpose and locations | Source/license |
 |---|---|---|
-| paths-logo.svg; paths-logo-ink.svg; paths-logo-white.svg | Primary wordmark, product/admin identity | Original SVG geometry, project artwork |
-| paths-symbol.svg/.png; ink/white variants | App/splash/shared symbol | Original SVG geometry; PNG exports via local Pillow 12.3 |
+| paths-logo.svg; paths-logo-ink.svg; paths-logo-white.svg | Primary wordmark, product/admin identity | Original symbol; outlined Inter lettering under bundled SIL OFL |
+| paths-symbol.svg/.png; ink/white variants | App/splash/shared symbol | Original Open P geometry; SVG rasterization via local Sharp, platform exports via Pillow |
 | Android mipmap icons + drawable/paths_symbol.xml | Density PNG fallback, adaptive foreground, themed monochrome, Android 12 splash | Same symbol; foreground stays inside 66/108 safe region; OS supplies adaptive mask |
 | iOS Assets.xcassets/AppIcon + LaunchImage | Opaque square app icons (OS rounds), transparent centered launch symbol | Same symbol; each required size exported separately |
 | Inter-Variable.ttf | Bundled UI font | https://github.com/google/fonts/tree/main/ofl/inter — SIL Open Font License 1.1, retained Inter-OFL.txt with copyright notices |
@@ -34,7 +36,7 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - License checked2026-10-17: https://www.pexels.com/license/ . Free commercial/app use and modification permitted; attribution not required. Do not imply endorsement, misuse identifiable people, resell unaltered copies or redistribute as stock. Optional photographer credit appears in the app's image credits.
 - Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
 
-Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained tools/render_logo.swift. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
+Task3 originally exported the ink wordmark with tools/render_logo.swift. The Open P exporter now renders it directly from the approved SVG; the obsolete fixed-aspect Swift helper was retired. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
 
 ## Device-feedback loader and splash
 
@@ -106,7 +108,7 @@ Google sign-in artwork SHA-256: `d260d50a14d8f7deb03025e8ceb644577a8798e127fe203
 
 ## Logo refresh concepts — 23 October 2026
 
-Draft artwork only; current bundled app/admin branding is unchanged pending owner direction selection.
+Concept-stage record: production branding was unchanged pending owner direction selection.
 
 | Asset | Purpose | Source / generation | License / attribution | Location |
 | --- | --- | --- | --- | --- |
@@ -115,3 +117,18 @@ Draft artwork only; current bundled app/admin branding is unchanged pending owne
 | concepts.png and PNG render checks | Comparison, small-size and monochrome inspection | Existing local Sharp/librsvg and Pillow; no new dependency | Same artwork/font terms | design/logo-refresh/*.png |
 
 Design brief, examined references, actual checks and integration tasks are recorded in design/logo-refresh/README.md. These comparison tiles are not final Android/iOS launcher assets.
+
+
+## Open P production assets — 23 October 2026
+
+- Approved source: design/logo-refresh/b-open-p-v2.svg and b-open-p-lockup-v2.svg; owner selected B. Primary artwork is ink #101418 on white #FFFFFF; inverse white and existing blue #147DCE accent variants are exported.
+- SVGs/PNGs: assets/brand/paths-symbol*, paths-logo*, paths-logo-stacked.svg and paths-wordmark.svg. paths-loader.svg follows the same P route. Symbols are monochrome SVG strokes with round caps; lettering is font-independent filled outlines.
+- Runtime: generated/paths_geometry.dart is reproducibly derived from the SVG masters; shared PathsSymbol/PathsWordmark/PathsLoader use it. No SVG package or new font dependency.
+- Android: density fallback PNGs, adaptive/themed foreground and Android12 splash use the P. Separate paths_notification.xml is white-on-transparent for push/tracking notifications. Actual control-hull tests verify the system-circle bounds.
+- iOS: every catalog slot exported separately; app icons opaque RGB, launch symbols transparent, launch storyboard retains centered aspect-fit constraints.
+- Admin: matching public/brand files, favicon.svg and apple-touch-icon.png. Reference-library SVGs were studied temporarily outside the repositories and are not bundled.
+- Reproduce with existing tools: python3 tools/export_brand.py. Requires Dart on PATH, Pillow, and already-installed sibling paths-backend/node_modules/sharp; does not install or download them.
+
+Usage/padding/minimum-size and source notes: docs/brand/OPEN_P.md. Runtime/system-mask appearance remains a phone check; catalog/XML/render checks are not device evidence.
+
+`docs/brand/open-p-preview.png` is a white-background review export of the same primary logo; original artwork/Inter terms above apply.

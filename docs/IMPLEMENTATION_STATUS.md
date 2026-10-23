@@ -886,3 +886,24 @@ Current work: owner requested an elegant, subtle replacement logo using the link
 | Device/build gate | Pending integration | No phone/emulator operated; no Flutter build or application tests rerun for concept-only work |
 
 No dependency, SDK, font or plugin installation. Read the skill over HTTPS and kept three reference-library study SVGs temporarily outside the repositories; only original concept artwork is committed. Draft asset sources/licensing are in docs/ASSETS.md. Existing encounter performance qualification remains open and is unaffected by this design work.
+
+
+## UI pass 1 — approved Open P integration, 23 October 2026
+
+Owner chose **B — Open P**, superseding the concept-selection checkpoint above. Branch: `feature/logo-refresh`; API contract **1.12.0**, unchanged.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Editable approved masters and export kit | Implemented | bbc384e; SVG symbol, horizontal/stacked/wordmark compositions, ink/white/blue SVG and PNG variants; `tools/export_brand.py` uses existing local Sharp/Pillow/Dart |
+| Flutter brand and loader | Implemented; automated checks verified | cc32efd; generated vector lettering/route shared by brand and loader, retained semantics/reduced motion/disposal; inspected actual login golden |
+| Android launchers, splash and notification silhouette | Implemented; native build pending | Distinct legacy/adaptive/splash scales; white notification drawable; source parity and conservative circular safe-area tests passed after observed failure against old artwork |
+| iOS app icons and launch images | Implemented; catalog checks verified; compile blocked | All 22 app-icon entries checked against slot sizes and opaque RGB; launch assets inspected; Xcode's selected iOS 26.5 platform is not installed, so generic unsigned build exited 70 before compilation |
+| Admin / browser brand | Implemented; automated checks verified | Admin 50611c3/a5d25dc; matching exported assets, favicon and Apple touch icon; lint/build and 8 tests passed; draft PR16 |
+| Flutter checks | Verified | `flutter analyze --no-pub`: no issues; `flutter test --no-pub`: 301 passed on final run without golden updates |
+| Offline build failure privacy | Verified by regression | 8d95b84; observed encoded configuration leaking through failed subprocess exception, then removed argv traceback and retained exit status; focused regression passed |
+| Independent final review | Verified within inspection scope | No critical/important defect found; source/Flutter/native parity, safe areas, notification silhouette, icon opacity, semantics and cleanup inspected; generated build report excluded from commits |
+| Device appearance / merge | Awaiting device test | No phone/emulator operated; draft PRs remain unmerged; main unchanged |
+
+The initial offline Android attempt was blocked by missing pinned Kotlin artifacts (including Google sign-in plugin Kotlin 2.3.0). The two native Kotlin tooling checks also require cached Kotlin compiler/stdlib/script-runtime 2.4.0. A separate owner-authorized cache fill is running with Android SDK downloads disabled; no manifest versions changed. Final build/tooling results follow below when available.
+
+Brand use, source and license records: `docs/brand/OPEN_P.md`, `docs/ASSETS.md`. No backend application change. Existing failed encounter load qualification and unavailable iOS runtime evidence remain open; these brand checks do not qualify either gate.
