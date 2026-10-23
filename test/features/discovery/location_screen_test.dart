@@ -99,14 +99,14 @@ void main() {
       await tester.pumpWidget(PathsApp(repository: auth, locationSync: sync));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'a long fixture password',
       );
-      await tap(tester, 'Sign in');
+      await tap(tester, 'Login');
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
       router.go('/profile');
       await tester.pumpAndSettle();
@@ -129,7 +129,7 @@ void main() {
       await tap(tester, 'Sign out');
       expect(tracker.status.name, 'paused');
       expect(store.pending, true);
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await sync.close();

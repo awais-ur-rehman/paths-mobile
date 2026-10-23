@@ -201,14 +201,14 @@ start(
     await tester.pumpAndSettle();
   }
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Email'),
+    find.widgetWithText(TextFormField, 'Email address'),
     'fixture@example.invalid',
   );
   await tester.enterText(
     find.widgetWithText(TextFormField, 'Password'),
     'fixture password',
   );
-  await tap(tester, 'Sign in');
+  await tap(tester, 'Login');
   return (
     router: GoRouter.of(tester.element(find.byType(Scaffold).first)),
     sync: sync,
@@ -330,14 +330,14 @@ void main() {
       await tester.pumpAndSettle();
       await logout;
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'fixture password',
       );
-      await tap(tester, 'Sign in');
+      await tap(tester, 'Login');
       expect(app.router.routeInformationProvider.value.uri.path, '/home');
       await stop(tester, app.sync, app.tracker);
     },

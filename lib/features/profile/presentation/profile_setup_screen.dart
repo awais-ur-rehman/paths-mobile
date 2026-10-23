@@ -222,65 +222,73 @@ class _ProfileFormState extends State<_ProfileForm> {
             ),
             const SizedBox(height: 20),
           ],
-          TextFormField(
-            controller: name,
-            readOnly: saving,
-            decoration: const InputDecoration(labelText: 'Name'),
-            textInputAction: TextInputAction.next,
-            validator: (v) =>
-                v == null ||
-                    v.trim().runes.length < 2 ||
-                    v.trim().runes.length > 80
-                ? 'Use 2–80 characters.'
-                : null,
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: username,
-            readOnly: saving,
-            autocorrect: false,
-            enableSuggestions: false,
-            textCapitalization: TextCapitalization.none,
-            decoration: const InputDecoration(
-              labelText: 'Username',
-              prefixText: '@',
-              helperText: '3–24 letters, numbers or underscores.',
+          AuthFieldSurface(
+            child: TextFormField(
+              controller: name,
+              readOnly: saving,
+              decoration: const InputDecoration(labelText: 'Name'),
+              textInputAction: TextInputAction.next,
+              validator: (v) =>
+                  v == null ||
+                      v.trim().runes.length < 2 ||
+                      v.trim().runes.length > 80
+                  ? 'Use 2–80 characters.'
+                  : null,
             ),
-            textInputAction: TextInputAction.next,
-            validator: (v) =>
-                v == null ||
-                    !RegExp(r'^[a-z0-9_]{3,24}$')
-                        .hasMatch(v.trim().toLowerCase())
-                ? 'Use 3–24 letters, numbers or underscores.'
-                : null,
           ),
           const SizedBox(height: 20),
-          PathsDropdownField<String>(
-            label: 'Gender',
-            value: gender,
-            enabled: !saving,
-            options: const [
-              PathsDropdownOption('man', 'Man'),
-              PathsDropdownOption('woman', 'Woman'),
-              PathsDropdownOption('another_identity', 'Another identity'),
-              PathsDropdownOption('prefer_not_to_say', 'Prefer not to say'),
-            ],
-            onChanged: (value) => gender = value,
-            validator: (value) => value == null ? 'Choose an option.' : null,
-          ),
-          const SizedBox(height: 20),
-          TextFormField(
-            controller: bio,
-            readOnly: saving,
-            maxLines: 4,
-            maxLength: 300,
-            decoration: const InputDecoration(
-              labelText: 'Bio (optional)',
-              alignLabelWithHint: true,
+          AuthFieldSurface(
+            child: TextFormField(
+              controller: username,
+              readOnly: saving,
+              autocorrect: false,
+              enableSuggestions: false,
+              textCapitalization: TextCapitalization.none,
+              decoration: const InputDecoration(
+                labelText: 'Username',
+                prefixText: '@',
+                helperText: '3–24 letters, numbers or underscores.',
+              ),
+              textInputAction: TextInputAction.next,
+              validator: (v) =>
+                  v == null ||
+                      !RegExp(r'^[a-z0-9_]{3,24}$')
+                          .hasMatch(v.trim().toLowerCase())
+                  ? 'Use 3–24 letters, numbers or underscores.'
+                  : null,
             ),
-            validator: (v) => (v?.runes.length ?? 0) > 300
-                ? 'Use up to 300 characters.'
-                : null,
+          ),
+          const SizedBox(height: 20),
+          AuthFieldSurface(
+            child: PathsDropdownField<String>(
+              label: 'Gender',
+              value: gender,
+              enabled: !saving,
+              options: const [
+                PathsDropdownOption('man', 'Man'),
+                PathsDropdownOption('woman', 'Woman'),
+                PathsDropdownOption('another_identity', 'Another identity'),
+                PathsDropdownOption('prefer_not_to_say', 'Prefer not to say'),
+              ],
+              onChanged: (value) => gender = value,
+              validator: (value) => value == null ? 'Choose an option.' : null,
+            ),
+          ),
+          const SizedBox(height: 20),
+          AuthFieldSurface(
+            child: TextFormField(
+              controller: bio,
+              readOnly: saving,
+              maxLines: 4,
+              maxLength: 300,
+              decoration: const InputDecoration(
+                labelText: 'Bio (optional)',
+                alignLabelWithHint: true,
+              ),
+              validator: (v) => (v?.runes.length ?? 0) > 300
+                  ? 'Use up to 300 characters.'
+                  : null,
+            ),
           ),
           BlocSelector<ProfileCubit, ProfileState, bool>(
             selector: (state) => state.error?.code == 'CONTENT_REVIEW_REQUIRED',

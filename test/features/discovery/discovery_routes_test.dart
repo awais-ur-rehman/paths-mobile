@@ -43,14 +43,14 @@ void main() {
       await tester.pumpWidget(PathsApp(repository: repo, locationSync: sync));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'a long fixture password',
       );
-      await tap(tester, 'Sign in');
+      await tap(tester, 'Login');
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
       router.go('/profile');
       await tester.pumpAndSettle();
@@ -66,10 +66,10 @@ void main() {
       await tester.tap(find.byTooltip('Profile options'));
       await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       router.go('/home');
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       expect(find.text('Crossed paths'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();

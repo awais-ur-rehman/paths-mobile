@@ -135,7 +135,7 @@ void main() {
       await tap(tester, 'Sign out');
       router.go('/setup/verification');
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
     },

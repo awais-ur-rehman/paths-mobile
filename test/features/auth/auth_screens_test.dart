@@ -40,14 +40,14 @@ Future<void> signInForSetup(WidgetTester tester, ApiAdapter adapter) async {
   );
   await tester.pumpAndSettle();
   await tester.enterText(
-    find.widgetWithText(TextFormField, 'Email'),
+    find.widgetWithText(TextFormField, 'Email address'),
     'fixture@example.invalid',
   );
   await tester.enterText(
     find.widgetWithText(TextFormField, 'Password'),
     'a long fixture password',
   );
-  await tap(tester, 'Sign in');
+  await tap(tester, 'Login');
 }
 
 void main() {
@@ -74,22 +74,26 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Meet people you\ncross paths with'), findsOneWidget);
       await tap(tester, 'Get started');
-      expect(find.text('Good to see you'), findsOneWidget);
-      await tap(tester, 'New to Paths? Create an account');
+      expect(find.text('Log in'), findsOneWidget);
+      await tap(tester, 'Sign up');
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Name'),
         'Fixture User',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'a long fixture password',
       );
-      await tester.ensureVisible(find.byType(CheckboxListTile));
-      await tester.tap(find.byType(CheckboxListTile));
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm password'),
+        'a long fixture password',
+      );
+      await tester.ensureVisible(find.byType(Checkbox));
+      await tester.tap(find.byType(Checkbox));
       await tap(tester, 'Create account');
       expect(find.byType(OtpScreen), findsOneWidget);
       await tester.enterText(
@@ -126,10 +130,10 @@ void main() {
       await tester.pumpAndSettle();
       await tap(tester, 'Forgot password?');
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
-      await tap(tester, 'Send reset code');
+      await tap(tester, 'Continue');
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Verification code'),
         '123456',
@@ -178,7 +182,7 @@ void main() {
       );
       router.go('/setup/profile');
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       router.go('/policies/privacy');
       await tester.pumpAndSettle();
       expect(find.text('Development testing notice'), findsOneWidget);
@@ -214,7 +218,7 @@ void main() {
             ).scale(10),
             10 * scale,
           );
-          await tap(tester, 'New to Paths? Create an account');
+          await tap(tester, 'Sign up');
           tester.view.viewInsets = FakeViewPadding(bottom: 300);
           addTearDown(tester.view.resetViewInsets);
           await tester.pumpAndSettle();
@@ -387,14 +391,14 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'a long fixture password',
       );
-      await tap(tester, 'Sign in');
+      await tap(tester, 'Login');
       expect(find.text('Your account is restricted'), findsOneWidget);
       expect(find.text('Contact support'), findsOneWidget);
       expect(find.text('Request deletion help'), findsOneWidget);

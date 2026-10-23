@@ -38,7 +38,7 @@ void main() {
     await tester.tap(find.byTooltip('Profile options'));
     await tester.pumpAndSettle();
     await tap(tester, 'Sign out');
-    expect(find.text('Good to see you'), findsOneWidget);
+    expect(find.text('Log in'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

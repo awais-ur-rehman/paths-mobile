@@ -1,0 +1,9 @@
+# Authentication layout
+
+Owner's supplied three-screen reference is the visual contract: centered P symbol (no wordmark), centered short heading/description, pill fields with leading icons, password reveal, full-width pill action, account link, divider and circular Google/Apple options. Keep Paths white/ink/blue palette and bundled Inter. Apply the same form treatment to signup, OTP, recovery/reset, age and existing setup forms. Keep other product surfaces and onboarding artwork intact.
+
+Use the existing shared AuthScaffold and a locally scoped form theme; this avoids restyling the whole app or duplicating each screen. Existing provider SDK support/configuration determines visible options: Google on configured Android; Apple remains gated until configured. No Facebook or nonfunctional Remember me control is added; secure-session behavior is unchanged. Signup gains confirmation validation; required Terms/Privacy consent and links remain compact and accessible. Recovery sends the existing OTP code, not the reference's reset link.
+
+Existing Cubits/repositories own auth and setup behavior. Retain keyboard scrolling, large text, secure fields/autofill, validation, retry, duplicate-request guards and lifecycle cleanup. Back controls appear where a real back destination exists (signup/login, forgot/login, challenge cancellation). Login is the signed-out root and needs no inert back button.
+
+Execution is authorized by the owner's detailed implementation request and earlier instruction to resolve routine choices without another approval. Extend feature/logo-refresh (from development) into the current branding/auth UI pass; keep its draft PR and main unchanged pending this combined phone check. Android checks only per owner's instruction; preserve iOS implementation but do not run its build. Use installed dependencies; only the official Google circular sign-in visual asset is fetched under the visual-assets exception.

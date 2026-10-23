@@ -55,23 +55,26 @@ class _OtpFormState extends State<_OtpForm> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
-          controller: code,
-          decoration: const InputDecoration(
-            labelText: 'Verification code',
-            hintText: '6 digits',
+        AuthFieldSurface(
+          child: TextFormField(
+            controller: code,
+            decoration: const InputDecoration(
+              labelText: 'Verification code',
+              prefixIcon: Icon(Icons.password_rounded, size: 20),
+              hintText: '6 digits',
+            ),
+            keyboardType: TextInputType.number,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            autocorrect: false,
+            textInputAction: TextInputAction.done,
+            maxLength: 6,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onFieldSubmitted: (_) => submit(),
+            validator: (value) =>
+                value == null || !RegExp(r'^\d{6}$').hasMatch(value)
+                ? 'Enter all six digits.'
+                : null,
           ),
-          keyboardType: TextInputType.number,
-          autofillHints: const [AutofillHints.oneTimeCode],
-          autocorrect: false,
-          textInputAction: TextInputAction.done,
-          maxLength: 6,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          onFieldSubmitted: (_) => submit(),
-          validator: (value) =>
-              value == null || !RegExp(r'^\d{6}$').hasMatch(value)
-              ? 'Enter all six digits.'
-              : null,
         ),
         const SizedBox(height: 16),
         AuthSubmit(label: 'Verify code', onPressed: submit),

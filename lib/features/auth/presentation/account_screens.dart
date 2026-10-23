@@ -35,34 +35,37 @@ class _AdultFormState extends State<_AdultForm> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextFormField(
-          controller: dob,
-          decoration: InputDecoration(
-            labelText: 'Date of birth',
-            hintText: 'YYYY-MM-DD',
-            suffixIcon: IconButton(
-              tooltip: 'Choose date of birth',
-              icon: const Icon(Icons.calendar_today_outlined),
-              onPressed: () async {
-                final now = DateTime.now();
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime(now.year - 18, now.month, now.day),
-                  firstDate: DateTime(1900),
-                  lastDate: now,
-                );
-                if (picked != null && mounted) {
-                  dob.text =
-                      '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-                }
-              },
+        AuthFieldSurface(
+          child: TextFormField(
+            controller: dob,
+            decoration: InputDecoration(
+              labelText: 'Date of birth',
+              prefixIcon: const Icon(Icons.cake_rounded, size: 20),
+              hintText: 'YYYY-MM-DD',
+              suffixIcon: IconButton(
+                tooltip: 'Choose date of birth',
+                icon: const Icon(Icons.calendar_today_outlined),
+                onPressed: () async {
+                  final now = DateTime.now();
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime(now.year - 18, now.month, now.day),
+                    firstDate: DateTime(1900),
+                    lastDate: now,
+                  );
+                  if (picked != null && mounted) {
+                    dob.text =
+                        '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                  }
+                },
+              ),
             ),
+            keyboardType: TextInputType.datetime,
+            validator: (value) =>
+                value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)
+                ? 'Use YYYY-MM-DD.'
+                : null,
           ),
-          keyboardType: TextInputType.datetime,
-          validator: (value) =>
-              value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)
-              ? 'Use YYYY-MM-DD.'
-              : null,
         ),
         const SizedBox(height: 24),
         AuthSubmit(

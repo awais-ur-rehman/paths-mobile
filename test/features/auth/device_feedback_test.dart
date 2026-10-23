@@ -81,7 +81,7 @@ void main() {
       expect(tester.getCenter(arrow).dx, greaterThan(before + 40));
       expect(find.byType(CredentialsScreen), findsNothing);
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       expect(
         Theme.of(tester.element(find.byType(CredentialsScreen)))
             .scaffoldBackgroundColor,
