@@ -1,7 +1,20 @@
-// Phase 0 only: align the SDK integration_test plugin with the app's cached AGP.
+// Align the SDK integration_test plugin with the app's cached AGP.
 // No SDK files are edited; offline mode still rejects missing transitive artifacts.
 gradle.startParameter.offline = true
 gradle.beforeProject { project ->
+    // Original vendor POMs/JARs can be mirrored here after checksum verification.
+    // Prefer that optional cache to remote metadata whose JAR is not cached yet.
+    def engineCache = new File(gradle.gradleUserHomeDir, 'paths-android-maven')
+    // Included SDK/plugin builds may forbid project repositories.
+    if (project.path == ':app' && engineCache.isDirectory()) {
+        def repository = project.repositories.maven {
+            name = 'PathsAndroidEngineCache'
+            url = engineCache.toURI()
+            content { includeGroup('io.flutter') }
+        }
+        project.repositories.remove(repository)
+        project.repositories.addFirst(repository)
+    }
     project.buildscript.configurations.configureEach {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == 'com.android.tools.build' && details.requested.name == 'gradle' && details.requested.version == '8.11.0') {
