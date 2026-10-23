@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -5,6 +7,7 @@ import 'package:paths_mobile/app/theme/paths_theme.dart';
 import 'package:paths_mobile/features/verification/domain/verification_repository.dart';
 import 'package:paths_mobile/features/verification/presentation/verification_screen.dart';
 import 'package:paths_mobile/shared/widgets/paths_toast.dart';
+import 'package:paths_mobile/shared/widgets/paths_brand.dart';
 import 'package:paths_mobile/shared/widgets/verification_badge.dart';
 
 import 'verification_cubit_test.dart';
@@ -182,6 +185,42 @@ void main() {
         uploadsAvailable: false,
       );
     await mount(tester, repo);
+    final symbolBounds = tester.getRect(find.byType(PathsSymbol));
+    await tester.runAsync(() async {
+      final image = await captureImage(tester.element(find.byType(Scaffold)));
+      try {
+        final pixels = (await image.toByteData(
+          format: ui.ImageByteFormat.rawRgba,
+        ))!;
+        var inkPixels = 0;
+        for (
+          var y = symbolBounds.top.ceil();
+          y < symbolBounds.bottom.floor();
+          y++
+        ) {
+          for (
+            var x = symbolBounds.left.ceil();
+            x < symbolBounds.right.floor();
+            x++
+          ) {
+            final offset = (y * image.width + x) * 4;
+            if (pixels.getUint8(offset) < 80 &&
+                pixels.getUint8(offset + 1) < 80 &&
+                pixels.getUint8(offset + 2) < 80 &&
+                pixels.getUint8(offset + 3) > 0) {
+              inkPixels++;
+            }
+          }
+        }
+        expect(
+          inkPixels,
+          greaterThan(100),
+          reason: 'The P symbol must be painted',
+        );
+      } finally {
+        image.dispose();
+      }
+    });
     await expectLater(
       find.byType(Scaffold),
       matchesGoldenFile('goldens/optional-verification.png'),

@@ -33,7 +33,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/auth/google-sign-in.png
+    - assets/auth/google-round.png
     - assets/brand/paths-symbol.png
     - assets/brand/paths-logo-ink.png
     - assets/onboarding/friends-walking.jpg

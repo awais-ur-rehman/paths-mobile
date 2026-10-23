@@ -11,40 +11,40 @@ class ProviderButton extends StatelessWidget {
   });
   final IdentityProvider provider;
   final VoidCallback? onPressed;
+
   @override
-  Widget build(BuildContext context) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 300),
-      child: provider == IdentityProvider.apple
-          ? SignInWithAppleButton(
-              onPressed: onPressed,
-              height: 52,
-              borderRadius: BorderRadius.circular(26),
-            )
-          : Semantics(
-              button: true,
-              enabled: onPressed != null,
-              label: 'Sign in with Google',
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: onPressed,
-                  borderRadius: BorderRadius.circular(26),
-                  child: Opacity(
-                    opacity: onPressed == null ? 0.5 : 1,
-                    child: SizedBox(
-                      height: 52,
-                      width: 300,
-                      child: Image.asset(
-                        'assets/auth/google-sign-in.png',
-                        fit: BoxFit.contain,
-                        excludeFromSemantics: true,
-                      ),
-                    ),
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: 60,
+    child: Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 3,
+      shadowColor: const Color(0x14101418),
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: provider == IdentityProvider.google
+            ? 'Sign in with Google'
+            : 'Sign in with Apple',
+        padding: EdgeInsets.zero,
+        style: IconButton.styleFrom(shape: const CircleBorder()),
+        icon: Opacity(
+          opacity: onPressed == null ? .4 : 1,
+          child: provider == IdentityProvider.google
+              ? Image.asset(
+                  'assets/auth/google-round.png',
+                  width: 60,
+                  height: 60,
+                  excludeFromSemantics: true,
+                )
+              : const SizedBox(
+                  width: 25,
+                  height: 30,
+                  child: CustomPaint(
+                    painter: AppleLogoPainter(color: Color(0xFF101418)),
                   ),
                 ),
-              ),
-            ),
+        ),
+      ),
     ),
   );
 }

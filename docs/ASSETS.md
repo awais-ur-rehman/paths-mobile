@@ -97,7 +97,7 @@ Reuses existing original Paths vector symbol/logo and bundled Inter. No new visu
 
 No new production visual assets. Existing Paths branding, fonts and reference goldens are reused. The inline one-pixel RGBA PNG in mobile `test/features/media/private_image_lifecycle_test.dart` is original test-only artwork generated with Python standard-library PNG chunks/zlib; project-owned, no attribution required. It contains no people or personal data.
 
-## Task14 sign-in controls
+## Task14 sign-in controls (historical, replaced below)
 
 `assets/auth/google-sign-in.png` is the unmodified 354×80 RGBA pre-approved light pill button from https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_lg.png (6,953 bytes), linked by https://developers.google.com/identity/branding-guidelines. Google brand features remain Google's trademarks; use is limited to the documented sign-in control under those branding guidelines, not a general open-source logo license. No additional attribution is requested by the guidelines. Keep its proportions and colors. It is bundled locally, displayed with contain fit and a screen-reader button label; no hotlink, invented G or font dependency. This is third-party artwork, not Paths project artwork.
 
@@ -132,3 +132,18 @@ Design brief, examined references, actual checks and integration tasks are recor
 Usage/padding/minimum-size and source notes: docs/brand/OPEN_P.md. Runtime/system-mask appearance remains a phone check; catalog/XML/render checks are not device evidence.
 
 `docs/brand/open-p-preview.png` is a white-background review export of the same primary logo; original artwork/Inter terms above apply.
+
+
+## Authentication UI refresh — 24 October 2026
+
+| Asset | Purpose / outputs | Source / method | License / attribution |
+| --- | --- | --- | --- |
+| Google round sign-in control | `assets/auth/google-round.svg` (editable vendor source), `google-round.png` (180px; only PNG bundled) | Unmodified official light round icon-mode SVG from https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_sl.svg, linked at https://developers.google.com/identity/branding-guidelines . Rasterized with the already-installed sibling backend Sharp/librsvg; no new package/font | Google brand features remain Google's trademarks; use is limited to sign-in under the branding guidelines, not a general open-source mark license. Colors/aspect/boundary are preserved. No additional attribution requested. |
+| Apple sign-in symbol | Public `AppleLogoPainter` in existing `sign_in_with_apple`8.2.0 renders the equal-size circular control; no new asset file | Existing installed MIT package implementation, original Apple brand symbol. Shown only where the provider SDK/configuration permits Apple sign-in | Retain existing package license; Apple brand use follows Sign in with Apple guidelines. Apple setup/runtime testing remains deferred. |
+| Auth reference goldens | `test/features/auth/goldens/auth-login-configured.png`, `auth-signup-configured.png`, `auth-forgot.png` | Actual Flutter test renders with bundled Inter/Material icons and synthetic provider configuration. The supplied reference is studied for layout, not copied into the app. | Paths UI artwork plus existing font/provider terms. Test-only fixtures, no real users or credentials. |
+
+The old pill `google-sign-in.png` is removed from the app and asset manifest; its historical source record remains above. No hotlinks or new runtime SVG dependency. All form icons use the existing Material icon family; primary Paths artwork remains the approved Open P.
+
+google-round.svg SHA256: `4d197ab476078c8979c90ea9c4ed98e56a6748e118ace7a07caeb43266cad469`.
+
+google-round.png SHA256: `b653ff86df9554970c3c88a57a51b208439ee9bc1a2b9944e4bbd12f3fbf8a7d`.
