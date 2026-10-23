@@ -227,7 +227,7 @@ class PathsLocationService : Service() {
         manager.createNotificationChannel(NotificationChannel("paths_tracking", "Paths location", NotificationManager.IMPORTANCE_LOW))
         val stopIntent = PendingIntent.getService(this, 1, Intent(this, PathsLocationService::class.java).setAction("stop"), PendingIntent.FLAG_IMMUTABLE)
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-        val notification = Notification.Builder(this, "paths_tracking").setSmallIcon(com.paths.mobile.R.drawable.paths_symbol)
+        val notification = Notification.Builder(this, "paths_tracking").setSmallIcon(com.paths.mobile.R.drawable.paths_notification)
             .setContentTitle(PathsLocationTracker.get(this).notificationTitle()).setContentText("Best-effort capture is active. Tap Stop to purge samples.")
             .setContentIntent(PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE))
             .addAction(Notification.Action.Builder(null,"Stop",stopIntent).build()).setOngoing(true).build()
