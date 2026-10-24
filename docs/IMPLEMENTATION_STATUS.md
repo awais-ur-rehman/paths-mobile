@@ -1,5 +1,28 @@
 # Implementation status
 
+## Current update — Home map, 24 October 2026
+
+Current task: Home map UI; **implemented, locally verified, awaiting Android device test**. Branch `feature/logo-refresh`; source `8ffd5ed`, search/state `9dcd999`; API **1.15.0**. Draft PR16. Main unchanged; historical phase entries below retain their original evidence and are not current release claims.
+
+| Applicable task | Status and evidence |
+| --- | --- |
+| Whole-screen map, no inline cards/list | Implemented; HomeScreen/EncounterMap, dead card/results/filter source removed; no-card and route regressions verified |
+| Original light style/free provider/consistent icons | Implemented; assets/maps/paths-light.json and locate/fit SVG masters; attribution retained; ASSETS/ICONS updated; actual tiles/attribution awaiting phone |
+| Current location, recenter, history fit, pan/zoom | Implemented; existing consent/permission recovery; shortest-arc Mercator camera regression covers Android date-line bounds issue; actual native synchronization awaiting phone |
+| Private avatars/grouped pins and preview | Implemented; batched/coalesced DPR-correct projection, viewport culling, immutable coarse/collision groups, authorized Flutter images, draggable member selection; no native private image cache |
+| Search/Recent/Nearby/radius/bounded paging | Verified locally; literal server name/username search, debounce/cancel/account guards, query-bound cursors, paging retry;50 per page and explicit More paths |
+| Save/request/incoming/outgoing/connected actions | Existing RelationshipCubit reused; preview and direct profile/chat navigation implemented; nested branch dialogs dismiss on safety/pause; owner state checks pending |
+| Loading/empty/API/map errors/offline/retry/lifecycle | Focused tests pass including style timeout/recreation, pause/resume and safety dismissal; native map removed when inactive/paused; map remains the only Home surface |
+| Automated validation | Analyzer clean;383 Flutter tests pass. Final visual fixture scope adjusted to match production media scope; final focused rerun and analyzer pass recorded below.14 Android/tooling tests pass; no iOS build requested |
+| Backend/admin/API | Backend lint,56unit/13feasibility/4metrics/221integration pass; admin lint/build/11unit pass. Three real OpenAPI exports match SHA256 `9ab9fce037c39c858ba9b7a3015647af78802c14155d81339ce5183509ff5153` |
+| Live local API | Cached network-disabled Docker rebuild; only API/worker recreated; ready1.15.0. Owner-scoped search/name/username/literal/cursor checks and6encounters/6private photos pass; temporary session removed |
+| Code review | One fresh read-only review. Fixed both Important findings: root confirmation surviving sheet invalidation and native Android wrapped-bounds conversion. Nested safety test demonstrated RED with old behavior, GREEN with scoped dialog; camera/date-line/poles tests pass |
+| Android build/handoff | Offline ARM64 assemble passes; compiler/staged/APK kernel matches (76,347,400bytes, SHA256 e66357ad7aee7fd818f328af07d69d7e8dfb9293ce9f9bcac7c5a8ffb05ece81); final analyzer clean and8focused tests pass. No agent phone operation. docs/HOME_MAP_DEVICE_TESTS.md has exact implementation commits, install/build commands and acceptance steps |
+| Remaining gates | Awaiting owner Android native visual/permission/camera test; iOS runtime not checked. Existing Task13 capacity/native baseline/battery/soak qualification remains open. No deployment/merge/main promotion |
+
+No new dependencies, installs or Docker pulls. Provider metadata was read; map runtime requires online free tiles/glyphs. Synthetic layout photos remain isolated to tests, credentials/QR/local defines remain ignored.
+
+
 Current phase: **Phase 6 Task13 load, security, battery and UI hardening; in progress**. Task12 phone/restore acceptance received and PRs merged; main unchanged. API contract1.11.0.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
