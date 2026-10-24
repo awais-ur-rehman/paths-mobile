@@ -250,7 +250,7 @@ void main() {
       SetupAdapter(),
       Progress()..seen.add('11111111-1111-4111-8111-111111111111'),
     );
-    await tester.tap(find.byIcon(Icons.chat_bubble_outline));
+    await tester.tap(find.byTooltip('Chats'));
     await tester.pumpAndSettle();
     expect(app.router.routeInformationProvider.value.uri.path, '/chats');
     expect(find.text('Chats'), findsWidgets);

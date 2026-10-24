@@ -100,7 +100,12 @@ class _LikesState extends State<LikesScreen> {
               child: RefreshIndicator(
                 onRefresh: () => cubit.load(),
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    20 + MediaQuery.paddingOf(context).bottom,
+                  ),
                   children: [
                     if (state.busy && state.items.isEmpty)
                       const Center(child: PathsLoader()),

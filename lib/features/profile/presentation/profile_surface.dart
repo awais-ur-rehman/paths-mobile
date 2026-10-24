@@ -47,6 +47,9 @@ class ProfileSurface extends StatelessWidget {
               ),
             ),
             SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.paddingOf(context).bottom,
+              ),
               child: Align(
                 alignment: Alignment.topCenter,
                 child: ConstrainedBox(
