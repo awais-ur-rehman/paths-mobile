@@ -147,3 +147,11 @@ The old pill `google-sign-in.png` is removed from the app and asset manifest; it
 google-round.svg SHA256: `4d197ab476078c8979c90ea9c4ed98e56a6748e118ace7a07caeb43266cad469`.
 
 google-round.png SHA256: `b653ff86df9554970c3c88a57a51b208439ee9bc1a2b9944e4bbd12f3fbf8a7d`.
+
+## Original navigation icon family — 24 October 2026
+
+- Purpose: Home, Likes, Chats, Profile and raised Plus in the reference-shaped bottom navigation; source for future consistent product icons.
+- Source/method: original24-unit SVG paths authored for Paths, using rounded1.8-unit strokes. The owner's supplied screenshots informed navigation shape/style; no screenshot pixels or third-party icon paths are shipped.
+- License/attribution: original project artwork, owned with the Paths project; no external license or attribution requirement.
+- Editable sources: `assets/icons/{home,likes,chats,profile,plus}.svg`. Exporter: `tools/export_icons.py`; shipped vector geometry: `lib/shared/widgets/generated/paths_icon_geometry.dart`; runtime consumer: `PathsIcon`. No raster scaling or SVG runtime dependency.
+- Guidance: `docs/design/ICONS.md`. Generated source renders at28px (Plus26px), using runtime ink/blue/white.320/390px navigation golden renders inspected; physical Android appearance remains owner-tested.
