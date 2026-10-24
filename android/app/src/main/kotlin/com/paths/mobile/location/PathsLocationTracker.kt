@@ -178,7 +178,7 @@ class PathsLocationTracker private constructor(private val context: Context) {
                         val ids = response.getJSONArray("acknowledged")
                         val sent=batch.map {it.getString("sampleId")}.toSet()
                         synchronized(this@PathsLocationTracker) {
-                            if(session == activeSession && epoch == activeEpoch) { acknowledge((0 until ids.length()).map { ids.getString(it) }.filter {it in sent}); attempts=0;retryAt=0;lastStatus=if(permissions()["precise"]!=true || batch.last().optDouble("horizontalAccuracyM",100.0)>25)"inaccurate" else if(foreground)"active" else "background";emit?.invoke(mapOf("status" to lastStatus)); retryHandler.postDelayed({flush(false)},250) }
+                            if(session == activeSession && epoch == activeEpoch) { val accepted = (0 until ids.length()).map { ids.getString(it) }.filter {it in sent}; acknowledge(accepted); if(accepted.isNotEmpty()) emit?.invoke(mapOf("uploaded" to true,"deviceSessionId" to activeSession,"consentEpoch" to activeEpoch)); attempts=0;retryAt=0;lastStatus=if(permissions()["precise"]!=true || batch.last().optDouble("horizontalAccuracyM",100.0)>25)"inaccurate" else if(foreground)"active" else "background";emit?.invoke(mapOf("status" to lastStatus)); retryHandler.postDelayed({flush(false)},250) }
                         }
                     } else if(responseCode in listOf(400,401,403,409,413)) {
                         synchronized(this@PathsLocationTracker) {if(session==activeSession && epoch==activeEpoch){stop();lastStatus="unavailable";emit?.invoke(mapOf("status" to lastStatus))}}

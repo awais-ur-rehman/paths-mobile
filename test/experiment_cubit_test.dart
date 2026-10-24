@@ -11,6 +11,9 @@ class TestTracker implements LocationTracker {
   bool backgroundGranted = true;
   bool failStart = false;
   int count = 0, starts = 0;
+  final uploads = StreamController<void>.broadcast();
+  @override
+  Stream<void> get uploadStream => uploads.stream;
   final statuses = StreamController<TrackingStatus>.broadcast();
   final samples = StreamController<LocationSample>.broadcast();
   @override
@@ -62,6 +65,7 @@ class TestTracker implements LocationTracker {
   @override
   Future<void> dispose() async {
     await stopAndPurge();
+    await uploads.close();
     await statuses.close();
     await samples.close();
   }

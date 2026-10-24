@@ -25,7 +25,13 @@ class MainActivity : FlutterActivity() {
         }
         push=com.paths.mobile.push.PathsPushChannel(this,MethodChannel(engine.dartExecutor.binaryMessenger,"paths/push"))
         val channel=MethodChannel(engine.dartExecutor.binaryMessenger,"paths/location")
-        tracker.emit={ event -> channel.invokeMethod("event",event) }
+        // Upload completion runs on the worker executor; Flutter channels require the UI thread.
+        tracker.emit={ event -> runOnUiThread {
+            if(!isDestroyed) {
+                val current = if(event.containsKey("status")) event + mapOf("status" to tracker.status()) else event
+                channel.invokeMethod("event",current)
+            }
+        } }
         channel.setMethodCallHandler { call,result ->
             try {
                 when(call.method) {

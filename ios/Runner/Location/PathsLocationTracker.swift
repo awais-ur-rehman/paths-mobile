@@ -205,7 +205,7 @@ final class PathsLocationTracker: NSObject, CLLocationManagerDelegate {
                     do {
                         let result = try JSONSerialization.jsonObject(with: data) as? [String: Any]
                         guard let ids=result?["acknowledged"] as? [String] else {self.retryUpload(activeSession,activeEpoch);return}
-                        let sent=Set(batch.compactMap{$0["sampleId"] as? String});try self.acknowledge(ids.filter{sent.contains($0)});self.attempts=0;self.retryAt = .distantPast
+                        let sent=Set(batch.compactMap{$0["sampleId"] as? String});let accepted=ids.filter{sent.contains($0)};try self.acknowledge(accepted);if !accepted.isEmpty {self.emit?(["uploaded":true,"deviceSessionId":activeSession,"consentEpoch":activeEpoch])};self.attempts=0;self.retryAt = .distantPast
                         self.lastStatus = self.manager.accuracyAuthorization == .reducedAccuracy || ((batch.last?["horizontalAccuracyM"] as? NSNumber)?.doubleValue ?? 100)>25 ? "inaccurate" : (self.foreground ? "active" : "background");self.emit?(["status":self.lastStatus])
                         DispatchQueue.main.asyncAfter(deadline:.now()+0.25){[weak self] in self?.flush(false)}
                     } catch { self.stop() }
