@@ -1049,3 +1049,28 @@ Current task: owner/member profile UI redesign from the supplied references. Imp
 Observed/fixed during author checks: empty-grid layout notifications requested a second page prematurely, now gated by actual positive scroll; ClipRect bounds the filter so it does not bleed into the grid. Initial profile/menu tests failed against the old layout, then passed. Existing test navigation was updated for the new settings page/lazy rows; two old age/edit-label assertions were updated to the requested name-only/Settings composition. Two test import diagnostics were corrected before the clean analyzer result. Existing Kotlin/Gradle deprecation warnings remain; no new prerequisite/download blocker. iOS Swift-policy probe was intentionally omitted from the14-test Android/tooling run. Test photographs are isolated licensed local fixtures, never live profile/active-user data.
 
 Publication: profile code3fe019a/7638adf and evidence5e736c9 pushed to existing draftPR16: https://github.com/awais-ur-rehman/paths-mobile/pull/16. PR description includes current profile/settings scope and actual checks. Only mobile changed; no empty backend/admin commits, merges, main promotion or automatic claim of device acceptance. Next action: owner runs PROFILE_UI_DEVICE_TESTS.md.
+
+
+## Likes screen redesign — 24 October 2026
+
+Current task: useful Likes search/filter UI; API **1.14.0**, branch `feature/logo-refresh`. State6c2a2b5, card UId3f2a6b, small-phone spacingd7dbf19. Existing draftPR16 targets development; main unchanged.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Research/design | Implemented | Official Hinge Likes separation and Bumble filter guidance recorded in docs/superpowers/specs/2026-10-24-likes-redesign-design.md. User delegated final design; no new dating/paywall/ranking behavior |
+| Four sections/photo cards | Verified locally | Saved/Requests/Sent/Connected visible; two-column lazy photo grid, original icon family/verification badge, concise status and existing profile route. No quick accept or fake totals |
+| Whole-list search/filter state | Verified locally | Server-side name/username,300ms debounce, cancel/generation/account guards, deduped cursor pages, Verified and request Pending-only, explicit Reset; criteria-bound API cursors |
+| Refresh/error/lifecycle | Verified locally | Pull refresh, no reload popup, offline/empty/retry/cancellation, current-tab resume/profile-return refresh, unavailable Saved removal. Retry records refresh versus pagination; confirmed removals stay removed after offline reload |
+| Privacy/assets/accessibility | Verified locally | Authorized private thumbnails keep existing lifecycle; hidden profile fields excluded from search. Actual card action replaces misleading image retry semantics; no downloads/dependencies. ASSETS.md records fixture reuse |
+| Static/full suite | Verified |372 Flutter tests passed in final run, analyzer no issues,14 Android/tooling checks passed; git diff --check. Swift policy probe intentionally omitted under Android-only request |
+| Visual inspection | Verified locally | Four320/390 normal/200percent+keyboard renders inspected. Reproduced/fixed Connected label wrap at320; line-box regression and updated goldens passed |
+| Backend/admin and local API | Verified locally | Backend220integration/56unit/13feasibility/4metrics plus lint/build; admin8tests/lint/build. Real1.14 exports identicalSHA256e5c3b3d454546d38d8a444b326db72774afebfc00e8d9f278eecf81e84e74375; localcachedAPI/worker1.14 live6saved/2verified/1incoming/4sent(1pending)/3connected/6R2photos passed |
+| Fresh code review | Reviewed and findings fixed | One read-only review; no critical/security finding. Refresh retry, photo semantics and stale confirmed removal reproduced and fixed, final full suite passed. Executor inspected snapshots and separately verified admin MFA login/logout; reviewer did not run device/platform checks |
+| Admin guide | Implemented/verified locally | Root documents/ADMIN_LOGIN.md and admin/docs copy; existing test staff password/MFA/session/logout passed. Secrets remain in protected ignored files; no real credentials in Markdown/Git |
+| Android package | Verification recorded below | Final offline ARM64 build and compiler/staged/APK kernel check; no emulator/agent phone operation |
+| Owner device acceptance | Awaiting device test | docs/LIKES_UI_DEVICE_TESTS.md, source d7dbf19. Draft PRs remain pending acceptance; no iOS build or native runtime claim |
+| Prior capacity gates | Existing pending gate | No load rerun or change to Task13 encounter/native baseline/soak evidence; UI tests do not qualify capacity |
+
+Author checks also corrected three analyzer brace diagnostics and a stale1.13 contract assertion before the successful reruns. Test-only semantics-handle disposal and lazy-footer scrolling were corrected before their regression assertions were used as evidence. No deferred review findings, new dependency prerequisite or download blocker for this task.
+
+Final Android evidence atd7dbf19: offline ARM64 build25s,274tasks(24executed/250cached); compiler/staged/APK kernel76,296,656bytes SHA256490f6aa7f9ed338fc332577f99d0c589102eeae8271152acf454f2ae67bd8f50. APK SHA25645c97a77694ad76cd9611fc24ff3625ccf89be7239adeda13254dd15a413f8d7. Existing Kotlin/Gradle deprecation warnings remain; build succeeded without downloads.
