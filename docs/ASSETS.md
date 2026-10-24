@@ -186,3 +186,8 @@ Test-only snapshots `test/features/likes/goldens/likes-{320,390}.png` and `likes
 - `assets/icons/{locate,fit}.svg`: original 24-unit,1.8-stroke rounded masters for recenter/fit controls; no external attribution. Compiled using the existing `tools/export_icons.py` to PathsIcon geometry. No extra package or bitmap dependency.
 - Production marker/preview photos use authenticated PrivateImage in Flutter, never native map image caches. Native maps only receive already authorized coarse encounter positions. The current-position puck is local native location; peer pins are encounter areas, not live peer positions.
 - Test-only `test/features/discovery/goldens/home-{map,preview}-{320,390}.png` use the existing licensed onboarding photo and a locally painted native-renderer boundary. Synthetic names/photos are isolated layout fixtures. These prove Flutter layout, not real tile appearance, camera synchronization, GPU performance or Android permissions. Native appearance/attribution remain owner-device checks.
+
+
+## Demo photography — 24 October 2026
+
+The development backend now serves six explicitly labelled demo profiles with licensed Unsplash sample photos and gallery scenery. Source files, exact download URLs, SHA-256 hashes and license ledger are versioned in `paths-backend/docs/testing/photos/sources.json` and `paths-backend/docs/ASSETS.md`. These are private backend fixtures, not app-bundled member photos or endorsements. The mobile app continues using authorized private media delivery and existing cleanup rules. No new production icon/font/image dependency.

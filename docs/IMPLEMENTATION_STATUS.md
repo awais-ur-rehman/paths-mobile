@@ -989,7 +989,7 @@ Current phase/task: screen-by-screen authentication UI, implemented and locally 
 | Keyboard, narrow layout and large text | Automated checks verified; awaiting device test | Existing and new 320/390/768 layouts; actual large-font label truncation reproduced and fixed with floating labels/compact inset at large text |
 | Full automated verification | Verified | 311 Flutter tests passed without golden updates on final source; flutter analyze --no-pub clean; 15 tooling tests passed; git diff --check passed |
 | Fresh whole-change review | Verified within source-review scope | No critical/important functional defect found; accidental nested provider-email shadow removed. Temporary rendering diagnostics removed before final checks |
-| Android ARM64 APK and bundled assets | Verified | Offline debug build21s, 274 tasks:24 executed/250 up-to-date. Kernel/compiler/APK comparison passed; official round Google bytes match source, old pill absent, new auth copy compiled and engine ARM64 only |
+| Android ARM64 APK and bundled assets | Verified | Offline debug build 21s, 274 tasks:24 executed/250 up-to-date. Kernel/compiler/APK comparison passed; official round Google bytes match source, old pill absent, new auth copy compiled and engine ARM64 only |
 | Android native UI/provider/autofill appearance | Awaiting device test | docs/AUTH_UI_DEVICE_TESTS.md; no phone/emulator operated |
 | iOS build/runtime | Not run / runtime validation pending | Owner explicitly excluded iOS builds this round; implementation preserved. Earlier missing Xcode destination remains unresolved; no iOS result inferred from Android |
 | Push and draft handoff | Verified; awaiting device test | Source/evidence pushed through4c9ff6b to feature/logo-refresh. Mobile PR16 targets development and remains draft; main unchanged pending owner phone acceptance. GitHub reported no checks yet at handoff; local results above are the executed evidence |
@@ -1122,3 +1122,23 @@ Author checks also corrected three analyzer brace diagnostics and a stale1.13 co
 Final Android evidence atd7dbf19: offline ARM64 build25s,274tasks(24executed/250cached); compiler/staged/APK kernel76,296,656bytes SHA256490f6aa7f9ed338fc332577f99d0c589102eeae8271152acf454f2ae67bd8f50. APK SHA25645c97a77694ad76cd9611fc24ff3625ccf89be7239adeda13254dd15a413f8d7. Existing Kotlin/Gradle deprecation warnings remain; build succeeded without downloads.
 
 Publication: all three changed branches pushed; draft mobilePR16 https://github.com/awais-ur-rehman/paths-mobile/pull/16, backendPR19 https://github.com/awais-ur-rehman/paths-backend/pull/19 (a2cff9f), adminPR17 https://github.com/awais-ur-rehman/paths-admin/pull/17 (6fa4cd6). Mobile application source d7dbf19, evidencef1bdb91. All target development and remain draft; no main merge/promotion. Remote CI is separate from the local passing checks. Next action: owner runs LIKES_UI_DEVICE_TESTS.md and optionally the admin login guide.
+
+
+## Startup, refresh and demo follow-up — 24 October 2026
+
+Current task: remove duplicate splash, investigate rapid-switch failures, prepare a cache strategy and replace demo artwork with real licensed photos. API **1.15.0**, branch `feature/logo-refresh`; application commits `f5d3406`, `1cf7875`. Prior phase/capacity qualification remains open.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Single startup handoff | Verified locally; awaiting device test | Defer first native frame until committed auth/setup destination or actionable error. No startup spinner on duplicate Flutter splash. Successful, incomplete, restricted, revoked and setup-error routes covered; release once only |
+| Warm validation cleanup | Verified locally | Preserve tracking/media on successful same-account validation; retain cold/logout/restriction/terminal cleanup. Regression covers repeated restores and logout; failed terminal cleanup still blocks sign-in until retry |
+| Own-profile refresh/skeleton | Verified locally; awaiting device test | Retain loaded profile during refresh, coalesce overlapping reads, retain only permitted offline state, clear terminal access failure, cancel/discard late result on disposal. Initial skeleton only; existing private-image revocation remains |
+| Performance strategy | Implemented proposal | docs/PERFORMANCE_PLAN.md and root documents/PERFORMANCE_PLAN.md: staged measurement, bounded requests, own memory snapshot, revision freshness, encrypted account-scoped disk cache with key in vault. No persistent cache dependency or retention change implemented |
+| API-switch failure investigation | Verified bounded local case | Backend exclusive media read locks reproduced six HTTP 500s/30 requests, p95 2,440 ms. Shared authorized read locks: identical 30 requests all HTTP 200, p95 1,442 ms. This is not the full Task13 capacity/soak gate |
+| Demo profiles/areas | Implemented in backend | Six licensed photo avatars, three gallery photos each, four Islamabad/two Mirpur coarse fixture areas; sources and license ledger in backend. No real live-location insertion or owner/profile/consent change |
+| Automated checks | Verified | 394 Flutter tests, analyzer no issues, 14 Android/tooling tests; offline ARM64 APK build 21s, 274 tasks; compiler/staged/APK kernel 76,361,352 bytes, SHA256 0ba2f6dc3530002bc6b1fa9ef3a5b58c8400d6bc5cca1d5102e9caba66371dec. git diff --check clean |
+| Review findings | Fixed and rechecked | Fresh read-only review found no critical/important issue. Additional author tests caught first-frame release using an incoming URI during immediate redirects; now checks committed router configuration. Updated terminal-cleanup fixture and fixed one analyzer brace issue |
+| Device and iOS | Awaiting device test / not run | docs/STARTUP_PERFORMANCE_DEVICE_TESTS.md; owner operates phone. No iOS build, native first-frame timing, phone jank/memory/battery or 100-switch claim |
+| Publication | Draft review | Existing mobile PR16/backend PR19; main unchanged. No new dependencies or images pulled; only requested visual photographs downloaded |
+
+Known limits: private images still clear on pause/hidden as required by the existing policy; persistent own-avatar cache is a proposal. Backend still holds database read locks/connections during R2 access; much larger bursts need bounded request scheduling and separate capacity measurement. Existing Kotlin/Gradle deprecation warnings remain. Next action: owner follows the startup/performance device guide.
