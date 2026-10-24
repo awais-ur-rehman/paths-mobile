@@ -955,3 +955,29 @@ Review/check fixes: a large-font Confirm password label was clipped and the init
 Material decisions: use existing OTP recovery rather than adding reset links; preserve persistent secure sessions rather than adding a decorative Remember me checkbox; retain supported Google/Apple filtering rather than add unsupported Facebook. Login remains the signed-out root with no inert Back button; signup/recovery/challenges retain functional navigation. Shared AuthScaffold styling intentionally reaches setup forms while unrelated app controls keep their current theme.
 
 Phone instructions and acceptance steps: docs/AUTH_UI_DEVICE_TESTS.md. Existing encounter load qualification remains open; this UI pass does not rerun or close backend performance gates.
+
+
+## UI pass 3 — bottom navigation, 24 October 2026
+
+Current task: reference-shaped bottom bar and original icon family, implemented and locally verified; **awaiting Android device test**. Branch `feature/logo-refresh`; API contract **1.12.0**, unchanged. Source commits: `2bb3636` (icons), `83ad77c` (navigation). Draft mobile PR16 targets development; main unchanged. No backend/admin source change.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Rounded floating surface, smooth notch and raised Plus | Implemented; rendered checks verified | paths_bottom_navigation.dart; inspected320/390px goldens, existing Paths white/ink/blue |
+| Existing destinations / center action | Implemented; automated checks verified | DiscoveryShell maps Home/Likes/Chats/Profile directly to stateful branches; Plus retains existing Camera. No calls/settings destination added from reference imagery |
+| Original custom icon assets and future design rules | Implemented; verified | assets/icons/*.svg → tools/export_icons.py → generated/paths_icon_geometry.dart; PathsIcon; docs/design/ICONS.md and docs/ASSETS.md. Deterministic export passed |
+| State, reselection, capability combinations and camera return | Automated checks verified | Real go_router tests; eight optional Likes/Chats/Camera combinations; camera return from Chats preserves selected branch |
+| Accessibility / keyboard / RTL / safe area | Automated checks verified; native acceptance pending | >=48px targets at320px with large text/system inset; named/selected semantics; keyboard visual order; RTL mirrored sides/center stable; keyboard hides/restores bar |
+| Notch background and content clearance | Implemented; rendered regression verified | extendBody:true; contrasting-page regression reproduced gray blocked background, then passed after fix. Explicit Likes/profile scroll padding consumes inherited bottom clearance; existing Home SafeArea/Chats list retain theirs |
+| Full Flutter suite / analysis / diff | Verified |325 tests passed without golden updates; flutter analyze --no-pub clean; git diff --check passed |
+| Whole-change source review | Verified within source scope | Accepted missing body extension and exporter unsupported-attribute findings; fixed both. Aligned RTL spec wording with behavior. Reviewer independently ran13 navigation tests; final full-suite result is local executor evidence |
+| Android offline build / packaged code | Verified |35s/274 tasks (24 executed/250 up-to-date); kernel/compiler/APK match; new navigation/vector names compiled; ARM64 only |
+| Phone appearance / native accessibility | Awaiting device test | docs/NAVIGATION_DEVICE_TESTS.md; no phone/emulator operation |
+| iOS build/runtime | Not run / pending | Owner excludes iOS builds for current UI work; Android result does not validate iOS |
+| Draft handoff | Awaiting owner test | Updated existing mobile PR16; no merge/main promotion |
+
+Final kernel:76,163,264 bytes, SHA256 `18388007efc663aaab5aa36848f47d75737af1c0f51dfdc9aaccf1ab27d822a7`. APK SHA256 `9d4fa193849a5020b658702f14a4e66f4055cabfee6842437b53527d8a3cd993`, actual path `build/app/outputs/apk/debug/app-debug.apk`.
+
+Check history: first regression failed against the labelled Material bar as intended. A selected-semantics issue in the initial implementation was fixed by merging each control's accessible name/state. Reviewer caught the page not extending behind the bar; a rendered regression failed before the extension fix. One combined reviewer run overlapped golden regeneration and returned a null-image comparison; isolated reviewer rerun passed. The first full run passed324 tests and failed a new keyboard expectation that incorrectly placed Camera last; corrected to visual Home/Likes/Camera/Chats/Profile order, then final full suite325 passed. No thresholds or production focus behavior changed to satisfy that test.
+
+No dependencies, tools or assets downloaded for this task. Original vector masters are retained and shipped through generated geometry. Existing failed backend encounter performance qualification remains open and unaffected by this UI work.

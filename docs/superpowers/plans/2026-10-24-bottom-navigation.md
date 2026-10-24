@@ -17,12 +17,12 @@
 ### Task 1: Navigation surface and icon family
 
 Files: lib/app/discovery_shell.dart; new lib/shared/widgets/paths_bottom_navigation.dart, paths_icon.dart and generated/paths_icon_geometry.dart; assets/icons/*.svg; tools/export_icons.py. Tests: test/shared/paths_bottom_navigation_test.dart and existing route tests.
-- [ ] Add real-router regression for icon-only semantics, branch persistence/reselection and raised camera return; observe RED against existing bar. Add width/optional capability tests.
-- [ ] Author original SVG icons and deterministic vector exporter. Implement shaped white Material bar with smooth notch, raised blue plus, underline and safe-area padding; preserve existing branch callbacks. Record family in docs/ASSETS.md.
-- [ ] Update existing tab selectors to accessible tooltips. Run focused interaction/layout suites and inspect visual goldens; commit.
+- [x] Add real-router regression for icon-only semantics, branch persistence/reselection and raised camera return; observe RED against existing bar. Add width/optional capability tests.
+- [x] Author original SVG icons and deterministic vector exporter. Implement shaped white Material bar with smooth notch, raised blue plus, underline and safe-area padding; preserve existing branch callbacks. Record family in docs/ASSETS.md.
+- [x] Update existing tab selectors to accessible tooltips. Run focused interaction/layout suites and inspect visual goldens; commit.
 
 ### Task 2: Verify and hand off
 
-- [ ] Run full Flutter suite and analyzer, deterministic export/diff check. Fresh whole-change source review; fix actual findings and rerun affected checks.
-- [ ] Build ARM64 debug offline; verify APK/compiler kernel. No iOS build or phone/emulator operation.
-- [ ] Record implementation status and Android test steps, commit, push existing feature draft PR. Main unchanged; owner device acceptance pending.
+- [x] Run full Flutter suite and analyzer, deterministic export/diff check. Fresh whole-change source review; fix actual findings and rerun affected checks.
+- [x] Build ARM64 debug offline; verify APK/compiler kernel. No iOS build or phone/emulator operation.
+- [x] Record implementation status and Android test steps, commit, push existing feature draft PR. Main unchanged; owner device acceptance pending.
