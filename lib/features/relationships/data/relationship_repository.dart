@@ -22,6 +22,9 @@ abstract interface class RelationshipRepository {
   Future<RelationshipPageDto> page(
     String box, {
     String? cursor,
+    String search = '',
+    bool verifiedOnly = false,
+    bool pendingOnly = false,
     CancelToken? cancelToken,
   });
 }
@@ -104,6 +107,9 @@ final class HttpRelationshipRepository implements RelationshipRepository {
   Future<RelationshipPageDto> page(
     String box, {
     String? cursor,
+    String search = '',
+    bool verifiedOnly = false,
+    bool pendingOnly = false,
     CancelToken? cancelToken,
   }) {
     final path = switch (box) {
@@ -117,6 +123,10 @@ final class HttpRelationshipRepository implements RelationshipRepository {
       queryParameters: {
         if (box == 'incoming' || box == 'sent') 'box': box,
         'cursor': ?cursor,
+        if (search.trim().isNotEmpty) 'search': search.trim(),
+        if (verifiedOnly) 'verification': 'verified',
+        if (pendingOnly && (box == 'incoming' || box == 'sent'))
+          'status': 'pending',
       },
     );
     return _parse(

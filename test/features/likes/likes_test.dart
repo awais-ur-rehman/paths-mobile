@@ -41,6 +41,9 @@ class Pages extends RelationshipFixture {
   Future<RelationshipPageDto> page(
     String box, {
     String? cursor,
+    String search = '',
+    bool verifiedOnly = false,
+    bool pendingOnly = false,
     CancelToken? cancelToken,
   }) async {
     loads++;
