@@ -31,6 +31,7 @@ final class HttpAuthRepository
         LocationRepository,
         EncounterRepository,
         AuthenticatedApi,
+        AuthenticatedAccountChanges,
         AuthenticatedMediaApi {
   HttpAuthRepository({
     required String origin,
@@ -108,6 +109,9 @@ final class HttpAuthRepository
   final Dio _public, _private;
   late final RefreshCoordinator _coordinator;
   final _changes = StreamController<AuthAccount?>.broadcast(sync: true);
+  final _accountChanges = StreamController<String?>.broadcast(sync: true);
+  @override
+  Stream<String?> get accountChanges => _accountChanges.stream;
   AuthSession? _session;
   int _generation = 0;
   bool _cleanupPending = false;
@@ -418,7 +422,11 @@ final class HttpAuthRepository
         !session.account.adultChecked) {
       invalidateOwnProfile();
     }
+    final previousAccount = _session?.account.id;
     _session = session;
+    if (previousAccount != session.account.id) {
+      _accountChanges.add(session.account.id);
+    }
   }
 
   Future<void> _clearPush() async {
@@ -450,6 +458,7 @@ final class HttpAuthRepository
     final generation = ++_generation;
     _cleanupPending = true;
     _session = null;
+    _accountChanges.add(null);
     _coordinator.replace(null);
     try {
       await Future.wait([
@@ -1149,10 +1158,13 @@ final class HttpAuthRepository
   Future<void> close() async {
     _generation++;
     _profileMemory.dispose();
+    _session = null;
+    _accountChanges.add(null);
     _coordinator.replace(null);
     _public.close(force: true);
     _private.close(force: true);
     await _storageTail;
     await _changes.close();
+    await _accountChanges.close();
   }
 }

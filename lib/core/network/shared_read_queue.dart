@@ -46,10 +46,11 @@ class SharedReadQueue<K, V> {
       entry.priority = entry.priority || priority;
     }
     final subscriber = Completer<V>();
-    entry.subscribers.add(subscriber);
+    entry.subscribers[subscriber] = cancelToken;
     final owned = entry;
     cancelToken?.whenCancel.then((_) {
-      if (!owned.subscribers.remove(subscriber)) return;
+      if (!owned.subscribers.containsKey(subscriber)) return;
+      owned.subscribers.remove(subscriber);
       _cancelled++;
       subscriber.completeError(const AuthFailure('cancelled'));
       if (owned.subscribers.isEmpty) _remove(owned);
@@ -64,10 +65,24 @@ class SharedReadQueue<K, V> {
     entry.token.cancel();
   }
 
+  void _dropCancelled(_ReadEntry<V> entry) {
+    for (final subscriber in entry.subscribers.entries.toList()) {
+      if (subscriber.value?.isCancelled != true) continue;
+      entry.subscribers.remove(subscriber.key);
+      _cancelled++;
+      subscriber.key.completeError(const AuthFailure('cancelled'));
+    }
+  }
+
   void _pump() {
     while (!_closed && _active < concurrency && _waiting.isNotEmpty) {
       final priority = _waiting.indexWhere((entry) => entry.priority);
       final entry = _waiting.removeAt(priority < 0 ? 0 : priority);
+      _dropCancelled(entry);
+      if (entry.subscribers.isEmpty) {
+        _remove(entry);
+        continue;
+      }
       _active++;
       _started++;
       if (_active > _peak) _peak = _active;
@@ -79,14 +94,15 @@ class SharedReadQueue<K, V> {
     try {
       final value = await load(entry.key as K, entry.token);
       try {
-        for (final subscriber in entry.subscribers) {
+        _dropCancelled(entry);
+        for (final subscriber in entry.subscribers.keys) {
           subscriber.complete(copy(value));
         }
       } finally {
         release?.call(value);
       }
     } catch (error, stack) {
-      for (final subscriber in entry.subscribers) {
+      for (final subscriber in entry.subscribers.keys) {
         if (!subscriber.isCompleted) subscriber.completeError(error, stack);
       }
     } finally {
@@ -100,7 +116,7 @@ class SharedReadQueue<K, V> {
 
   void clear() {
     for (final entry in _entries.values.toList()) {
-      for (final subscriber in entry.subscribers) {
+      for (final subscriber in entry.subscribers.keys) {
         _cancelled++;
         subscriber.completeError(const AuthFailure('cancelled'));
       }
@@ -120,5 +136,5 @@ class _ReadEntry<V> {
   final Object? key;
   bool priority;
   final token = CancelToken();
-  final subscribers = <Completer<V>>{};
+  final subscribers = <Completer<V>, CancelToken?>{};
 }

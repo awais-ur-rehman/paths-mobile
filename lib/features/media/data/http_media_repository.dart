@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -11,17 +13,35 @@ import '../../profile/domain/profile_repository.dart';
 import '../domain/media_repository.dart';
 
 class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
-  HttpMediaRepository(this.api, this.binary);
+  HttpMediaRepository(this.api, this.binary) {
+    if (api is AuthenticatedAccountChanges) {
+      _accounts = (api as AuthenticatedAccountChanges).accountChanges.listen(
+        (_) => _synchronizeAccount(),
+      );
+    }
+  }
+  StreamSubscription<String?>? _accounts;
+  void _synchronizeAccount() {
+    if (_readAccount == accountId) return;
+    _reads.clear();
+    _readAccount = accountId;
+  }
+
   final AuthenticatedApi api;
   final AuthenticatedMediaApi binary;
   String? _readAccount;
   late final _reads = SharedReadQueue<(String, String, bool), Uint8List>(
     load: (key, token) async {
+      _synchronizeAccount();
+      if (key.$1 != accountId || token.isCancelled) {
+        throw const AuthFailure('cancelled');
+      }
       final bytes = await binary.imageBytes(
         key.$2,
         thumbnail: key.$3,
         cancelToken: token,
       );
+      _synchronizeAccount();
       if (key.$1 != accountId || token.isCancelled) {
         bytes.fillRange(0, bytes.length, 0);
         throw const AuthFailure('cancelled');
@@ -105,10 +125,7 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
     required CancelToken cancelToken,
   }) async {
     final account = accountId;
-    if (_readAccount != account) {
-      _reads.clear();
-      _readAccount = account;
-    }
+    _synchronizeAccount();
     if (account == null) throw const AuthFailure('cancelled');
     return _reads.read(
       (account, id, thumbnail),
@@ -129,6 +146,7 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
 
   @override
   void dispose() {
+    unawaited(_accounts?.cancel());
     _reads.dispose();
     super.dispose();
   }

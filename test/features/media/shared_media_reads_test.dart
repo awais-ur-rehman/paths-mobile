@@ -8,6 +8,10 @@ import 'package:paths_mobile/features/media/data/http_media_repository.dart';
 
 import 'package:paths_mobile/features/profile/domain/profile_repository.dart';
 
+import 'package:paths_mobile/features/auth/data/http_auth_repository.dart';
+
+import '../auth/auth_repository_test.dart'
+    show ApiAdapter, MemoryVault, MemoryPreferences;
 import 'private_image_lifecycle_test.dart' show PictureFixture;
 
 class PendingPhoto {
@@ -222,6 +226,64 @@ void main() {
       await Future.wait([...busy, peer, own]);
       expect(repo.readStatistics.peak, 4);
       repo.dispose();
+    },
+  );
+  test('account replacement clears queued old-account reads before transport starts', () async {
+    final api = DelayedPhotos();
+    final repo = HttpMediaRepository(api, api);
+    final reads = [
+      for (var i = 0; i < 5; i++)
+        repo.bytes('old$i', cancelToken: CancelToken()),
+    ];
+    final rejected = [for (final read in reads) expectLater(read, cancelled)];
+    await turn();
+    api.accountId = 'other';
+    api.pending.first.result.complete(Uint8List.fromList([1, 2, 3]));
+    await turn();
+    final started = api.pending.length;
+    final cancelledTransports = api.pending
+        .skip(1)
+        .every((p) => p.token!.isCancelled);
+    for (var i = 0; i < 3; i++) {
+      api.finish();
+      await turn();
+    }
+    await Future.wait(rejected);
+    expect(started, 4);
+    expect(cancelledTransports, true);
+    repo.dispose();
+  });
+
+  test(
+    'logout cancels all media transports before any response settles',
+    () async {
+      final adapter = ApiAdapter(), binary = DelayedPhotos();
+      final api = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: MemoryVault(),
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+      );
+      await api.login('fixture@example.invalid', 'fixture password');
+      final repo = HttpMediaRepository(api, binary);
+      final reads = [
+        for (var i = 0; i < 5; i++)
+          repo.bytes('photo$i', cancelToken: CancelToken()),
+      ];
+      final rejected = [for (final read in reads) expectLater(read, cancelled)];
+      await turn();
+      await api.logout();
+      final wasCancelled = binary.pending.every((p) => p.token!.isCancelled);
+      for (var i = 0; i < 3; i++) {
+        binary.finish();
+        await turn();
+      }
+      await Future.wait(rejected);
+      expect(wasCancelled, true);
+      expect(binary.pending.length, 4);
+      repo.dispose();
+      await api.close();
     },
   );
 }
