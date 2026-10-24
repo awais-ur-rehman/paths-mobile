@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:paths_mobile/features/relationships/presentation/likes_card.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -138,6 +139,20 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (!largeText) {
+          final label = tester.renderObject<RenderParagraph>(
+            find.text('Connected'),
+          );
+          expect(
+            label
+                .getBoxesForSelection(
+                  const TextSelection(baseOffset: 0, extentOffset: 9),
+                )
+                .map((box) => box.top)
+                .toSet(),
+            hasLength(1),
+          );
+        }
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile(
