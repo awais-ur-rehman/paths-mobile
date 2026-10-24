@@ -253,7 +253,10 @@ void main() {
     await tester.tap(find.byTooltip('Chats'));
     await tester.pumpAndSettle();
     expect(app.router.routeInformationProvider.value.uri.path, '/chats');
-    expect(find.text('Chats'), findsWidgets);
+    expect(
+      find.widgetWithText(TextField, 'Search conversations'),
+      findsOneWidget,
+    );
     await stop(tester, app.sync, app.tracker);
   });
   for (final complete in [true, false]) {

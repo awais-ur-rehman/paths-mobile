@@ -444,6 +444,9 @@ GoRouter createAuthRouter(
             peerId: route.extra is ConversationDto
                 ? (route.extra! as ConversationDto).peerId
                 : null,
+            avatarAssetId: route.extra is ConversationDto
+                ? (route.extra! as ConversationDto).avatarAssetId
+                : null,
             name: route.extra is ConversationDto
                 ? (route.extra as ConversationDto).name
                 : 'Chat',
@@ -479,11 +482,13 @@ GoRouter createAuthRouter(
                     try {
                       final peer = route.pathParameters['id'];
                       final account = chats.accountId;
-                      final conversations = await chats.conversations();
+                      final conversations = await chats.conversations(
+                        peerId: peer,
+                      );
                       if (!context.mounted || chats.accountId != account) {
                         return;
                       }
-                      final item = conversations
+                      final item = conversations.items
                           .where((c) => c.peerId == peer && c.canSend)
                           .firstOrNull;
                       if (item == null) {

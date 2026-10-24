@@ -2008,6 +2008,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "peerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2017,6 +2035,41 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConversationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/v1/conversations/{id}": {
+      "get": {
+        "operationId": "ChatController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
                 }
               }
             }
@@ -4140,7 +4193,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.12.0",
+    "version": "1.13.0",
     "contact": {}
   },
   "tags": [],
@@ -6441,7 +6494,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.12.0"
+              "1.13.0"
             ]
           }
         },

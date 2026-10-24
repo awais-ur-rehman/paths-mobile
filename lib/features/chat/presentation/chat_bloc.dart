@@ -52,6 +52,7 @@ final class ChatState {
     this.pending = const [],
     this.loading = true,
     this.loadingOlder = false,
+    this.olderFailed = false,
     this.canSend = false,
     this.available = true,
     this.error,
@@ -59,7 +60,7 @@ final class ChatState {
   });
   final List<ChatMessageDto> messages;
   final List<PendingMessage> pending;
-  final bool loading, loadingOlder, canSend, available;
+  final bool loading, loadingOlder, olderFailed, canSend, available;
   final AuthFailure? error;
   final String? older;
   ChatState copy({
@@ -67,6 +68,7 @@ final class ChatState {
     List<PendingMessage>? pending,
     bool? loading,
     bool? loadingOlder,
+    bool olderFailed = false,
     bool? canSend,
     bool? available,
     AuthFailure? error,
@@ -77,6 +79,7 @@ final class ChatState {
     pending: pending ?? this.pending,
     loading: loading ?? this.loading,
     loadingOlder: loadingOlder ?? this.loadingOlder,
+    olderFailed: olderFailed,
     canSend: canSend ?? this.canSend,
     available: available ?? this.available,
     error: error,
@@ -263,7 +266,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         emit(
           gone(e)
               ? ChatState(loading: false, available: false, error: e)
-              : state.copy(loadingOlder: false, error: e),
+              : state.copy(loadingOlder: false, olderFailed: true, error: e),
         );
       }
     }
