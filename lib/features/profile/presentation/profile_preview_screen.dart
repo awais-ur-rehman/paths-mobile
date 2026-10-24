@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../shared/widgets/paths_loader.dart';
+import 'profile_skeleton.dart';
 import 'profile_surface.dart';
 import '../domain/profile_repository.dart';
 import 'profile_preview_cubit.dart';
@@ -101,7 +101,9 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
     body: BlocBuilder<ProfilePreviewCubit, ProfilePreviewState>(
       bloc: cubit,
       builder: (context, state) {
-        if (state.loading) return _withOptions(const PathsLoader());
+        if (state.loading && state.profile == null) {
+          return _withOptions(const ProfileSkeleton());
+        }
         final profile = state.profile;
         if (profile == null) {
           return _withOptions(

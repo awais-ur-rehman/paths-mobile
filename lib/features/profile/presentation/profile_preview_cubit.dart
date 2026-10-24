@@ -18,12 +18,18 @@ class ProfilePreviewCubit extends Cubit<ProfilePreviewState> {
   final String userId;
   CancelToken? _request;
   int _generation = 0;
-  Future<void> load() async {
+  Future<void>? _inFlight;
+  Future<void> load() {
+    if (isClosed) return Future.value();
+    return _inFlight ??= _load().whenComplete(() => _inFlight = null);
+  }
+
+  Future<void> _load() async {
     if (isClosed) return;
     _request?.cancel();
     final token = _request = CancelToken();
     final generation = ++_generation;
-    emit(const ProfilePreviewState(loading: true));
+    emit(ProfilePreviewState(profile: state.profile, loading: true));
     try {
       final profile = await repository.loadProfileSummary(
         userId,
@@ -34,7 +40,12 @@ class ProfilePreviewCubit extends Cubit<ProfilePreviewState> {
       }
     } on AuthFailure catch (error) {
       if (!isClosed && generation == _generation) {
-        emit(ProfilePreviewState(error: error));
+        emit(
+          ProfilePreviewState(
+            profile: error.offline ? state.profile : null,
+            error: error,
+          ),
+        );
       }
     } catch (_) {
       if (!isClosed && generation == _generation) {
