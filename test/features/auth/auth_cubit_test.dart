@@ -13,7 +13,6 @@ void main() {
     'refresh invalidation cleanup failure blocks sign-in until retry',
     () async {
       final adapter = ApiAdapter(), vault = MemoryVault();
-      var purges = 0;
       var cleanupFails = true;
       final repo = HttpAuthRepository(
         origin: 'https://api.example.invalid',
@@ -22,8 +21,9 @@ void main() {
         publicTransport: Dio()..httpClientAdapter = adapter,
         authenticatedTransport: Dio()..httpClientAdapter = adapter,
         purgeTracking: () async {
-          purges++;
-          if (purges > 1 && cleanupFails) throw StateError('fixture cleanup');
+          if (adapter.revoked && cleanupFails) {
+            throw StateError('fixture cleanup');
+          }
         },
       );
       await repo.login('fixture@example.invalid', 'a long fixture password');

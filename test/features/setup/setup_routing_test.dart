@@ -38,7 +38,7 @@ class DelayedVault extends MemoryVault {
 }
 
 class SetupAdapter extends EncounterAdapter {
-  bool complete = true, offer = true;
+  bool complete = true, offer = true, profileUnavailable = false;
   @override
   Future<ResponseBody> fetch(
     RequestOptions options,
@@ -46,6 +46,7 @@ class SetupAdapter extends EncounterAdapter {
     Future<void>? cancel,
   ) async {
     if (options.path == '/v1/me/profile') {
+      if (profileUnavailable) return ResponseBody.fromString('{}', 503);
       return ResponseBody.fromString(
         jsonEncode({
           ...profile,
@@ -150,6 +151,8 @@ start(
   Progress progress, {
   String? destination,
   bool restore = false,
+  VoidCallback? onStartupReady,
+  VoidCallback? onStartupWaiting,
 }) async {
   adapter.adultChecked = true;
   adapter.profile = {
@@ -184,6 +187,7 @@ start(
   await tester.pumpWidget(
     PathsApp(
       repository: repo,
+      onStartupReady: onStartupReady,
       locationSync: sync,
       photoPicker: ProfilePickerFixture(),
       setupProgress: progress,
@@ -194,6 +198,7 @@ start(
     router.go(destination!);
     await tester.pump();
     expect(router.routeInformationProvider.value.uri.path, '/');
+    onStartupWaiting?.call();
     vault.ready.complete();
     await tester.pumpAndSettle();
     return (router: router, sync: sync, tracker: tracker);
@@ -248,6 +253,71 @@ void main() {
   final originalMapFactory = MapLibrePlatform.createInstance;
   setUp(() => MapLibrePlatform.createInstance = () => TestMapPlatform());
   tearDown(() => MapLibrePlatform.createInstance = originalMapFactory);
+  testWidgets(
+    'startup releases one native frame only after validated routing',
+    (tester) async {
+      var ready = 0;
+      final app = await start(
+        tester,
+        SetupAdapter(),
+        Progress(),
+        restore: true,
+        destination: '/home',
+        onStartupReady: () => ready++,
+        onStartupWaiting: () => expect(ready, 0),
+      );
+      expect(app.router.routeInformationProvider.value.uri.path, '/home');
+      expect(ready, 1);
+      app.router.go('/profile');
+      await tester.pumpAndSettle();
+      expect(ready, 1);
+      await stop(tester, app.sync, app.tracker);
+    },
+  );
+  for (final scenario in [
+    'incomplete',
+    'restricted',
+    'setup-error',
+    'revoked',
+  ]) {
+    testWidgets('startup releases actionable $scenario destination', (
+      tester,
+    ) async {
+      var ready = 0;
+      final adapter = SetupAdapter()
+        ..complete = scenario != 'incomplete'
+        ..restricted = scenario == 'restricted'
+        ..profileUnavailable = scenario == 'setup-error'
+        ..revoked = scenario == 'revoked';
+      final app = await start(
+        tester,
+        adapter,
+        Progress(),
+        restore: true,
+        destination: '/home',
+        onStartupReady: () => ready++,
+        onStartupWaiting: () => expect(ready, 0),
+      );
+      await tester.pump();
+      expect(
+        ready,
+        1,
+        reason:
+            'route=${app.router.routeInformationProvider.value.uri.path}; stage=${tester.element(find.byType(Scaffold).first).read<AuthCubit>().state.stage}',
+      );
+      expect(
+        app.router.routeInformationProvider.value.uri.path,
+        switch (scenario) {
+          'incomplete' => '/setup/profile',
+          'restricted' => '/account/restricted',
+          'revoked' => '/auth/login',
+          _ => '/setup/resume',
+        },
+      );
+      if (scenario == 'setup-error') expect(find.text('Retry'), findsOneWidget);
+      await stop(tester, app.sync, app.tracker);
+    });
+  }
   testWidgets('Chats tab remains reachable after completed setup', (
     tester,
   ) async {

@@ -270,6 +270,35 @@ class ApiAdapter implements HttpClientAdapter {
 }
 
 void main() {
+  test(
+    'warm session validation does not stop tracking or purge photos',
+    () async {
+      var purges = 0;
+      final adapter = ApiAdapter();
+      final repo = HttpAuthRepository(
+        origin: 'https://api.example.invalid',
+        vault: MemoryVault(),
+        preferences: MemoryPreferences(),
+        publicTransport: Dio()..httpClientAdapter = adapter,
+        authenticatedTransport: Dio()..httpClientAdapter = adapter,
+        purgeTracking: () async {
+          purges++;
+        },
+        purgeMedia: () async {
+          purges++;
+        },
+      );
+      await repo.login('fixture@example.invalid', 'fixture password');
+      final before = purges;
+      for (var i = 0; i < 20; i++) {
+        expect(await repo.restore(), isNotNull);
+      }
+      expect(purges, before);
+      await repo.logout();
+      expect(purges, greaterThan(before));
+      await repo.close();
+    },
+  );
   test('provider session cannot survive logout, cancellation during secure write or failed vault write', () async {
     final adapter = ApiAdapter(),
         vault = MemoryVault(),
@@ -426,8 +455,8 @@ void main() {
     await logout;
     expect(
       purges,
-      2,
-      reason: 'Only restore and explicit logout may purge; the stale failure must not invalidate again.',
+      1,
+      reason: 'Warm restore must not purge; explicit logout purges once and stale failure cannot invalidate again.',
     );
     vault.pause = null;
     vault.writeStarted = null;

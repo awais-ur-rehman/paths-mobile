@@ -501,7 +501,8 @@ final class HttpAuthRepository
       await _invalidate();
       return null;
     }
-    await _purge(notifications: false);
+    // Cold restoration clears prior-process resources; a warm validation must not stop live tracking.
+    if (_session == null) await _purge(notifications: false);
     if (!await _stored<bool?>(() => _preferences.flag('paths.auth.installed'))
         .then((value) => value ?? false)) {
       await _clearPush();
@@ -554,6 +555,7 @@ final class HttpAuthRepository
       if (current == null || generation != _generation) {
         throw const AuthFailure('cancelled');
       }
+      if (account.restricted) await _purge(notifications: false);
       final updated = AuthSession(
         account: account,
         tokens: current.tokens,

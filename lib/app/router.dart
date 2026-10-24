@@ -85,6 +85,7 @@ GoRouter createAuthRouter(
   ProfileRepository profiles,
   ProfileSummaryRepository summaries,
   VerificationRepository verification, {
+  VoidCallback? onStartupBlocked,
   SetupProgressStore? setupProgress,
   HttpMediaRepository? media,
   PhotoPicker? picker,
@@ -356,6 +357,7 @@ GoRouter createAuthRouter(
           path: '/setup/resume',
           builder: (context, route) => SetupResumeScreen(
             profiles: profiles,
+            onError: onStartupBlocked,
             verification: verification,
             progress: setupProgress,
             owner: cubit.state.account!.id,

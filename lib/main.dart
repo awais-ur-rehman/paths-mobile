@@ -46,20 +46,23 @@ import 'features/discovery/domain/encounter_repository.dart';
 import 'features/discovery/data/location_sync_service.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+  final binding = WidgetsFlutterBinding.ensureInitialized();
+  binding.deferFirstFrame();
   registerBrandLicenses();
-  runApp(const PathsApp());
+  runApp(PathsApp(onStartupReady: binding.allowFirstFrame));
 }
 
 class PathsApp extends StatefulWidget {
   const PathsApp({
     this.repository,
+    this.onStartupReady,
     this.deletion,
     this.locationSync,
     this.photoPicker,
     this.setupProgress,
     super.key,
   });
+  final VoidCallback? onStartupReady;
   final SetupProgressStore? setupProgress;
   final PhotoPicker? photoPicker;
   final LocationSyncService? locationSync;
@@ -147,6 +150,28 @@ class _PathsAppState extends State<PathsApp> {
     } finally {
       openingPush = false;
     }
+  }
+
+  bool _startupReleased = false;
+  StreamSubscription<AuthState>? _startupAuth;
+  void _startupReady({bool force = false}) {
+    if (_startupReleased || !mounted) return;
+    bool ready() =>
+        force ||
+        failure != null ||
+        cubit?.state.stage == AuthStage.blocked ||
+        (cubit?.state.stage != AuthStage.booting &&
+            navigation != null &&
+            !['/', '/setup/resume'].contains(
+              navigation!.routerDelegate.currentConfiguration.uri.path,
+            ));
+    if (!ready()) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _startupReleased || !ready()) return;
+      _startupReleased = true;
+      widget.onStartupReady?.call();
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
   }
 
   AppLifecycleListener? lifecycle;
@@ -272,6 +297,7 @@ class _PathsAppState extends State<PathsApp> {
         profiles as ProfileRepository,
         profiles as ProfileSummaryRepository,
         profiles as VerificationRepository,
+        onStartupBlocked: () => _startupReady(force: true),
         setupProgress: setupProgress,
         media: media,
         picker: photoPicker,
@@ -289,6 +315,9 @@ class _PathsAppState extends State<PathsApp> {
             ? profiles as EncounterRepository
             : null,
       );
+      navigation!.routerDelegate.addListener(_startupReady);
+      navigation!.routeInformationProvider.addListener(_startupReady);
+      _startupAuth = cubit!.stream.listen((_) => _startupReady());
       unawaited(cubit!.initialize());
       if (deletion != null) {
         unawaited(() async {
@@ -332,6 +361,7 @@ class _PathsAppState extends State<PathsApp> {
       );
     } on AuthFailure catch (error) {
       failure = error;
+      _startupReady(force: true);
     }
   }
 
@@ -347,6 +377,9 @@ class _PathsAppState extends State<PathsApp> {
     unawaited(pushEvents?.cancel());
     unawaited(push?.dispose());
     deletion?.close();
+    unawaited(_startupAuth?.cancel());
+    navigation?.routerDelegate.removeListener(_startupReady);
+    navigation?.routeInformationProvider.removeListener(_startupReady);
     navigation?.dispose();
     refresh?.dispose();
     final owned = cubit;
