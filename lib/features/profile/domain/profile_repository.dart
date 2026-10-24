@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 final class ProfileDetails {
   const ProfileDetails({
+    this.revision,
     required this.username,
     required this.name,
     required this.gender,
@@ -10,6 +11,7 @@ final class ProfileDetails {
     this.avatarAssetId,
     this.profileComplete = false,
   });
+  final String? revision;
   final String username, name, gender, bio, visibility;
   final String? avatarAssetId;
   final bool profileComplete;

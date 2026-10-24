@@ -1,3 +1,5 @@
+import 'core/storage/own_cache_store.dart';
+import 'features/profile/data/own_persistent_cache.dart';
 import 'features/auth/domain/provider_auth.dart';
 import 'features/auth/data/social_auth_service.dart';
 import 'features/auth/presentation/provider_scope.dart';
@@ -185,6 +187,7 @@ class _PathsAppState extends State<PathsApp> {
           widget.repository ??
           HttpAuthRepository(
             origin: const String.fromEnvironment('PATHS_API_ORIGIN'),
+            ownCache: OwnPersistentCache(PlatformOwnCacheStore()),
             vault: PlatformTokenVault(),
             preferences: PlatformAuthPreferences(),
             purgeMedia: () async {
@@ -351,7 +354,19 @@ class _PathsAppState extends State<PathsApp> {
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
       );
       lifecycle = AppLifecycleListener(
-        onHide: () => realtime?.foreground(false),
+        onHide: () {
+          final profiles = repository;
+          if (profiles is OwnProfileSnapshotRepository) {
+            (profiles as OwnProfileSnapshotRepository).invalidateOwnProfile();
+          }
+          realtime?.foreground(false);
+        },
+        onPause: () {
+          final profiles = repository;
+          if (profiles is OwnProfileSnapshotRepository) {
+            (profiles as OwnProfileSnapshotRepository).invalidateOwnProfile();
+          }
+        },
         onResume: () {
           realtime?.foreground(true);
           if (cubit?.state.stage == AuthStage.authenticated) {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+        CC0000000000000000000001 /* OwnCacheChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC0000000000000000000002; };
 		AF7000000000000000000001 /* PathsPushNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF7000000000000000000002 /* PathsPushNotifications.swift */; };
         AB0000000000000000000501 /* UploadEndpointPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB0000000000000000000502; };
         AA0000000000000000000001 /* PathsLocationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000000000000002; };
@@ -45,6 +46,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+        CC0000000000000000000002 /* OwnCacheChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnCacheChannel.swift; sourceTree = "<group>"; };
 		AF7000000000000000000002 /* PathsPushNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathsPushNotifications.swift; sourceTree = "<group>"; };
         AB0000000000000000000502 /* UploadEndpointPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Location/UploadEndpointPolicy.swift; sourceTree = "<group>"; };
         AA0000000000000000000002 /* PathsLocationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Location/PathsLocationTracker.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				AF7000000000000000000002 /* PathsPushNotifications.swift */,
                 AA0000000000000000000002 /* PathsLocationTracker.swift */,
+                CC0000000000000000000002 /* OwnCacheChannel.swift */,
                 AB0000000000000000000502 /* UploadEndpointPolicy.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
@@ -293,6 +296,7 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				AF7000000000000000000001 /* PathsPushNotifications.swift in Sources */,
                 AA0000000000000000000001 /* PathsLocationTracker.swift in Sources */,
+                CC0000000000000000000001 /* OwnCacheChannel.swift in Sources */,
                 AB0000000000000000000501 /* UploadEndpointPolicy.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,

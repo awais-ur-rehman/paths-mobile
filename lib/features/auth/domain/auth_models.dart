@@ -56,6 +56,9 @@ final class AuthFailure implements Exception {
   final String? requestId;
   bool get offline => code == 'offline' || code == 'timeout';
   String get message => switch (code) {
+    'PROFILE_CHANGED' => 'Your profile changed. Reload it before saving again.',
+    'cache_cleanup' =>
+      'Private cache cleanup did not finish. Retry to continue.',
     'location_permission' => 'Location access is unavailable. You can keep using your profile or open Settings.',
     'location_unavailable' =>
       'Location sharing could not start. Check permissions and retry.',

@@ -15,6 +15,7 @@ import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
 import '../../profile/data/own_profile_memory.dart';
+import '../../profile/data/own_persistent_cache.dart';
 import '../../discovery/domain/location_repository.dart';
 import '../../discovery/domain/encounter_repository.dart';
 import '../../verification/domain/verification_repository.dart';
@@ -43,6 +44,7 @@ final class HttpAuthRepository
     this._purgeNotifications,
     this.purgeMedia,
     DateTime Function()? profileCacheClock,
+    this._ownCache,
   }) : _public = publicTransport ?? Dio(),
        _private = authenticatedTransport ?? Dio() {
     final uri = Uri.tryParse(origin);
@@ -84,11 +86,18 @@ final class HttpAuthRepository
       SessionRefreshInterceptor(_private, _coordinator),
     );
   }
+  final OwnPersistentCache? _ownCache;
+  int _cacheGeneration = -1, _cacheEpoch = 0;
   late final OwnProfileMemory _profileMemory;
   @override
   ProfileSummary? get cachedOwnProfile => _profileMemory.snapshot;
   @override
-  void invalidateOwnProfile() => _profileMemory.invalidate();
+  void invalidateOwnProfile() {
+    _cacheEpoch++;
+    _ownCache?.invalidate();
+    _profileMemory.invalidate();
+  }
+
   @override
   Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken}) {
     final owner = accountId;
@@ -302,6 +311,8 @@ final class HttpAuthRepository
         },
       );
       if (generation != _generation || account != accountId) {
+        final abandoned = response.data;
+        if (abandoned is List<int>) abandoned.fillRange(0, abandoned.length, 0);
         throw const AuthFailure('cancelled');
       }
       return response;
@@ -344,23 +355,71 @@ final class HttpAuthRepository
     );
   }
 
+  bool get _cacheSessionEligible {
+    final session = _session;
+    return session != null &&
+        !session.account.restricted &&
+        session.account.adultChecked &&
+        session.accessExpiresAt.isAfter(DateTime.now());
+  }
+
   @override
   Future<Uint8List> imageBytes(
     String assetId, {
     bool thumbnail = true,
     CancelToken? cancelToken,
   }) async {
-    final token = cancelToken ?? CancelToken();
+    _mediaId(assetId);
+    final token = cancelToken ?? CancelToken(),
+        generation = _generation,
+        epoch = _cacheEpoch;
+    final cached = _cacheSessionEligible
+        ? await _ownCache?.avatar(assetId, thumbnail)
+        : null;
+    if (generation != _generation ||
+        epoch != _cacheEpoch ||
+        token.isCancelled) {
+      cached?.fillRange(0, cached.length, 0);
+      throw const AuthFailure('cancelled');
+    }
+    if (cached != null) {
+      if (_cacheSessionEligible) return cached;
+      cached.fillRange(0, cached.length, 0);
+    }
     final response = await _binary<List<int>>(
       assetId,
       thumbnail: thumbnail,
       cancelToken: token,
     );
     final bytes = response.data;
-    if (bytes == null || bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
-      throw const AuthFailure('invalid_response');
+    try {
+      if (bytes == null || bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
+        throw const AuthFailure('invalid_response');
+      }
+      if (generation != _generation ||
+          epoch != _cacheEpoch ||
+          token.isCancelled) {
+        throw const AuthFailure('cancelled');
+      }
+      if (_ownCache != null && _cacheSessionEligible) {
+        final staging = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+        try {
+          await _ownCache.writeAvatar(assetId, thumbnail, staging);
+        } finally {
+          if (!identical(staging, bytes)) {
+            staging.fillRange(0, staging.length, 0);
+          }
+        }
+      }
+      if (generation != _generation ||
+          epoch != _cacheEpoch ||
+          token.isCancelled) {
+        throw const AuthFailure('cancelled');
+      }
+      return Uint8List.fromList(bytes);
+    } finally {
+      bytes?.fillRange(0, bytes.length, 0);
     }
-    return Uint8List.fromList(bytes);
   }
 
   AuthAccount _account(AccountDto dto) => AuthAccount(
@@ -424,6 +483,22 @@ final class HttpAuthRepository
     }
     final previousAccount = _session?.account.id;
     _session = session;
+    final cache = _ownCache;
+    if (cache != null &&
+        (session.account.restricted || !session.account.adultChecked)) {
+      await cache.purge();
+      if (generation != _generation) throw const AuthFailure("cancelled");
+    }
+    if (cache != null &&
+        !session.account.restricted &&
+        session.account.adultChecked &&
+        (_cacheGeneration != generation ||
+            cache.owner != session.account.id ||
+            !cache.ready)) {
+      await cache.activate(session.account.id);
+      if (generation != _generation) throw const AuthFailure('cancelled');
+      _cacheGeneration = generation;
+    }
     if (previousAccount != session.account.id) {
       _accountChanges.add(session.account.id);
     }
@@ -437,9 +512,13 @@ final class HttpAuthRepository
     }
   }
 
-  Future<void> _purge({bool notifications = true}) async {
+  Future<void> _purge({
+    bool notifications = true,
+    bool persistent = true,
+  }) async {
     invalidateOwnProfile();
     await Future.wait([
+      if (persistent && _ownCache != null) _ownCache.purge(),
       if (notifications) _clearPush(),
       _clearTracking(),
       if (purgeMedia != null) purgeMedia!(),
@@ -551,10 +630,11 @@ final class HttpAuthRepository
       return null;
     }
     // Cold restoration clears prior-process resources; a warm validation must not stop live tracking.
-    if (_session == null) await _purge(notifications: false);
+    if (_session == null) await _purge(notifications: false, persistent: false);
     if (!await _stored<bool?>(() => _preferences.flag('paths.auth.installed'))
         .then((value) => value ?? false)) {
       await _clearPush();
+      await _ownCache?.purge();
       await _serialize(() async {
         await _vault.clear();
         await _preferences.setFlag('paths.auth.installed', true);
@@ -563,6 +643,7 @@ final class HttpAuthRepository
     if (await _stored<bool?>(() => _preferences.flag('paths.auth.signedOut')) ==
         true) {
       await _clearPush();
+      await _ownCache?.purge();
       await _serialize(_vault.clear);
       return null;
     }
@@ -625,6 +706,7 @@ final class HttpAuthRepository
   }
 
   ProfileDetails _profile(ProfileDetailsDto dto) => ProfileDetails(
+    revision: dto.revision,
     username: dto.username,
     name: dto.name,
     gender: dto.gender,
@@ -658,6 +740,7 @@ final class HttpAuthRepository
           authenticated: true,
           cancelToken: cancelToken,
           data: ProfileDetailsInput(
+            expectedRevision: profile.revision,
             username: profile.username,
             name: profile.name,
             gender: profile.gender,
@@ -694,14 +777,80 @@ final class HttpAuthRepository
     String userId, {
     CancelToken? cancelToken,
   }) async {
-    final dto = ProfileSummaryDto.fromJson(
-      await _request(
-        'GET',
-        '/v1/profiles/$userId',
-        authenticated: true,
-        cancelToken: cancelToken,
+    final cache = _ownCache, generation = _generation, epoch = _cacheEpoch;
+    if (cache != null && userId == accountId && cache.owner == userId) {
+      try {
+        final candidate = await cache.candidate();
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            userId != accountId) {
+          throw const AuthFailure('cancelled');
+        }
+        final path = Uri(
+          path: '/v1/me/profile/snapshot',
+          queryParameters: {
+            if (candidate != null) 'revision': candidate.revision,
+          },
+        ).toString();
+        final snapshot = OwnProfileSnapshotDto.fromJson(
+          await _request(
+            'GET',
+            path,
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        );
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            userId != accountId ||
+            cancelToken?.isCancelled == true) {
+          throw const AuthFailure('cancelled');
+        }
+        final ProfileSummary result;
+        if (snapshot.notModified) {
+          if (candidate == null ||
+              snapshot.revision != candidate.revision ||
+              snapshot.profile != null) {
+            throw const AuthFailure('invalid_response');
+          }
+          result = candidate.profile;
+        } else {
+          if (snapshot.profile == null) {
+            throw const AuthFailure('invalid_response');
+          }
+          result = _summary(snapshot.profile!);
+        }
+        if (result.userId != userId) {
+          throw const AuthFailure('invalid_response');
+        }
+        await cache.record(result, snapshot.revision);
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            cancelToken?.isCancelled == true) {
+          throw const AuthFailure('cancelled');
+        }
+        return result;
+      } on FormatException {
+        cache.invalidate();
+        throw const AuthFailure('invalid_response');
+      } on AuthFailure catch (error) {
+        if (!error.offline && error.code != 'cancelled') cache.invalidate();
+        rethrow;
+      }
+    }
+    return _summary(
+      ProfileSummaryDto.fromJson(
+        await _request(
+          'GET',
+          '/v1/profiles/$userId',
+          authenticated: true,
+          cancelToken: cancelToken,
+        ),
       ),
     );
+  }
+
+  ProfileSummary _summary(ProfileSummaryDto dto) {
     return ProfileSummary(
       userId: dto.userId,
       username: dto.username,
@@ -1158,6 +1307,7 @@ final class HttpAuthRepository
   Future<void> close() async {
     _generation++;
     _profileMemory.dispose();
+    await _ownCache?.close();
     _session = null;
     _accountChanges.add(null);
     _coordinator.replace(null);

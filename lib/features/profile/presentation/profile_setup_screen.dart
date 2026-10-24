@@ -169,6 +169,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     if (form.currentState!.validate()) {
       context.read<ProfileCubit>().save(
         ProfileDetails(
+          revision: widget.details.revision,
           username: username.text.trim().toLowerCase(),
           name: name.text.trim(),
           gender: gender!,
@@ -299,6 +300,15 @@ class _ProfileFormState extends State<_ProfileForm> {
                       extra: ReviewDraft(kind: 'bio', content: bio.text),
                     ),
                     child: const Text('Request review'),
+                  )
+                : const SizedBox.shrink(),
+          ),
+          BlocSelector<ProfileCubit, ProfileState, bool>(
+            selector: (state) => state.error?.code == 'PROFILE_CHANGED',
+            builder: (context, changed) => changed
+                ? TextButton(
+                    onPressed: () => context.read<ProfileCubit>().load(),
+                    child: const Text('Reload latest profile'),
                   )
                 : const SizedBox.shrink(),
           ),
