@@ -1,6 +1,6 @@
 # Paths mobile performance plan
 
-Status: proposal for staged implementation after baseline measurement. Immediate startup/resume/lock-contention fixes in this change are separate from the proposed persistent cache. This plan does not claim measured phone frame-time, memory, cold-start or battery improvements.
+Status: owner approved staged execution after the startup Android retest. Stages 1–2 are implemented in the current draft mobile change and await their own device acceptance. Server revisions, persistent encryption and decode-size work remain pending the measurement/lifecycle gate below. No phone frame-time, memory, cold-start or battery improvement is claimed.
 
 ## Findings before this change
 
@@ -20,7 +20,7 @@ On the owner's Android phone, capture cold launch (process absent), warm resume 
 | --- | --- | --- |
 | Access/refresh credentials, encryption keys | Existing OS-backed secure vault | Small secrets only; serialized rotation, account generation and logout cleanup |
 | Own profile snapshot (name/bio/avatar ID/preferences) | Versioned encrypted app-private file/database; key in secure vault | Account/schema keyed; short bounded stale window. Do not put large JSON or images directly into keychain/Keystore. Revalidate `/me/session` before authenticated use; cached profile never authorizes adult/restricted/setup/access decisions |
-| Own avatar thumbnail | Bounded encrypted app-private cache; key in vault | Opt-in product/security decision before persistence. Account+asset/version keyed. Fresh validated account and matching avatar ID required; purge on logout/deletion/restriction/account change. Do not cache CNIC or arbitrary peer photos in this phase |
+| Own avatar thumbnail | Bounded encrypted app-private cache; key in vault | Owner approved this direction; implementation follows measurement/lifecycle acceptance before persistence. Account+asset/version keyed. Fresh validated account and matching avatar ID required; purge on logout/deletion/restriction/account change. Do not cache CNIC or arbitrary peer photos in this phase |
 | Peer images/profile visibility | Revocable in-memory cache only initially | Reauthorize per server rules. Block/privacy/deletion/socket safety events evict immediately. No global public ImageCache or unbounded disk URL cache |
 | Chat bodies / exact locations / CNIC | No new cache under this plan | Existing encrypted native tracking queue retains its documented limits; separate audited design required for any message persistence |
 | Public icon/font/style assets | Existing bundled assets | Version with app; map provider tiles remain governed by provider/SDK caching and online availability |
@@ -38,4 +38,15 @@ Secure storage protects small keys and credentials. Keeping private images indef
 
 ## Open decisions
 
-No framework/database/cache dependency is selected or downloaded. Evaluate installed capabilities first. Persistent own-avatar caching changes current retention policy and requires explicit agreement on offline access, retention and invalidation; peer/message/CNIC caching remains outside this first cache phase. iOS keychain/data protection/runtime behavior must be validated separately; Android acceptance cannot close it.
+No framework/database/cache dependency is selected or downloaded. Evaluate installed capabilities first. The owner approved the staged own-avatar caching direction. Its offline access, retention and invalidation must follow the measured plan; changes materially beyond that direction require a new product decision; peer/message/CNIC caching remains outside this first cache phase. iOS keychain/data protection/runtime behavior must be validated separately; Android acceptance cannot close it.
+
+
+## Stage 1–2 delivery evidence — 24 October 2026
+
+- Shared in-flight media reads are keyed by authenticated account, asset and variant. Each consumer receives a separate byte copy. Four transports can run at once; visible own-avatar reads take priority. Cancelling the last consumer cancels the transport; cancelled transports retain their slot until settlement. Queue preflight and completion check caller cancellation and account ownership; explicit auth lifecycle events cancel work immediately on logout/account replacement. No completed peer image is retained by the queue.
+- One immutable own-profile summary is held in process memory with a 30-second freshness window. Validated adult, unrestricted, unexpired session required before cache access. Setup/profile-completion reads and peer reads still go to the server. Pull/resume bypass TTL; edits and verification writes invalidate before/after execution, and access/reconnect/session events invalidate old snapshots. First preview can initialize from fresh own metadata; this is not persistent image caching.
+- Controlled repository comparison using the old implementation at `5abd2b3` and identical delayed transport:20 waves × 10 consumer reads → baseline 200 transports/peak 10, new 120 transports/peak 4. Own-profile repeated-read regression: initial read plus 20 returns → 21 HTTP reads before, 1 within the new TTL. These are deterministic request counts, not real-network/device latency results.
+- Current diagnostics contain only aggregate active/queued/peak/started/joined/cancelled counters; no account/asset IDs, URLs, coordinates or bodies are logged.
+- Two review races were reproduced and fixed: completion-before-cancellation dispatch and queued reads starting after account replacement. Follow docs/CACHE_STAGE_ONE_DEVICE_TESTS.md before advancing the disk-cache/revision work.
+
+The owner has authorized future plan stages; the remaining hold is technical evidence, not a request to grant the same permission again. Private images continue to clear on hide/pause and reauthorize when shown. Audit existing upstream transport-buffer copies before adding persistent media storage.
