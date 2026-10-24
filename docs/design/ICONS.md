@@ -13,3 +13,5 @@ The navigation uses original editable SVG masters in `assets/icons/`: Home, Like
 New icon checklist: draw an original master, extend the exporter's NAMES list, regenerate, inspect24/28px alongside this set, then verify the real control's hit area/contrast and semantics. No third-party icon source or attribution applies to this original family.
 
 Verification badges use the same rounded1.8-unit stroke: a shield with check for approved, a shield with minus for unverified/pending/declined. Only approved shows Verified; pending/declined retain explicit status labels. The minus is neutral and does not claim that the member is unsafe. Profiles show the badge on both approved and unverified states; the optional submission form omits the redundant Unverified label.
+
+Chat extends this family with Search (magnifier), Back (chevron), More (three rounded dots) and Send (paper plane). Display at20–24px inside labelled48px controls. More opens the shared PathsOptionsMenu with custom white rounded rows; keep its options and icons consistent with existing safety actions.
