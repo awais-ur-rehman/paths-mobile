@@ -1175,3 +1175,23 @@ Decisions and evidence limits: reuse the clean existing feature checkout to pres
 Author verification also corrected analyzer annotations/braces before clean checks and replaced a racy fixture wait with an explicit transport-start signal. Existing Kotlin/Gradle deprecation warnings remain. Next action: owner tests current APK using CACHE_STAGE_ONE_DEVICE_TESTS.md; continue the already approved subsequent cache stages after that gate.
 
 Publication confirmed: source 7ac2c7f and cache evidence pushed to feature/logo-refresh; GitHub draft PR16 head 5e6b2dd matched the remote at verification. PR body updated with current scope/checks and remains draft. No CI checks were listed for that head; no CI-pass claim. Remote main remains fc7603f. Backend PR19 remains draft; backend/admin working trees unchanged. This final note contains no application change.
+
+
+## Performance stages 3–5: encrypted own cache — 25 October 2026
+
+Current task: implemented locally, awaiting owner Android/native crypto test. Branch feature/logo-refresh; draftPR16 into development. Stage1–2 owner acceptance received; stage6 release/device comparison pending. Main unchanged. API1.16.0.
+
+| Applicable checklist | Status | Evidence |
+| --- | --- | --- |
+| Conditional freshness and stale edits | Verified locally |08cb0ba contract;20dfafd session/profile integration. Backend expectedRevision comparison serialized under existing account lock; conflict offers Reload latest profile. No silent overwrite |
+| Encrypted own metadata/avatar | Implemented; native runtime pending |a4b3266 fixed3slots, AndroidAES256GCM/Keystore/AtomicFile/nonbackup; iOSCryptoKit/ThisDeviceOnly/protected sources. Metadata64KiB, thumbnail1MiB, display8MiB; atomic transient below20MiB. TTL24h; approved own current asset only; no persistent peers/gallery/CNIC/messages/locations |
+| Authorization and cleanup | Verified Dart/HTTP; native pending |Session plus conditional snapshot required after restart. Current adult/unrestricted/unexpired session and30sec snapshot authorization before/after native reads. Hide/pause/mutations/safety invalidate; restriction-refresh/logout/deletion/account change purge; late writes bound to native owner/nonce. Cleanup failure explicit; no plaintext fallback |
+| Decode sizing | Verified locally |ab20054;48logical px atDPR2 decodes96px vs320previously. Existing visibility/pause/cancel/dispose ownership retained. Inspected resized-image visual comparisons; refreshed12affected screenshot baselines without layout change |
+| Business/failure checks | Verified locally |flutter analyze --no-pub: no issues. flutter test --no-pub:432passed.15Python tool/generator tests passed (native iOS upload probe excluded by Android-only policy); generator determinism/three export hashes match. git diff --check passed |
+| Android compile/package | Verified locally |Offline arm64debug Gradle build passed274tasks. Kernel compiler/staged/APK match76,440,376bytes SHA256a93cfcafdfd569af56c696b87085883ab11687cb4fb060d932ac04bd9efa9a10. APK SHA256969edcd900fef4fdd47e64aac545f11b8e7748f800abd27b8a1184f6b3ff7602 |
+| Review and repairs | Reviewed; regressions passed |Fresh read-only review found expiry eligibility and restriction-refresh purge gaps; both reproduced failing and fixed. Also fixed async-retirement invalidation, late old-read failure disabling new binding and clock-tick TTL defects. Rejected/malformed snapshots cannot unlock disk pixels; write failure falls back; failed purge stays unusable |
+| Local runtime/API compatibility | Verified locally |Cached Docker rebuilt network=none/pull=false; API/worker restarted without volume deletion. API1.16 own snapshot200/full448bytes→conditional200/98bytes, no-store and omitted profile verified.30request switching burst30HTTP200,p951558ms. Not full Task13/load/device evidence |
+| Device/native/security/performance acceptance | Awaiting device test |docs/ENCRYPTED_CACHE_DEVICE_TESTS.md includes exact install, restart, account/offline/edit/switch steps and isolated debug Keystore/tamper/purge probe. Agent did not operate phone/emulator; real native crypto probe not executed. Stage6 frame/memory/battery comparison still pending |
+| iOS validation | Blocked/deferred runtime |Source implementation and project wiring inspected; no iOS build/runtime per owner Android-only direction. Android acceptance cannot verify Keychain/data-protection behavior |
+
+Source to test:ab20054 plus this documentation commit; backendd0971f1. Existing ignored config remains local. No new packages, SDKs, images or dependency downloads. Real exported API SHA25606730832ec465ffc8d1bdc0bef5be2b117817796d13b3b1cd449946c88b7b641 is identical in all3repos. Drafts remain until owner acceptance; no merge/main promotion.

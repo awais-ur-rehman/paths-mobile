@@ -1,6 +1,6 @@
 # Paths mobile performance plan
 
-Status: owner approved staged execution after the startup Android retest. Stages 1–2 are implemented in the current draft mobile change and await their own device acceptance. Server revisions, persistent encryption and decode-size work remain pending the measurement/lifecycle gate below. No phone frame-time, memory, cold-start or battery improvement is claimed.
+Status: stages 1–2 accepted on the owner's Android phone. Stages 3–5 implemented locally for a separate Android retest; PRs remain draft. Stage 6 device comparison and iOS runtime validation remain pending. No phone frame-time, memory, cold-start or battery improvement is claimed.
 
 ## Findings before this change
 
@@ -50,3 +50,14 @@ No framework/database/cache dependency is selected or downloaded. Evaluate insta
 - Two review races were reproduced and fixed: completion-before-cancellation dispatch and queued reads starting after account replacement. Follow docs/CACHE_STAGE_ONE_DEVICE_TESTS.md before advancing the disk-cache/revision work.
 
 The owner has authorized future plan stages; the remaining hold is technical evidence, not a request to grant the same permission again. Private images continue to clear on hide/pause and reauthorize when shown. Audit existing upstream transport-buffer copies before adding persistent media storage.
+
+
+## Stages 3–5 implementation — 25 October 2026
+
+API 1.16.0 adds an authenticated conditional own-profile snapshot and optional expectedRevision for profile edits. Revision equality is checked only after authorization; conflict comparison runs inside the existing account write lock. Existing clients can omit the revision. Personalized reads remain no-store; this reduces response payload and image downloads, not the underlying snapshot authorization query count.
+
+Own metadata plus the current approved own-avatar thumbnail/display use three fixed encrypted slots. Android uses AES-256-GCM/Keystore and nonbackup AtomicFile storage; iOS source uses CryptoKit/ThisDeviceOnly Keychain and protected nonbackup files. No new dependency. Profile≤64KiB, thumbnail≤1MiB, display≤8MiB; transient atomic replacement remains below20MiB. The fixed slots replace the proposed12-entry LRU because no historical or peer images are eligible. Entries expire after24h; disk pixels require a current eligible session and server-confirmed snapshot authorization younger than30s. Cold offline launch cannot unlock the cache. Background/hide, profile mutations and safety events invalidate authorization. Restriction, account change, logout/deletion and crypto/key failures purge it. Cleanup failure is explicit; there is no plaintext fallback.
+
+Private images now decode to rendered physical dimensions, preserving cancellation, lifecycle clearing and private buffer disposal. No global decoded-image cache or persistent peer/gallery/message/CNIC/location cache was introduced. Square-avatar regression verifies96px for48 logical pixels atDPR2 rather than320px; this is decoded-width evidence, not measured device memory.
+
+One fresh read-only review found expiry eligibility and restricted-refresh purge gaps; both were reproduced with failing tests and repaired. Async invalidation/read-failure races and a clock-tick envelope defect were also reproduced and fixed during implementation. Native Android crypto probe is isolated debug-only test data; owner must run it. Native crypto/runtime correctness is not established by Dart's fake storage tests. Follow ENCRYPTED_CACHE_DEVICE_TESTS.md; release comparison remains stage6.
