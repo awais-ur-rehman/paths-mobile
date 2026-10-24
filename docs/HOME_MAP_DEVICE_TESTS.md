@@ -1,5 +1,7 @@
 # Home map Android test
 
+Latest location/blank-map fix: see `docs/LOCATION_MAP_RETEST.md` for cold-start commands and current code commits.
+
 Branch: `feature/logo-refresh`. Implementation: `8ffd5ed` (with search contract/state `9dcd999`). API: `1.15.0`; backend `ef826d4`, admin contract `20ec0a0`. Later documentation commits do not change the APK. Existing draft PRs remain pending owner acceptance; main is unchanged.
 
 ## Local prerequisites and configuration

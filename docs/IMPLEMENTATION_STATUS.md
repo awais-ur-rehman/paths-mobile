@@ -1,5 +1,19 @@
 # Implementation status
 
+## Current fix — location and blank Android map, 24 October 2026
+
+**Implemented and locally verified; awaiting owner phone retest.** Branch `feature/logo-refresh`, source `f85d0b0` and bridge `c598410`; draft PR16; API1.15.0/main unchanged. Backend/admin unchanged.
+
+- [x] Reproduce stale Nearby response after successful upload and default Android surface selection in regressions; add scoped native acknowledgment stream and refresh unavailable Nearby after server acknowledgment.
+- [x] Dispatch Android tracking events on UI thread; skip destroyed activity and deliver current status. Reject stale lease/epoch and post-pause upload events.
+- [x] Use fresh in-memory tracker fixes for recentering; retain SDK callbacks; validate age/coordinates and clear on revocation/pause/service loss. Distinguish waiting/upload/offline from permission-disabled status and map-unavailable feedback.
+- [x] Select opaque Android TextureView before map construction. APK style matches source; provider source/world tile reachable from development machine. This is a rendering-mode remedy to test, not proof of the phone's rendering/network cause.
+- [x] Analyzer clean;387Flutter tests,14Android/tooling checks, offline ARM64 assemble/Kotlin and compiler/staged/APK kernel check pass. Kernel SHA256 `ff689f76fd857e82f4c82458e4083d8646459fc08b7ed9949da2066d1023be1c`,76,351,648bytes. Full diff reviewed for authorization/privacy/lifecycle and late events.
+- [ ] Owner cold-start map/GPS/Nearby/background-notification/revocation retest: docs/LOCATION_MAP_RETEST.md. No agent phone/emulator operation; iOS not built (source event added only); existing capacity/battery/soak gates still pending.
+
+No package/tool download, storage reset, extra service or contract change. Implementation does not silently resume paused sharing or claim OS permission guarantees a GPS fix.
+
+
 ## Current update — Home map, 24 October 2026
 
 Current task: Home map UI; **implemented, locally verified, awaiting Android device test**. Branch `feature/logo-refresh`; source `8ffd5ed`, search/state `9dcd999`; API **1.15.0**. Draft PR16. Main unchanged; historical phase entries below retain their original evidence and are not current release claims.
