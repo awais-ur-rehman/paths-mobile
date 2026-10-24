@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/authenticated_api.dart';
+import '../../../core/network/shared_read_queue.dart';
 import '../../../core/network/authenticated_media_api.dart';
 import '../../../core/network/generated/api_contract.dart';
 import '../../auth/domain/auth_models.dart';
@@ -12,7 +13,24 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
   HttpMediaRepository(this.api, this.binary);
   final AuthenticatedApi api;
   final AuthenticatedMediaApi binary;
-  final _reads = <CancelToken>{};
+  String? _readAccount;
+  late final _reads = SharedReadQueue<(String, String, bool), Uint8List>(
+    load: (key, token) async {
+      final bytes = await binary.imageBytes(
+        key.$2,
+        thumbnail: key.$3,
+        cancelToken: token,
+      );
+      if (key.$1 != accountId || token.isCancelled) {
+        bytes.fillRange(0, bytes.length, 0);
+        throw const AuthFailure('cancelled');
+      }
+      return bytes;
+    },
+    copy: Uint8List.fromList,
+    release: (bytes) => bytes.fillRange(0, bytes.length, 0),
+  );
+  get readStatistics => _reads.statistics;
   @override
   String? get accountId => api.accountId;
   MediaAsset _asset(Map<String, dynamic> json) {
@@ -84,32 +102,23 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
     bool thumbnail = true,
     required CancelToken cancelToken,
   }) async {
-    _reads.add(cancelToken);
-    try {
-      return await binary.imageBytes(
-        id,
-        thumbnail: thumbnail,
-        cancelToken: cancelToken,
-      );
-    } finally {
-      _reads.remove(cancelToken);
+    final account = accountId;
+    if (_readAccount != account) {
+      _reads.clear();
+      _readAccount = account;
     }
+    if (account == null) throw const AuthFailure('cancelled');
+    return _reads.read((account, id, thumbnail), cancelToken: cancelToken);
   }
 
   Future<void> purge() async {
-    for (final token in _reads.toList()) {
-      token.cancel();
-    }
     _reads.clear();
     notifyListeners();
   }
 
   @override
   void dispose() {
-    for (final token in _reads) {
-      token.cancel();
-    }
-    _reads.clear();
+    _reads.dispose();
     super.dispose();
   }
 }
