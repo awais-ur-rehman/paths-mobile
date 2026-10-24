@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/widgets/paths_loader.dart';
+import '../../../shared/widgets/paths_icon.dart';
+import '../../../shared/widgets/paths_options_menu.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import '../data/relationship_repository.dart';
 import 'relationship_cubit.dart';
@@ -111,9 +113,7 @@ class _ControlsState extends State<RelationshipControls> {
                 if (value.status != 'connected' || widget.onChat == null)
                   OutlinedButton.icon(
                     onPressed: state.busy ? null : cubit.save,
-                    icon: Icon(
-                      value.saved ? Icons.bookmark : Icons.bookmark_outline,
-                    ),
+                    icon: const PathsIcon(PathsIconName.likes, size: 20),
                     label: Text(value.saved ? 'Saved' : 'Save'),
                   ),
                 if (value.available)
@@ -136,32 +136,50 @@ class _ControlsState extends State<RelationshipControls> {
                       child: const Text('Cancel request'),
                     ),
                     'connected' when widget.onChat != null => Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
                       children: [
-                        FilledButton.icon(
-                          onPressed: state.busy ? null : widget.onChat,
-                          icon: const Icon(Icons.chat_bubble_outline),
-                          label: const Text('Message'),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: state.busy ? null : widget.onChat,
+                            icon: const PathsIcon(
+                              PathsIconName.chats,
+                              size: 20,
+                            ),
+                            label: const Text('Message'),
+                          ),
                         ),
-                        PopupMenuButton<String>(
+                        const SizedBox(width: 8),
+                        IconButton(
                           tooltip: 'Connection options',
-                          onSelected: (action) {
-                            if (action == 'save') {
-                              unawaited(cubit.save());
-                            } else {
-                              unawaited(_confirm('disconnect', 'Disconnect?'));
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'save',
-                              child: Text(value.saved ? 'Unsave' : 'Save'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'disconnect',
-                              child: Text('Disconnect'),
-                            ),
-                          ],
+                          icon: const PathsIcon(
+                            PathsIconName.more,
+                            color: Colors.white,
+                          ),
+                          onPressed: state.busy
+                              ? null
+                              : () async {
+                                  final action = await showPathsOptions(
+                                    context,
+                                    [
+                                      PathsMenuOption(
+                                        'save',
+                                        value.saved ? 'Unsave' : 'Save',
+                                        PathsIconName.likes,
+                                      ),
+                                      const PathsMenuOption(
+                                        'disconnect',
+                                        'Disconnect',
+                                        PathsIconName.block,
+                                      ),
+                                    ],
+                                  );
+                                  if (!mounted || action == null) return;
+                                  if (action == 'save') {
+                                    await cubit.save();
+                                  } else {
+                                    await _confirm('disconnect', 'Disconnect?');
+                                  }
+                                },
                         ),
                       ],
                     ),

@@ -13,12 +13,16 @@ class PrivateImage extends StatefulWidget {
     required this.assetId,
     this.thumbnail = true,
     this.fit = BoxFit.cover,
+    this.imageBuilder,
     super.key,
   });
   final HttpMediaRepository repository;
   final String assetId;
   final bool thumbnail;
   final BoxFit fit;
+
+  /// Paint only: consumers must not retain or dispose this private frame.
+  final Widget Function(BuildContext, ui.Image)? imageBuilder;
   @override
   State<PrivateImage> createState() => _PrivateImageState();
 }
@@ -150,5 +154,6 @@ class _PrivateImageState extends State<PrivateImage> {
             child: const Center(child: Icon(Icons.image_outlined)),
           ),
         )
-      : RawImage(image: _image, fit: widget.fit);
+      : widget.imageBuilder?.call(context, _image!) ??
+            RawImage(image: _image, fit: widget.fit);
 }

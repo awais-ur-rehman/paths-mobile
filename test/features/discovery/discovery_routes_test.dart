@@ -52,6 +52,10 @@ void main() {
       );
       await tap(tester, 'Login');
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
+      router.go('/profiles/11111111-1111-4111-8111-111111111111');
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/profile');
+      expect(find.text('Connect'), findsNothing);
       router.go('/profile');
       await tester.pumpAndSettle();
       expect(find.byTooltip('Home'), findsOneWidget);
@@ -67,7 +71,7 @@ void main() {
       expect(adapter.discovery!.uri.queryParameters['mode'], 'nearby');
       await tester.tap(find.byTooltip('Profile'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Profile options'));
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
       expect(find.text('Log in'), findsOneWidget);

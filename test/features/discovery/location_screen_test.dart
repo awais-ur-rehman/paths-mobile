@@ -110,7 +110,7 @@ void main() {
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
       router.go('/profile');
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Profile options'));
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tap(tester, 'Location & permissions');
       expect(
@@ -123,8 +123,8 @@ void main() {
       expect(data.grants, 1);
       await tap(tester, 'Done');
       expect(tracker.starts, 1);
-      expect(find.text('Fixture User, 26'), findsOneWidget);
-      await tester.tap(find.byTooltip('Profile options'));
+      expect(find.text('Fixture User'), findsOneWidget);
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
       expect(tracker.status.name, 'paused');

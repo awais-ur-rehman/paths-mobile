@@ -19,10 +19,7 @@ void main() {
     await signInForSetup(tester, adapter);
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
     await tester.pumpAndSettle();
-    expect(
-      tester.getTopLeft(find.byTooltip('Profile options')).dy,
-      lessThan(80),
-    );
+    expect(tester.getTopLeft(find.byTooltip('Settings')).dy, lessThan(80));
     expect(find.text('Follow'), findsNothing);
     expect(find.text('Followers'), findsNothing);
     await tester.pumpWidget(const SizedBox());
@@ -35,7 +32,7 @@ void main() {
     GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
     await tester.pumpAndSettle();
     expect(find.text('Profile unavailable'), findsOneWidget);
-    await tester.tap(find.byTooltip('Profile options'));
+    await tester.tap(find.byTooltip('Settings'));
     await tester.pumpAndSettle();
     await tap(tester, 'Sign out');
     expect(find.text('Log in'), findsOneWidget);

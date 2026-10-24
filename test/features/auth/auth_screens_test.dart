@@ -26,7 +26,15 @@ HttpAuthRepository repository(
   authenticatedTransport: Dio()..httpClientAdapter = adapter,
 );
 Future<void> tap(WidgetTester tester, String text) async {
-  final item = find.text(text).last;
+  final matches = find.text(text);
+  if (matches.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      matches,
+      200,
+      scrollable: find.byType(Scrollable).last,
+    );
+  }
+  final item = matches.last;
   await tester.ensureVisible(item);
   await tester.tap(item);
   await tester.pumpAndSettle();
@@ -302,8 +310,8 @@ void main() {
     expect(find.text('Edit profile'), findsNothing);
     adapter.profileSaveRelease!.complete();
     await tester.pumpAndSettle();
-    expect(find.text('Fixture User, 26'), findsOneWidget);
-    expect(find.text('Edit profile'), findsOneWidget);
+    expect(find.text('Fixture User'), findsOneWidget);
+    expect(find.byTooltip('Settings'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();
   });

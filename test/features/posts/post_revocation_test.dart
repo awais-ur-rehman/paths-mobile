@@ -106,12 +106,14 @@ void main() {
             posts: posts,
             child: Builder(
               builder: (context) => Scaffold(
-                body: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      RelationshipControls(
-                        repository: relations,
-                        target: 'owner',
+                body: ScrollNotificationObserver(
+                  child: CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: RelationshipControls(
+                          repository: relations,
+                          target: 'owner',
+                        ),
                       ),
                       PostsGrid(
                         scope: MediaScope.maybeOf(context)!,
@@ -126,13 +128,13 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Private posts'), findsNothing);
+      expect(find.text('Private photos'), findsNothing);
       expect(pages.reads, 1);
       await tester.tap(find.text('Disconnect'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Confirm'));
       await tester.pumpAndSettle();
-      expect(find.text('Private posts'), findsOneWidget);
+      expect(find.text('Private photos'), findsOneWidget);
       expect(pages.reads, greaterThanOrEqualTo(2));
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();

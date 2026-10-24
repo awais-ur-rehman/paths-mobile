@@ -50,8 +50,8 @@ void main() {
       await tester.pumpAndSettle();
       repository.requests['first']!.complete(profile('first'));
       await tester.pumpAndSettle();
-      expect(find.text('second, 30'), findsOneWidget);
-      expect(find.text('first, 30'), findsNothing);
+      expect(find.text('second'), findsOneWidget);
+      expect(find.text('first'), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
   );
