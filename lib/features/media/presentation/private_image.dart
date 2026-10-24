@@ -29,6 +29,7 @@ class PrivateImage extends StatefulWidget {
 
 class _PrivateImageState extends State<PrivateImage> {
   ui.Image? _image;
+  Size? _decodeSize;
   CancelToken? _token;
   int _generation = 0;
   bool _visible = false, _foreground = true;
@@ -74,7 +75,10 @@ class _PrivateImageState extends State<PrivateImage> {
 
   void _invalidate() {
     _clear();
-    if (_visible && _foreground && widget.repository.accountId != null) {
+    if (_visible &&
+        _foreground &&
+        _decodeSize != null &&
+        widget.repository.accountId != null) {
       unawaited(_load());
     }
   }
@@ -91,17 +95,27 @@ class _PrivateImageState extends State<PrivateImage> {
         cancelToken: token,
       );
       ui.Codec? codec;
+      ui.ImmutableBuffer? buffer;
+      ui.ImageDescriptor? descriptor;
       try {
         if (!mounted ||
             generation != _generation ||
             account != widget.repository.accountId) {
           return;
         }
-        codec = await ui.instantiateImageCodec(
-          bytes,
-          targetWidth: widget.thumbnail ? 320 : 1600,
-          allowUpscaling: false,
+        buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+        descriptor = await ui.ImageDescriptor.encoded(buffer);
+        final intrinsic = Size(
+          descriptor.width.toDouble(),
+          descriptor.height.toDouble(),
         );
+        final fitted = applyBoxFit(widget.fit, intrinsic, _decodeSize!);
+        final scale = fitted.destination.width / fitted.source.width;
+        final target = (descriptor.width * scale).ceil().clamp(
+          1,
+          descriptor.width,
+        );
+        codec = await descriptor.instantiateCodec(targetWidth: target);
         final frame = await codec.getNextFrame();
         if (!mounted ||
             generation != _generation ||
@@ -112,6 +126,8 @@ class _PrivateImageState extends State<PrivateImage> {
         setState(() => _image = frame.image);
       } finally {
         codec?.dispose();
+        descriptor?.dispose();
+        buffer?.dispose();
         bytes.fillRange(0, bytes.length, 0);
       }
     } catch (_) {
@@ -145,15 +161,38 @@ class _PrivateImageState extends State<PrivateImage> {
   }
 
   @override
-  Widget build(BuildContext context) => _image == null
-      ? Semantics(
-          label: 'Photo unavailable. Tap to retry.',
-          button: true,
-          child: InkWell(
-            onTap: _invalidate,
-            child: const Center(child: Icon(Icons.image_outlined)),
-          ),
-        )
-      : widget.imageBuilder?.call(context, _image!) ??
-            RawImage(image: _image, fit: widget.fit);
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final ratio = MediaQuery.devicePixelRatioOf(context),
+          screen = MediaQuery.sizeOf(context);
+      final cap = widget.thumbnail ? 320.0 : 1600.0;
+      final size = Size(
+        ((constraints.hasBoundedWidth ? constraints.maxWidth : screen.width) *
+                ratio)
+            .clamp(1, cap),
+        ((constraints.hasBoundedHeight
+                    ? constraints.maxHeight
+                    : screen.height) *
+                ratio)
+            .clamp(1, cap),
+      );
+      if (size != _decodeSize) {
+        _decodeSize = size;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _invalidate();
+        });
+      }
+      return _image == null
+          ? Semantics(
+              label: 'Photo unavailable. Tap to retry.',
+              button: true,
+              child: InkWell(
+                onTap: _invalidate,
+                child: const Center(child: Icon(Icons.image_outlined)),
+              ),
+            )
+          : widget.imageBuilder?.call(context, _image!) ??
+                RawImage(image: _image, fit: widget.fit);
+    },
+  );
 }
