@@ -22,6 +22,11 @@ class ContractGeneratorTest(unittest.TestCase):
   schemas={'Child':{'type':'object','required':['id'],'properties':{'id':{'type':'string'}}},'Parent':{'type':'object','required':['child'],'properties':{'child':{'$ref':'#/components/schemas/Child'}}}}
   result=module.generate({'info':{'version':'1'},'components':{'schemas':schemas}},b'')
   self.assertIn('final Child child',result);self.assertIn('Child.fromJson(rawChild)',result);self.assertIn("'child': child.toJson()",result)
+ def test_optional_object_reference_can_represent_an_unchanged_snapshot(self):
+  schemas={'Child':{'type':'object','required':['id'],'properties':{'id':{'type':'string'}}},'Snapshot':{'type':'object','properties':{'profile':{'$ref':'#/components/schemas/Child'}}}}
+  result=module.generate({'info':{'version':'1'},'components':{'schemas':schemas}},b'')
+  self.assertIn('final Child? profile',result)
+  self.assertIn("if (profile != null) 'profile': profile?.toJson()",result)
  def test_nested_schema_fails_explicitly(self):
   with self.assertRaises(ValueError):module.generate({'info':{'version':'1'},'components':{'schemas':{'X':{'type':'object','properties':{'x':{'type':'object'}}}}}},b'')
  def test_reserved_dart_type_names_are_rejected(self):
