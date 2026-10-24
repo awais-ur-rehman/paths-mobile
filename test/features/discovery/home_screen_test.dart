@@ -1,13 +1,10 @@
-import 'dart:async';
+import 'map_platform_fixture.dart';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
+import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:paths_mobile/features/discovery/presentation/encounter_bloc.dart';
-import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_card.dart';
-import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_filters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:paths_mobile/core/platform/location_tracker.dart';
@@ -24,18 +21,6 @@ import 'location_sync_service_test.dart';
 import 'package:paths_mobile/features/discovery/data/location_sync_service.dart';
 import 'package:paths_mobile/features/discovery/presentation/widgets/encounter_map.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
-
-// Replace only the native view boundary; Home and map widget logic remain real.
-class TestMapPlatform extends MapLibrePlatform {
-  @override
-  Widget buildView(
-    Map<String, dynamic> params,
-    OnPlatformViewCreatedCallback created,
-    Set<Factory<OneSequenceGestureRecognizer>>? recognizers,
-  ) => const SizedBox();
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
 
 class SettingsTracker extends CapturingTracker {
   int settingsOpened = 0;
@@ -64,6 +49,7 @@ class HomeFixture implements EncounterRepository {
   Future<EncounterPage> loadEncounters({
     EncounterMode mode = EncounterMode.recent,
     double radiusKm = 1,
+    String search = '',
     String? cursor,
     CancelToken? cancelToken,
   }) async {
@@ -99,6 +85,123 @@ void main() {
   tearDown(() {
     MapLibrePlatform.createInstance = originalMapFactory;
   });
+  testWidgets(
+    'Nearby refreshes after an acknowledged location, not just permission',
+    (tester) async {
+      final tracker = CapturingTracker()..status = TrackingStatus.active;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      final repo = HomeFixture()..result = page([], nearby: false);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          home: HomeScreen(
+            repository: repo,
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nearby'));
+      await tester.pumpAndSettle();
+      final before = repo.modes.length;
+      repo.result = page([], nearby: true);
+      tracker.uploads.add(null);
+      await tester.pumpAndSettle();
+      expect(repo.modes.length, before + 1);
+      expect(find.text('Location needed for Nearby'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
+  testWidgets('Android map uses an opaque compositable texture for overlays', (
+    tester,
+  ) async {
+    final previous = MapLibreMap.useHybridComposition;
+    MapLibreMap.useHybridComposition = false;
+    addTearDown(() => MapLibreMap.useHybridComposition = previous);
+    await tester.pumpWidget(app(HomeFixture()));
+    await tester.pumpAndSettle();
+    expect(MapLibreMap.useHybridComposition, isTrue);
+    expect(
+      tester
+          .widget<MapLibreMap>(find.byType(MapLibreMap))
+          .translucentTextureSurface,
+      isFalse,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets(
+    'recenter uses a fresh tracker fix without a map-engine callback',
+    (tester) async {
+      final platform = TestMapPlatform();
+      MapLibrePlatform.createInstance = () => platform;
+      final tracker = CapturingTracker()..status = TrackingStatus.active;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      final repo = HomeFixture()..result = page([]);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          home: HomeScreen(
+            repository: repo,
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      tracker.samples.add(
+        LocationSample(
+          sampleId: 'fixture',
+          deviceSessionId: 'fixture',
+          consentEpoch: 1,
+          sequence: 1,
+          capturedAt: DateTime.now(),
+          latitude: 1,
+          longitude: 2,
+          horizontalAccuracyM: 5,
+          appState: 'foreground',
+          precisionMode: 'precise',
+          policyVersion: 'adaptive.v1',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Your location'));
+      await tester.pumpAndSettle();
+      expect(platform.cameraUpdates, isNotEmpty);
+      expect(platform.cameraUpdates.last.toJson(), [
+        'newLatLngZoom',
+        [1.0, 2.0],
+        15.0,
+      ]);
+      tracker.granted = false;
+      tracker.statuses.add(TrackingStatus.permissionNeeded);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<EncounterMap>(find.byType(EncounterMap)).userLocation,
+        isNull,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
   testWidgets('empty history still renders map before server center exists', (
     tester,
   ) async {
@@ -320,7 +423,9 @@ void main() {
     );
     await tester.pumpAndSettle();
     final before = repo.modes.length;
-    await tester.tap(find.byType(EncounterCard).first);
+    await tester.tap(find.bySemanticsLabel('2 crossed paths. Open profiles.'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Fixture a, 30'));
     await tester.pump();
     expect(repo.modes.length, before);
     returned.complete();
@@ -330,62 +435,28 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets(
-    'an in-flight refresh does not rebuild unchanged encounter cards',
-    (tester) async {
-      final repo = HomeFixture();
-      await tester.pumpWidget(app(repo));
-      await tester.pumpAndSettle();
-      final before = tester.widget<EncounterCard>(
-        find.byType(EncounterCard).first,
-      );
-      repo.pause = Completer();
-      final bloc = tester
-          .element(find.byType(EncounterCard).first)
-          .read<EncounterBloc>();
-      bloc.add(const RefreshEncounters());
-      await tester.pump();
-      await tester.pump();
-      expect(bloc.state.loading, true);
-      expect(
-        identical(
-          before,
-          tester.widget<EncounterCard>(find.byType(EncounterCard).first),
-        ),
-        true,
-      );
-      repo.pause!.complete(repo.result);
-      await tester.pumpAndSettle();
-    },
-  );
-  testWidgets(
-    'map fallback offers an explicit retry without adding another primary action',
-    (tester) async {
-      final bloc = EncounterBloc(HomeFixture());
-      var retried = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: BlocProvider.value(
-            value: bloc,
-            child: Scaffold(
-              body: EncounterFiltersBar(
-                styleUrl: 'https://map.example.invalid/style.json',
-                showMap: false,
-                mapFailed: true,
-                onToggleMap: () => retried = true,
-              ),
-            ),
-          ),
-        ),
-      );
-      expect(find.byTooltip('Retry map'), findsOneWidget);
-      await tester.tap(find.byTooltip('Retry map'));
-      expect(retried, true);
-      await tester.pumpWidget(const SizedBox());
-      await tester.runAsync(bloc.close);
-    },
-  );
-
+  testWidgets('an in-flight refresh does not rebuild unchanged encounter map', (
+    tester,
+  ) async {
+    final repo = HomeFixture();
+    await tester.pumpWidget(app(repo));
+    await tester.pumpAndSettle();
+    final before = tester.widget<EncounterMap>(find.byType(EncounterMap));
+    repo.pause = Completer();
+    final bloc = tester
+        .element(find.byType(EncounterMap))
+        .read<EncounterBloc>();
+    bloc.add(const RefreshEncounters());
+    await tester.pump();
+    await tester.pump();
+    expect(bloc.state.loading, true);
+    expect(
+      identical(before, tester.widget<EncounterMap>(find.byType(EncounterMap))),
+      true,
+    );
+    repo.pause!.complete(repo.result);
+    await tester.pumpAndSettle();
+  });
   setUpAll(() async {
     for (final e in {
       'Inter': 'assets/fonts/Inter-Variable.ttf',
@@ -415,7 +486,12 @@ void main() {
         expect(tester.takeException(), isNull);
         expect(find.text('Recent'), findsOneWidget);
         expect(find.text('Nearby'), findsOneWidget);
-        expect(find.text('Fixture a, 30'), findsOneWidget);
+        expect(find.text('Fixture a, 30'), findsNothing);
+        await tester.tap(
+          find.bySemanticsLabel('2 crossed paths. Open profiles.'),
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.text('Fixture a, 30'));
         await tester.tap(find.text('Fixture a, 30'));
         await tester.pumpAndSettle();
         expect(selected, 'a');
@@ -436,21 +512,16 @@ void main() {
       await tester.tap(find.text('Nearby'));
       await tester.pumpAndSettle();
       expect(repo.modes.last, EncounterMode.nearby);
-      expect(find.text('Enable location to explore nearby'), findsOneWidget);
-      expect(
-        find.widgetWithText(FilledButton, 'Location settings'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Location settings'));
+      expect(find.text('Location needed for Nearby'), findsOneWidget);
+      expect(find.widgetWithText(TextButton, 'Enable'), findsOneWidget);
+      await tester.tap(find.text('Enable'));
       expect(settings, 1);
       await tester.tap(find.text('Recent'));
       await tester.pumpAndSettle();
       expect(find.text('No paths crossed yet'), findsOneWidget);
     },
   );
-  testWidgets('API error retries and unavailable map retains real list', (
-    tester,
-  ) async {
+  testWidgets('API error retries without replacing the map', (tester) async {
     final repo = HomeFixture()..error = const AuthFailure('offline');
     await tester.pumpWidget(app(repo));
     await tester.pumpAndSettle();
@@ -458,7 +529,9 @@ void main() {
     repo.error = null;
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
-    expect(find.text('Fixture a, 30'), findsOneWidget);
+    expect(find.byType(EncounterMapMarker), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
   });
   testWidgets('Home visual fixture', (tester) async {
     tester.view.physicalSize = const Size(390, 844);

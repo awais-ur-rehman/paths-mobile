@@ -1,3 +1,7 @@
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+import 'features/discovery/map_platform_fixture.dart';
+
 import 'package:flutter/material.dart';
 import 'package:paths_mobile/app/theme/paths_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +13,9 @@ import 'features/discovery/home_screen_test.dart' as home;
 import 'package:paths_mobile/shared/widgets/paths_loader.dart';
 
 void main() {
+  final originalMapFactory = MapLibrePlatform.createInstance;
+  setUp(() => MapLibrePlatform.createInstance = () => TestMapPlatform());
+  tearDown(() => MapLibrePlatform.createInstance = originalMapFactory);
   for (final width in [320.0, 360.0, 390.0, 430.0, 600.0, 768.0, 1024.0]) {
     testWidgets(
       'Home fits width$width at200percent with labeled 48px actions',

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/widgets/paths_loader.dart';
+import '../../../shared/widgets/paths_icon.dart';
 import 'profile_surface.dart';
 import '../../relationships/data/relationship_repository.dart';
 import '../../relationships/presentation/relationship_controls.dart';
@@ -110,22 +111,30 @@ class _PeerOwnerState extends State<_PeerOwner> {
             }
             return ProfileSurface(
               profile: profile,
-              action: widget.configuration.relationships == null
-                  ? null
-                  : RelationshipControls(
+              onRefresh: cubit.load,
+              action: Column(
+                children: [
+                  if (widget.configuration.relationships != null)
+                    RelationshipControls(
                       key: ValueKey(widget.configuration.userId),
                       repository: widget.configuration.relationships!,
                       target: widget.configuration.userId,
                       onChat: widget.configuration.onChat,
                     ),
-              menu: SafetyScope.maybeOf(context) == null
-                  ? null
-                  : ProfileOptionsButton(
+                  if (SafetyScope.maybeOf(context) != null)
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const PathsIcon(PathsIconName.unverified, size: 18),
+                      label: const Text('Report'),
                       onPressed: () => showSafetyActions(
                         context,
                         SafetyTarget(widget.configuration.userId),
                       ),
                     ),
+                ],
+              ),
               onBack: widget.configuration.onBack,
             );
           },

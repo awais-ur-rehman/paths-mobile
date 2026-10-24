@@ -47,8 +47,11 @@ void main() {
         await tester.pumpAndSettle();
         GoRouter.of(tester.element(find.byType(Scaffold).first)).go('/profile');
         await tester.pumpAndSettle();
-        expect(find.text('Fixture User, 26'), findsOneWidget);
-        await tester.ensureVisible(find.text('Edit profile'));
+        expect(find.text('Fixture User'), findsOneWidget);
+        expect(find.text('Edit profile'), findsNothing);
+        await tester.tap(find.byTooltip('Settings'));
+        await tester.pumpAndSettle();
+        expect(find.text('Settings and activity'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
@@ -124,18 +127,20 @@ void main() {
       expect(adapter.verificationSeen, true);
       expect(find.text('Follow'), findsNothing);
       expect(find.text('Followers'), findsNothing);
-      expect(find.text('Fixture User, 26'), findsOneWidget);
+      expect(find.text('Fixture User'), findsOneWidget);
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
       await tap(tester, 'Edit profile');
       expect(find.text('Public profile'), findsOneWidget);
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
       router.go('/profile');
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('Profile options'));
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
       router.go('/setup/verification');
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
     },

@@ -30,7 +30,7 @@ ChatHistoryDto page(
   canSend: canSend,
   revision: revision,
 );
-ConversationDto conversation() => const ConversationDto(
+ConversationDto conversationFixture() => const ConversationDto(
   id: 'c',
   peerId: 'peer',
   name: 'Demo',
@@ -41,6 +41,8 @@ ConversationDto conversation() => const ConversationDto(
   lastText: 'Message',
   updatedAt: '2026-10-18T00:00:00.000Z',
 );
+
+ConversationDto conversation() => conversationFixture();
 
 class FakeChat implements ChatRepository {
   @override
@@ -57,7 +59,7 @@ class FakeChat implements ChatRepository {
     text,
   ) async => message(1, client: id);
   Future<List<ConversationDto>> Function() listResult = () async => [
-    conversation(),
+    conversationFixture(),
   ];
   final sent = <String>[], reads = <int>[];
   @override
@@ -84,8 +86,23 @@ class FakeChat implements ChatRepository {
   }
 
   @override
-  Future<List<ConversationDto>> conversations({CancelToken? cancelToken}) =>
-      listResult();
+  Future<ConversationPageDto> conversations({
+    String? cursor,
+    int? revision,
+    String search = '',
+    String? peerId,
+    int limit = 20,
+    CancelToken? cancelToken,
+  }) async => ConversationPageDto(
+    items: await listResult(),
+    nextCursor: null,
+    revision: 1,
+  );
+  @override
+  Future<ConversationDto> conversation(
+    String id, {
+    CancelToken? cancelToken,
+  }) async => conversationFixture();
 }
 
 Future<void> settle() async {
@@ -219,7 +236,7 @@ void main() {
       r.changes.add(
         const ChatSignal(type: 'conversation.removed', resourceId: 'c'),
       );
-      pending.complete([conversation()]);
+      pending.complete([conversationFixture()]);
       await load;
       await settle();
       expect(c.state.items, isEmpty);

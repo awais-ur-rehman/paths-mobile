@@ -1,56 +1,77 @@
-import '../../safety/presentation/report_sheet.dart';
-import '../../safety/domain/safety_repository.dart';
-
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/network/generated/api_contract.dart';
+import '../../../shared/widgets/paths_icon.dart';
 import '../../../shared/widgets/paths_loader.dart';
-import '../../../shared/widgets/paths_toast.dart';
-import '../../auth/domain/auth_models.dart';
 import '../../media/presentation/media_scope.dart';
 import '../../media/presentation/private_image.dart';
 import 'posts_cubit.dart';
+import 'post_detail.dart';
+export 'post_detail.dart' show PostDetail;
 
-class PostsGrid extends StatefulWidget {
+/// A lazy profile sliver; scope/account changes replace its lifecycle owner.
+class PostsGrid extends StatelessWidget {
   const PostsGrid({required this.scope, required this.owner, super.key});
   final MediaScope scope;
   final String owner;
   @override
-  State<PostsGrid> createState() => _PostsGridState();
+  Widget build(BuildContext context) => _PostsOwner(
+    key: ValueKey((scope.media, scope.posts, scope.posts.accountId, owner)),
+    scope: scope,
+    owner: owner,
+  );
 }
 
-class _PostsGridState extends State<PostsGrid> {
+class _PostsOwner extends StatefulWidget {
+  const _PostsOwner({required this.scope, required this.owner, super.key});
+  final MediaScope scope;
+  final String owner;
+  @override
+  State<_PostsOwner> createState() => _PostsOwnerState();
+}
+
+class _PostsOwnerState extends State<_PostsOwner> {
   late final cubit = PostsCubit(widget.scope.posts, widget.owner);
   late final AppLifecycleListener lifecycle;
+  ScrollNotificationObserverState? observer;
   @override
   void initState() {
     super.initState();
-    widget.scope.media.addListener(_revalidate);
+    widget.scope.media.addListener(_reload);
     lifecycle = AppLifecycleListener(onResume: refresh);
     unawaited(cubit.load());
   }
 
-  void refresh() {
-    unawaited(widget.scope.media.purge());
-  }
-
-  void _revalidate() {
-    unawaited(cubit.load());
-  }
-
   @override
-  void didUpdateWidget(PostsGrid old) {
-    super.didUpdateWidget(old);
-    if (old.key != widget.key) refresh();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ScrollNotificationObserver.maybeOf(context);
+    if (observer != current) {
+      observer?.removeListener(_scroll);
+      observer = current;
+      observer?.addListener(_scroll);
+    }
+  }
+
+  void refresh() => unawaited(widget.scope.media.purge());
+  void _reload() => unawaited(cubit.load());
+  void _scroll(ScrollNotification event) {
+    if ((event is ScrollUpdateNotification || event is ScrollEndNotification) &&
+        event.depth == 0 &&
+        event.metrics.pixels > 0 &&
+        event.metrics.maxScrollExtent > 0 &&
+        event.metrics.extentAfter < 360 &&
+        cubit.state.error == null) {
+      unawaited(cubit.load(more: true));
+    }
   }
 
   @override
   void dispose() {
-    widget.scope.media.removeListener(_revalidate);
+    observer?.removeListener(_scroll);
+    widget.scope.media.removeListener(_reload);
     lifecycle.dispose();
     unawaited(cubit.close());
     super.dispose();
@@ -61,48 +82,33 @@ class _PostsGridState extends State<PostsGrid> {
     bloc: cubit,
     builder: (context, state) {
       if (state.locked) {
-        return const Padding(
-          padding: EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Icon(Icons.lock_outline, color: Colors.white70),
-              SizedBox(height: 8),
-              Text('Private posts', style: TextStyle(color: Colors.white70)),
-            ],
+        return const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              children: [
+                PathsIcon(PathsIconName.lock, color: Colors.white70),
+                SizedBox(height: 8),
+                Text('Private photos', style: TextStyle(color: Colors.white70)),
+              ],
+            ),
           ),
         );
       }
-      return Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Posts',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+      return SliverMainAxisGroup(
+        slivers: [
+          if (state.items.isEmpty && !state.loading && state.error == null)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'No photos yet',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70),
                 ),
               ),
-              IconButton(
-                tooltip: 'Refresh posts',
-                onPressed: state.loading ? null : refresh,
-                icon: const Icon(Icons.refresh, color: Colors.white70),
-              ),
-            ],
-          ),
-          if (state.items.isEmpty && !state.loading && state.error == null)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'No posts yet',
-                style: TextStyle(color: Colors.white70),
-              ),
             ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+          SliverGrid.builder(
             itemCount: state.items.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -112,241 +118,88 @@ class _PostsGridState extends State<PostsGrid> {
             ),
             itemBuilder: (context, index) {
               final post = state.items[index];
-              return InkWell(
-                onTap: () async {
-                  await showModalBottomSheet<void>(
-                    context: context,
-                    isScrollControlled: true,
-                    useSafeArea: true,
-                    builder: (_) => PostDetail(
-                      scope: widget.scope,
-                      post: post,
-                      owner: widget.owner,
-                      own: widget.owner == widget.scope.posts.accountId,
-                    ),
-                  );
-                  if (mounted) refresh();
-                },
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (post.state != 'rejected')
-                        PrivateImage(
-                          repository: widget.scope.media,
-                          assetId: post.assetId,
-                        ),
-                      if (post.state != 'published')
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: double.infinity,
-                            color: Colors.black54,
-                            padding: const EdgeInsets.all(8),
-                            child: Text(
-                              post.state == 'pending'
-                                  ? 'In review'
-                                  : 'Not approved',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white),
+              return Semantics(
+                label: 'Photo ${index + 1}',
+                button: true,
+                child: InkWell(
+                  onTap: () async {
+                    await showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      builder: (_) => PostDetail(
+                        scope: widget.scope,
+                        post: post,
+                        owner: widget.owner,
+                        own: widget.owner == widget.scope.posts.accountId,
+                      ),
+                    );
+                    if (mounted) refresh();
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (post.state != 'rejected')
+                          PrivateImage(
+                            repository: widget.scope.media,
+                            assetId: post.assetId,
+                          ),
+                        if (post.state != 'published')
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Container(
+                              width: double.infinity,
+                              color: Colors.black54,
+                              padding: const EdgeInsets.all(8),
+                              child: Text(
+                                post.state == 'pending'
+                                    ? 'In review'
+                                    : 'Not approved',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
             },
           ),
-          if (state.loading)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: PathsLoader(color: Colors.white),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                if (state.loading)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: PathsLoader(color: Colors.white),
+                  ),
+                if (state.error != null)
+                  TextButton(
+                    style: TextButton.styleFrom(foregroundColor: Colors.white),
+                    onPressed: () => cubit.load(more: state.cursor != null),
+                    child: Text(
+                      state.error!.offline
+                          ? 'You’re offline · Retry'
+                          : 'Could not load photos · Retry',
+                    ),
+                  ),
+                if (state.cursor != null &&
+                    !state.loading &&
+                    state.error == null)
+                  TextButton(
+                    style: TextButton.styleFrom(foregroundColor: Colors.white),
+                    onPressed: () => cubit.load(more: true),
+                    child: const Text('More photos'),
+                  ),
+              ],
             ),
-          if (state.error != null)
-            TextButton(
-              onPressed: () => cubit.load(more: state.items.isNotEmpty),
-              child: const Text('Retry'),
-            ),
-          if (state.cursor != null && !state.loading)
-            TextButton(
-              onPressed: () => cubit.load(more: true),
-              child: const Text('More'),
-            ),
+          ),
         ],
       );
     },
-  );
-}
-
-class PostDetail extends StatefulWidget {
-  const PostDetail({
-    required this.scope,
-    required this.post,
-    required this.own,
-    required this.owner,
-    super.key,
-  });
-  final MediaScope scope;
-  final PostDto post;
-  final bool own;
-  final String owner;
-  @override
-  State<PostDetail> createState() => _PostDetailState();
-}
-
-class _PostDetailState extends State<PostDetail> {
-  PostDto? post;
-  AuthFailure? error;
-  bool busy = false;
-  CancelToken? token;
-  int generation = 0;
-  late final AppLifecycleListener lifecycle;
-  @override
-  void initState() {
-    super.initState();
-    widget.scope.media.addListener(_revalidateDetail);
-    lifecycle = AppLifecycleListener(
-      onPause: () {
-        ++generation;
-        token?.cancel();
-        if (mounted) setState(() => post = null);
-      },
-      onResume: load,
-    );
-    unawaited(load());
-  }
-
-  void _revalidateDetail() {
-    unawaited(load());
-  }
-
-  Future<void> load() async {
-    token?.cancel();
-    final request = token = CancelToken(), current = ++generation;
-    setState(() {
-      post = null;
-      error = null;
-    });
-    try {
-      final value = await widget.scope.posts.read(
-        widget.post.id,
-        cancelToken: request,
-      );
-      if (mounted && current == generation) setState(() => post = value);
-    } catch (e) {
-      if (mounted && current == generation) {
-        setState(
-          () => error = e is AuthFailure ? e : const AuthFailure('unavailable'),
-        );
-      }
-    }
-  }
-
-  Future<void> remove() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete post?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Keep'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-    setState(() => busy = true);
-    try {
-      await widget.scope.posts.remove(widget.post.id);
-      await widget.scope.media.purge();
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => busy = false);
-        PathsToast.show(
-          context,
-          (e is AuthFailure ? e : const AuthFailure('unavailable')).message,
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    ++generation;
-    token?.cancel();
-    widget.scope.media.removeListener(_revalidateDetail);
-    lifecycle.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    height: MediaQuery.sizeOf(context).height * .9,
-    child: Scaffold(
-      appBar: AppBar(
-        title: const Text('Post'),
-        actions: [
-          if (!widget.own)
-            SafetyMenuButton(
-              target: SafetyTarget(
-                widget.owner,
-                kind: 'post',
-                contentId: widget.post.id,
-              ),
-            ),
-          if (widget.own)
-            IconButton(
-              tooltip: 'Delete post',
-              onPressed: busy ? null : remove,
-              icon: const Icon(Icons.delete_outline),
-            ),
-        ],
-      ),
-      body: post == null
-          ? Center(
-              child: error == null
-                  ? const PathsLoader()
-                  : TextButton(
-                      onPressed: load,
-                      child: const Text('Photo unavailable. Retry'),
-                    ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AspectRatio(
-                    aspectRatio: 3 / 4,
-                    child: post!.state == 'rejected'
-                        ? const Center(child: Text('Not approved'))
-                        : PrivateImage(
-                            repository: widget.scope.media,
-                            assetId: post!.assetId,
-                            thumbnail: false,
-                          ),
-                  ),
-                  if (post!.caption.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(post!.caption),
-                    ),
-                  if (post!.state == 'pending')
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: Text('In review'),
-                    ),
-                ],
-              ),
-            ),
-    ),
   );
 }

@@ -23,6 +23,45 @@ void main() {
         .setMockMethodCallHandler(channel, null),
   );
   test(
+    'upload acknowledgments are scoped to the current lease and stop on pause',
+    () async {
+      final tracker = PlatformLocationTracker(channel: channel);
+      var uploads = 0;
+      final subscription = tracker.uploadStream.listen((_) => uploads++);
+      Future<void> event(String session, int epoch) async {
+        final done = Completer<void>();
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              'paths/location',
+              const StandardMethodCodec().encodeMethodCall(
+                MethodCall('event', {
+                  'uploaded': true,
+                  'deviceSessionId': session,
+                  'consentEpoch': epoch,
+                }),
+              ),
+              (_) => done.complete(),
+            );
+        await done.future;
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      await tracker.start(
+        const TrackingPolicy(deviceSessionId: 'current', consentEpoch: 2),
+      );
+      await event('old', 2);
+      await event('current', 1);
+      expect(uploads, 0);
+      await event('current', 2);
+      expect(uploads, 1);
+      await tracker.pause();
+      await event('current', 2);
+      expect(uploads, 1);
+      await subscription.cancel();
+      await tracker.dispose();
+    },
+  );
+  test(
     'pause invalidates in-flight samples before native completion',
     () async {
       final completer = Completer<List<Object>>();

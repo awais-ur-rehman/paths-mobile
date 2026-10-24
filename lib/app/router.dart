@@ -1,4 +1,8 @@
+import 'package:flutter/widgets.dart' show BuildContext;
+
 import '../features/auth/presentation/identity_settings_screen.dart';
+import '../features/settings/presentation/profile_settings_screen.dart';
+import '../shared/widgets/paths_icon.dart';
 import '../features/auth/domain/provider_auth.dart';
 import '../features/deletion/domain/deletion_repository.dart';
 import '../features/deletion/presentation/deletion_screen.dart';
@@ -81,6 +85,7 @@ GoRouter createAuthRouter(
   ProfileRepository profiles,
   ProfileSummaryRepository summaries,
   VerificationRepository verification, {
+  VoidCallback? onStartupBlocked,
   SetupProgressStore? setupProgress,
   HttpMediaRepository? media,
   PhotoPicker? picker,
@@ -104,25 +109,35 @@ GoRouter createAuthRouter(
     SetupDestination.permissions => '/setup/permissions?onboarding=1',
     SetupDestination.home => encounters == null ? '/profile' : '/home',
   };
+  Future<void> openPeerChat(BuildContext context, String peer) async {
+    final repository = chats;
+    if (repository == null) return;
+    try {
+      final account = repository.accountId;
+      final conversations = await repository.conversations(peerId: peer);
+      if (!context.mounted || repository.accountId != account) return;
+      final item = conversations.items
+          .where((c) => c.peerId == peer && c.canSend)
+          .firstOrNull;
+      if (item == null) {
+        PathsToast.show(context, 'Conversation unavailable');
+        return;
+      }
+      await context.push('/chats/${item.id}', extra: item);
+    } catch (_) {
+      if (context.mounted) {
+        PathsToast.show(context, 'Could not open chat. Try again.');
+      }
+    }
+  }
+
   final profileRoute = GoRoute(
     path: '/profile',
     builder: (context, route) => ProfilePreviewScreen(
       key: ValueKey(route.uri.toString()),
       repository: summaries,
       userId: cubit.state.account!.id,
-      onBack: encounters == null ? null : () => context.go('/home'),
-      onDeleteAccount: deletion == null
-          ? null
-          : () => context.push('/account/delete'),
-      onSignInMethods: profiles is ProviderAuthRepository
-          ? () => context.push('/settings/sign-in')
-          : null,
-      onBlockedAccounts: safety == null
-          ? null
-          : () => context.push('/settings/blocked'),
-      onLocationSetup: locations == null
-          ? null
-          : () => context.go('/setup/permissions'),
+      onSettings: () => context.push('/settings'),
     ),
   );
   return GoRouter(
@@ -206,6 +221,7 @@ GoRouter createAuthRouter(
                       if (hasSetupGate) '/setup/resume',
                       '/setup/verification',
                       '/profile',
+                      '/settings',
                       if (profiles is ProviderAuthRepository)
                         '/settings/sign-in',
                       if (media != null && path.startsWith('/media/')) path,
@@ -239,6 +255,82 @@ GoRouter createAuthRouter(
       return target == path ? null : target;
     },
     routes: [
+      GoRoute(
+        path: '/settings',
+        builder: (context, _) => ProfileSettingsScreen(
+          onBack: () =>
+              context.canPop() ? context.pop() : context.go('/profile'),
+          entries: [
+            ProfileSetting(
+              section: 'Your account',
+              label: 'Edit profile',
+              icon: PathsIconName.profile,
+              onTap: () => context.push('/setup/profile?edit=1'),
+            ),
+            ProfileSetting(
+              section: 'Your account',
+              label: 'Verification',
+              icon: PathsIconName.verified,
+              onTap: () => context.push('/setup/verification?return=profile'),
+            ),
+            if (profiles is ProviderAuthRepository)
+              ProfileSetting(
+                section: 'Your account',
+                label: 'Sign-in methods',
+                icon: PathsIconName.key,
+                onTap: () => context.push('/settings/sign-in'),
+              ),
+            ProfileSetting(
+              section: 'Privacy and preferences',
+              label: 'Profile privacy',
+              icon: PathsIconName.lock,
+              onTap: () => context.push('/setup/profile?edit=1'),
+            ),
+            if (locations != null)
+              ProfileSetting(
+                section: 'Privacy and preferences',
+                label: 'Location & permissions',
+                icon: PathsIconName.location,
+                onTap: () => context.push('/setup/permissions'),
+              ),
+            if (notifications != null)
+              ProfileSetting(
+                section: 'Privacy and preferences',
+                label: 'Notifications',
+                icon: PathsIconName.bell,
+                onTap: () => context.push('/settings/notifications'),
+              ),
+            if (safety != null)
+              ProfileSetting(
+                section: 'Safety',
+                label: 'Blocked accounts',
+                icon: PathsIconName.block,
+                onTap: () => context.push('/settings/blocked'),
+              ),
+            if (notifications != null)
+              ProfileSetting(
+                section: 'Safety',
+                label: 'Reviews',
+                icon: PathsIconName.review,
+                onTap: () => context.push('/reviews'),
+              ),
+            if (deletion != null)
+              ProfileSetting(
+                section: 'Account actions',
+                label: 'Delete account',
+                icon: PathsIconName.trash,
+                destructive: true,
+                onTap: () => context.push('/account/delete'),
+              ),
+            ProfileSetting(
+              section: 'Account actions',
+              label: 'Sign out',
+              icon: PathsIconName.logout,
+              onTap: () => unawaited(cubit.logout()),
+            ),
+          ],
+        ),
+      ),
       if (profiles is ProviderAuthRepository)
         GoRoute(
           path: '/settings/sign-in',
@@ -265,6 +357,7 @@ GoRouter createAuthRouter(
           path: '/setup/resume',
           builder: (context, route) => SetupResumeScreen(
             profiles: profiles,
+            onError: onStartupBlocked,
             verification: verification,
             progress: setupProgress,
             owner: cubit.state.account!.id,
@@ -386,6 +479,9 @@ GoRouter createAuthRouter(
                   builder: (context, _) => HomeScreen(
                     repository: encounters,
                     relationships: relationships,
+                    onChat: chats == null
+                        ? null
+                        : (id) => openPeerChat(context, id),
                     locations: locations,
                     onProfile: (id) async {
                       await context.push(
@@ -444,6 +540,9 @@ GoRouter createAuthRouter(
             peerId: route.extra is ConversationDto
                 ? (route.extra! as ConversationDto).peerId
                 : null,
+            avatarAssetId: route.extra is ConversationDto
+                ? (route.extra! as ConversationDto).avatarAssetId
+                : null,
             name: route.extra is ConversationDto
                 ? (route.extra as ConversationDto).name
                 : 'Chat',
@@ -470,36 +569,16 @@ GoRouter createAuthRouter(
       if (encounters != null)
         GoRoute(
           path: '/profiles/:id',
+          redirect: (_, route) =>
+              route.pathParameters['id'] == cubit.state.account?.id
+              ? '/profile'
+              : null,
           builder: (context, route) => PeerProfileScreen(
             repository: summaries,
             relationships: relationships,
             onChat: chats == null
                 ? null
-                : () async {
-                    try {
-                      final peer = route.pathParameters['id'];
-                      final account = chats.accountId;
-                      final conversations = await chats.conversations();
-                      if (!context.mounted || chats.accountId != account) {
-                        return;
-                      }
-                      final item = conversations
-                          .where((c) => c.peerId == peer && c.canSend)
-                          .firstOrNull;
-                      if (item == null) {
-                        PathsToast.show(context, 'Conversation unavailable');
-                        return;
-                      }
-                      await context.push('/chats/${item.id}', extra: item);
-                    } catch (_) {
-                      if (context.mounted) {
-                        PathsToast.show(
-                          context,
-                          'Could not open chat. Try again.',
-                        );
-                      }
-                    }
-                  },
+                : () => openPeerChat(context, route.pathParameters['id']!),
             onOpened:
                 notifications == null ||
                     route.uri.queryParameters['notification'] == null

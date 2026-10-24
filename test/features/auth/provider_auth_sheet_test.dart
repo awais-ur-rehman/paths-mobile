@@ -48,7 +48,7 @@ void main() {
         );
         await tester.tap(find.text('Open'));
         await tester.pumpAndSettle();
-        expect(find.text('Email'), findsOneWidget);
+        expect(find.text('Email address'), findsOneWidget);
         expect(tester.takeException(), isNull);
         await tester.ensureVisible(find.text('Continue').last);
         await tester.pumpAndSettle();

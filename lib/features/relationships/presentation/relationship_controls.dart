@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../shared/widgets/paths_loader.dart';
+import '../../../shared/widgets/paths_icon.dart';
+import '../../../shared/widgets/paths_options_menu.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import '../data/relationship_repository.dart';
 import 'relationship_cubit.dart';
@@ -15,11 +17,15 @@ class RelationshipControls extends StatefulWidget {
     required this.repository,
     required this.target,
     this.onChat,
+    this.onLightSurface = false,
+    this.useRootNavigator = true,
     super.key,
   });
   final RelationshipRepository repository;
   final String target;
   final VoidCallback? onChat;
+  final bool onLightSurface;
+  final bool useRootNavigator;
   @override
   State<RelationshipControls> createState() => _ControlsState();
 }
@@ -41,6 +47,7 @@ class _ControlsState extends State<RelationshipControls> {
   Future<void> _confirm(String action, String title) async {
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: widget.useRootNavigator,
       builder: (context) => AlertDialog(
         title: Text(title),
         actions: [
@@ -86,18 +93,32 @@ class _ControlsState extends State<RelationshipControls> {
         data: Theme.of(context).copyWith(
           filledButtonTheme: FilledButtonThemeData(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: widget.onLightSurface
+                  ? const Color(0xFF050708)
+                  : Colors.white,
+              foregroundColor: widget.onLightSurface
+                  ? Colors.white
+                  : Colors.black,
             ),
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white54),
+              foregroundColor: widget.onLightSurface
+                  ? const Color(0xFF101418)
+                  : Colors.white,
+              side: BorderSide(
+                color: widget.onLightSurface
+                    ? const Color(0xFFD8E4EC)
+                    : Colors.white54,
+              ),
             ),
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(
+              foregroundColor: widget.onLightSurface
+                  ? const Color(0xFF0B5AA1)
+                  : Colors.white,
+            ),
           ),
         ),
         child: Column(
@@ -111,9 +132,7 @@ class _ControlsState extends State<RelationshipControls> {
                 if (value.status != 'connected' || widget.onChat == null)
                   OutlinedButton.icon(
                     onPressed: state.busy ? null : cubit.save,
-                    icon: Icon(
-                      value.saved ? Icons.bookmark : Icons.bookmark_outline,
-                    ),
+                    icon: const PathsIcon(PathsIconName.likes, size: 20),
                     label: Text(value.saved ? 'Saved' : 'Save'),
                   ),
                 if (value.available)
@@ -125,7 +144,9 @@ class _ControlsState extends State<RelationshipControls> {
                               'Send a connection request?',
                             )
                           : null,
-                      child: const Text('Connect'),
+                      child: Text(
+                        widget.onLightSurface ? 'Send request' : 'Connect',
+                      ),
                     ),
                     'incoming' => FilledButton(
                       onPressed: state.busy ? null : () => cubit.act('accept'),
@@ -136,32 +157,52 @@ class _ControlsState extends State<RelationshipControls> {
                       child: const Text('Cancel request'),
                     ),
                     'connected' when widget.onChat != null => Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: MainAxisSize.max,
                       children: [
-                        FilledButton.icon(
-                          onPressed: state.busy ? null : widget.onChat,
-                          icon: const Icon(Icons.chat_bubble_outline),
-                          label: const Text('Message'),
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: state.busy ? null : widget.onChat,
+                            icon: const PathsIcon(
+                              PathsIconName.chats,
+                              size: 20,
+                            ),
+                            label: const Text('Message'),
+                          ),
                         ),
-                        PopupMenuButton<String>(
+                        const SizedBox(width: 8),
+                        IconButton(
                           tooltip: 'Connection options',
-                          onSelected: (action) {
-                            if (action == 'save') {
-                              unawaited(cubit.save());
-                            } else {
-                              unawaited(_confirm('disconnect', 'Disconnect?'));
-                            }
-                          },
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'save',
-                              child: Text(value.saved ? 'Unsave' : 'Save'),
-                            ),
-                            const PopupMenuItem(
-                              value: 'disconnect',
-                              child: Text('Disconnect'),
-                            ),
-                          ],
+                          icon: PathsIcon(
+                            PathsIconName.more,
+                            color: widget.onLightSurface
+                                ? const Color(0xFF101418)
+                                : Colors.white,
+                          ),
+                          onPressed: state.busy
+                              ? null
+                              : () async {
+                                  final action = await showPathsOptions(
+                                    context,
+                                    [
+                                      PathsMenuOption(
+                                        'save',
+                                        value.saved ? 'Unsave' : 'Save',
+                                        PathsIconName.likes,
+                                      ),
+                                      const PathsMenuOption(
+                                        'disconnect',
+                                        'Disconnect',
+                                        PathsIconName.block,
+                                      ),
+                                    ],
+                                  );
+                                  if (!mounted || action == null) return;
+                                  if (action == 'save') {
+                                    await cubit.save();
+                                  } else {
+                                    await _confirm('disconnect', 'Disconnect?');
+                                  }
+                                },
                         ),
                       ],
                     ),
@@ -171,11 +212,15 @@ class _ControlsState extends State<RelationshipControls> {
                           : () => _confirm('disconnect', 'Disconnect?'),
                       child: const Text('Disconnect'),
                     ),
-                    'cooldown' => const Padding(
+                    'cooldown' => Padding(
                       padding: EdgeInsets.all(12),
                       child: Text(
                         'Try connecting later',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: widget.onLightSurface
+                              ? const Color(0xFF52616D)
+                              : Colors.white70,
+                        ),
                       ),
                     ),
                     _ => const SizedBox.shrink(),

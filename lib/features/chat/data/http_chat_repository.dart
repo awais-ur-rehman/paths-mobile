@@ -24,48 +24,41 @@ final class HttpChatRepository implements ChatRepository {
   }
 
   @override
-  Future<List<ConversationDto>> conversations({
+  Future<ConversationPageDto> conversations({
+    String? cursor,
+    int? revision,
+    String search = '',
+    String? peerId,
+    int limit = 20,
     CancelToken? cancelToken,
-  }) async {
-    final account = accountId;
-    for (var attempt = 0; attempt < 3; attempt++) {
-      final all = <ConversationDto>[];
-      String? cursor;
-      int? revision;
-      try {
-        do {
-          final page = await _parse(
-            api.request(
-              'GET',
-              Uri(
-                path: '/v1/conversations',
-                queryParameters: {
-                  'limit': '50',
-                  'cursor': ?cursor,
-                  if (revision != null) 'revision': '$revision',
-                },
-              ).toString(),
-              cancelToken: cancelToken,
-            ),
-            ConversationPageDto.fromJson,
-          );
-          if (account == null || account != accountId) {
-            throw const AuthFailure('cancelled');
-          }
-          revision ??= page.revision;
-          if (page.revision != revision) throw const AuthFailure('conflict');
-          all.addAll(page.items);
-          cursor = page.nextCursor;
-        } while (cursor != null);
-        all.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-        return List.unmodifiable(all);
-      } on AuthFailure catch (e) {
-        if (!const {'CONFLICT', 'conflict'}.contains(e.code)) rethrow;
-        if (attempt == 2) rethrow;
-      }
-    }
-    throw const AuthFailure('conflict');
-  }
+  }) => _parse(
+    api.request(
+      'GET',
+      Uri(
+        path: '/v1/conversations',
+        queryParameters: {
+          'limit': '$limit',
+          'cursor': ?cursor,
+          if (revision != null) 'revision': '$revision',
+          if (search.isNotEmpty) 'search': search,
+          'peerId': ?peerId,
+        },
+      ).toString(),
+      cancelToken: cancelToken,
+    ),
+    ConversationPageDto.fromJson,
+  );
+
+  @override
+  Future<ConversationDto> conversation(String id, {CancelToken? cancelToken}) =>
+      _parse(
+        api.request(
+          'GET',
+          '/v1/conversations/${Uri.encodeComponent(id)}',
+          cancelToken: cancelToken,
+        ),
+        ConversationDto.fromJson,
+      );
 
   @override
   Future<ChatHistoryDto> history(

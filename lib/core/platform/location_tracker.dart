@@ -117,6 +117,7 @@ abstract interface class LocationTracker {
   Future<void> pause();
   Future<void> stopAndPurge();
   Stream<TrackingStatus> get statusStream;
+  Stream<void> get uploadStream;
   Stream<LocationSample> get sampleStream;
   Future<int> queueCount();
   Future<TrackingPermissions> permissions();
@@ -152,6 +153,13 @@ final class PlatformLocationTracker implements LocationTracker {
           ),
         );
       }
+      final policy = _policy;
+      if (event['uploaded'] == true &&
+          policy != null &&
+          event['deviceSessionId'] == policy.deviceSessionId &&
+          event['consentEpoch'] == policy.consentEpoch) {
+        _uploads.add(null);
+      }
       if (event['sample'] case final Map<Object?, Object?> raw) {
         final sample = LocationSample.fromMap(raw);
         final policy = _policy;
@@ -164,6 +172,9 @@ final class PlatformLocationTracker implements LocationTracker {
     });
   }
   final MethodChannel _channel;
+  final _uploads = StreamController<void>.broadcast();
+  @override
+  Stream<void> get uploadStream => _uploads.stream;
   final _statuses = StreamController<TrackingStatus>.broadcast();
   final _samples = StreamController<LocationSample>.broadcast();
   TrackingPolicy? _policy;
@@ -268,6 +279,7 @@ final class PlatformLocationTracker implements LocationTracker {
   Future<void> dispose() async {
     await stopAndPurge();
     _channel.setMethodCallHandler(null);
+    await _uploads.close();
     await _statuses.close();
     await _samples.close();
   }

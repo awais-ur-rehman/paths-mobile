@@ -178,7 +178,7 @@ class PathsLocationTracker private constructor(private val context: Context) {
                         val ids = response.getJSONArray("acknowledged")
                         val sent=batch.map {it.getString("sampleId")}.toSet()
                         synchronized(this@PathsLocationTracker) {
-                            if(session == activeSession && epoch == activeEpoch) { acknowledge((0 until ids.length()).map { ids.getString(it) }.filter {it in sent}); attempts=0;retryAt=0;lastStatus=if(permissions()["precise"]!=true || batch.last().optDouble("horizontalAccuracyM",100.0)>25)"inaccurate" else if(foreground)"active" else "background";emit?.invoke(mapOf("status" to lastStatus)); retryHandler.postDelayed({flush(false)},250) }
+                            if(session == activeSession && epoch == activeEpoch) { val accepted = (0 until ids.length()).map { ids.getString(it) }.filter {it in sent}; acknowledge(accepted); if(accepted.isNotEmpty()) emit?.invoke(mapOf("uploaded" to true,"deviceSessionId" to activeSession,"consentEpoch" to activeEpoch)); attempts=0;retryAt=0;lastStatus=if(permissions()["precise"]!=true || batch.last().optDouble("horizontalAccuracyM",100.0)>25)"inaccurate" else if(foreground)"active" else "background";emit?.invoke(mapOf("status" to lastStatus)); retryHandler.postDelayed({flush(false)},250) }
                         }
                     } else if(responseCode in listOf(400,401,403,409,413)) {
                         synchronized(this@PathsLocationTracker) {if(session==activeSession && epoch==activeEpoch){stop();lastStatus="unavailable";emit?.invoke(mapOf("status" to lastStatus))}}
@@ -227,7 +227,7 @@ class PathsLocationService : Service() {
         manager.createNotificationChannel(NotificationChannel("paths_tracking", "Paths location", NotificationManager.IMPORTANCE_LOW))
         val stopIntent = PendingIntent.getService(this, 1, Intent(this, PathsLocationService::class.java).setAction("stop"), PendingIntent.FLAG_IMMUTABLE)
         val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-        val notification = Notification.Builder(this, "paths_tracking").setSmallIcon(com.paths.mobile.R.drawable.paths_symbol)
+        val notification = Notification.Builder(this, "paths_tracking").setSmallIcon(com.paths.mobile.R.drawable.paths_notification)
             .setContentTitle(PathsLocationTracker.get(this).notificationTitle()).setContentText("Best-effort capture is active. Tap Stop to purge samples.")
             .setContentIntent(PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE))
             .addAction(Notification.Action.Builder(null,"Stop",stopIntent).build()).setOngoing(true).build()

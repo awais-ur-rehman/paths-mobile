@@ -2,12 +2,14 @@
 
 ## Original identity
 
-Two rounded crossing paths form the Paths symbol. Custom vector lettering forms the primary wordmark. Original Paths project artwork created in this session; no reference-app marks or photos reused. Rights reserved to the project owner; no third-party attribution required for this artwork. Editable SVG sources and reproducible Pillow exporter are retained in paths-mobile/tools/export_brand.py. No stock or generated people are presented as members.
+The owner selected **Open P (concept B)** on 23 October 2026. A single open-ended P route replaces the earlier crossing/hourglass mark. Original Paths symbol geometry is project artwork with no third-party symbol attribution. The title-case wordmark uses outlined bundled Inter at weight 460 with adjusted spacing; retain its existing SIL Open Font License 1.1 notice. No reference-app mark or reference-library trademark was copied.
+
+Editable masters: assets/brand/source/paths-symbol.svg and paths-logo.svg. tools/export_brand.py uses existing local Sharp/librsvg and Pillow to generate SVG/PNG, Flutter vector paths, Android resources, iOS catalogs and admin assets. No new renderer package is installed. Native sizing is intentionally different from general UI artwork to respect platform masks.
 
 | Asset | Purpose and locations | Source/license |
 |---|---|---|
-| paths-logo.svg; paths-logo-ink.svg; paths-logo-white.svg | Primary wordmark, product/admin identity | Original SVG geometry, project artwork |
-| paths-symbol.svg/.png; ink/white variants | App/splash/shared symbol | Original SVG geometry; PNG exports via local Pillow 12.3 |
+| paths-logo.svg; paths-logo-ink.svg; paths-logo-white.svg | Primary wordmark, product/admin identity | Original symbol; outlined Inter lettering under bundled SIL OFL |
+| paths-symbol.svg/.png; ink/white variants | App/splash/shared symbol | Original Open P geometry; SVG rasterization via local Sharp, platform exports via Pillow |
 | Android mipmap icons + drawable/paths_symbol.xml | Density PNG fallback, adaptive foreground, themed monochrome, Android 12 splash | Same symbol; foreground stays inside 66/108 safe region; OS supplies adaptive mask |
 | iOS Assets.xcassets/AppIcon + LaunchImage | Opaque square app icons (OS rounds), transparent centered launch symbol | Same symbol; each required size exported separately |
 | Inter-Variable.ttf | Bundled UI font | https://github.com/google/fonts/tree/main/ofl/inter — SIL Open Font License 1.1, retained Inter-OFL.txt with copyright notices |
@@ -34,7 +36,7 @@ Exporter executed locally. SVGs parsed as XML; all raster variants opened with P
 - License checked2026-10-17: https://www.pexels.com/license/ . Free commercial/app use and modification permitted; attribution not required. Do not imply endorsement, misuse identifiable people, resell unaltered copies or redistribute as stock. Optional photographer credit appears in the app's image credits.
 - Source retained: assets/source/friends-walking-pexels-8121667.jpg. Optimized locally with Pillow (resize only, original aspect, JPEG85): assets/onboarding/friends-walking.jpg. Source remains editable; production bundles only optimized asset. No hotlink.
 
-Task3 exports the ink wordmark to assets/brand/paths-logo-ink.png using retained tools/render_logo.swift. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
+Task3 originally exported the ink wordmark with tools/render_logo.swift. The Open P exporter now renders it directly from the approved SVG; the obsolete fixed-aspect Swift helper was retired. Font license files are bundled and registered with Flutter LicenseRegistry; the app credits link opens those notices. Onboarding/login golden renders were inspected for typography, icon glyphs, legibility and cropping. Native splash/icon masking remains owner-device evidence.
 
 ## Device-feedback loader and splash
 
@@ -95,10 +97,97 @@ Reuses existing original Paths vector symbol/logo and bundled Inter. No new visu
 
 No new production visual assets. Existing Paths branding, fonts and reference goldens are reused. The inline one-pixel RGBA PNG in mobile `test/features/media/private_image_lifecycle_test.dart` is original test-only artwork generated with Python standard-library PNG chunks/zlib; project-owned, no attribution required. It contains no people or personal data.
 
-## Task14 sign-in controls
+## Task14 sign-in controls (historical, replaced below)
 
 `assets/auth/google-sign-in.png` is the unmodified 354×80 RGBA pre-approved light pill button from https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_lg.png (6,953 bytes), linked by https://developers.google.com/identity/branding-guidelines. Google brand features remain Google's trademarks; use is limited to the documented sign-in control under those branding guidelines, not a general open-source logo license. No additional attribution is requested by the guidelines. Keep its proportions and colors. It is bundled locally, displayed with contain fit and a screen-reader button label; no hotlink, invented G or font dependency. This is third-party artwork, not Paths project artwork.
 
 The Apple control uses the cached `sign_in_with_apple` package's standard button (8.2.0, MIT code license; Apple mark remains subject to Apple's Sign in with Apple design rules). No separate Apple logo asset was copied. Both controls retain their provider names and comparable size. Native signed-device presentation remains to be checked.
 
 Google sign-in artwork SHA-256: `d260d50a14d8f7deb03025e8ceb644577a8798e127fe203a959cd6cebf145e4e`.
+
+
+## Logo refresh concepts — 23 October 2026
+
+Concept-stage record: production branding was unchanged pending owner direction selection.
+
+| Asset | Purpose | Source / generation | License / attribution | Location |
+| --- | --- | --- | --- | --- |
+| Passing, Open P and Between V1/V2 SVGs | Original logo directions for owner review | Original cubic geometry; methodology from https://github.com/kaankiziltug/logo-design-skill; no reference-library logo copied | Project symbol artwork; no third-party symbol attribution | design/logo-refresh/*-v1.svg, *-v2.svg |
+| Outlined Paths wordmark in concept lockups | Evaluate symbol/type proportions | Existing bundled Inter variable font, weight460, outlined with local CoreText; adjusted spacing | Inter SIL OFL1.1; retain assets/fonts/Inter-OFL.txt | design/logo-refresh/*-lockup-*.svg |
+| concepts.png and PNG render checks | Comparison, small-size and monochrome inspection | Existing local Sharp/librsvg and Pillow; no new dependency | Same artwork/font terms | design/logo-refresh/*.png |
+
+Design brief, examined references, actual checks and integration tasks are recorded in design/logo-refresh/README.md. These comparison tiles are not final Android/iOS launcher assets.
+
+
+## Open P production assets — 23 October 2026
+
+- Approved source: design/logo-refresh/b-open-p-v2.svg and b-open-p-lockup-v2.svg; owner selected B. Primary artwork is ink #101418 on white #FFFFFF; inverse white and existing blue #147DCE accent variants are exported.
+- SVGs/PNGs: assets/brand/paths-symbol*, paths-logo*, paths-logo-stacked.svg and paths-wordmark.svg. paths-loader.svg follows the same P route. Symbols are monochrome SVG strokes with round caps; lettering is font-independent filled outlines.
+- Runtime: generated/paths_geometry.dart is reproducibly derived from the SVG masters; shared PathsSymbol/PathsWordmark/PathsLoader use it. No SVG package or new font dependency.
+- Android: density fallback PNGs, adaptive/themed foreground and Android12 splash use the P. Separate paths_notification.xml is white-on-transparent for push/tracking notifications. Actual control-hull tests verify the system-circle bounds.
+- iOS: every catalog slot exported separately; app icons opaque RGB, launch symbols transparent, launch storyboard retains centered aspect-fit constraints.
+- Admin: matching public/brand files, favicon.svg and apple-touch-icon.png. Reference-library SVGs were studied temporarily outside the repositories and are not bundled.
+- Reproduce with existing tools: python3 tools/export_brand.py. Requires Dart on PATH, Pillow, and already-installed sibling paths-backend/node_modules/sharp; does not install or download them.
+
+Usage/padding/minimum-size and source notes: docs/brand/OPEN_P.md. Runtime/system-mask appearance remains a phone check; catalog/XML/render checks are not device evidence.
+
+`docs/brand/open-p-preview.png` is a white-background review export of the same primary logo; original artwork/Inter terms above apply.
+
+
+## Authentication UI refresh — 24 October 2026
+
+| Asset | Purpose / outputs | Source / method | License / attribution |
+| --- | --- | --- | --- |
+| Google round sign-in control | `assets/auth/google-round.svg` (editable vendor source), `google-round.png` (180px; only PNG bundled) | Unmodified official light round icon-mode SVG from https://developers.google.com/static/identity/images/branding_guideline_sample_lt_rd_sl.svg, linked at https://developers.google.com/identity/branding-guidelines . Rasterized with the already-installed sibling backend Sharp/librsvg; no new package/font | Google brand features remain Google's trademarks; use is limited to sign-in under the branding guidelines, not a general open-source mark license. Colors/aspect/boundary are preserved. No additional attribution requested. |
+| Apple sign-in symbol | Public `AppleLogoPainter` in existing `sign_in_with_apple`8.2.0 renders the equal-size circular control; no new asset file | Existing installed MIT package implementation, original Apple brand symbol. Shown only where the provider SDK/configuration permits Apple sign-in | Retain existing package license; Apple brand use follows Sign in with Apple guidelines. Apple setup/runtime testing remains deferred. |
+| Auth reference goldens | `test/features/auth/goldens/auth-login-configured.png`, `auth-signup-configured.png`, `auth-forgot.png` | Actual Flutter test renders with bundled Inter/Material icons and synthetic provider configuration. The supplied reference is studied for layout, not copied into the app. | Paths UI artwork plus existing font/provider terms. Test-only fixtures, no real users or credentials. |
+
+The old pill `google-sign-in.png` is removed from the app and asset manifest; its historical source record remains above. No hotlinks or new runtime SVG dependency. All form icons use the existing Material icon family; primary Paths artwork remains the approved Open P.
+
+google-round.svg SHA256: `4d197ab476078c8979c90ea9c4ed98e56a6748e118ace7a07caeb43266cad469`.
+
+google-round.png SHA256: `b653ff86df9554970c3c88a57a51b208439ee9bc1a2b9944e4bbd12f3fbf8a7d`.
+
+## Original navigation icon family — 24 October 2026
+
+- Purpose: Home, Likes, Chats, Profile and raised Plus in the reference-shaped bottom navigation; source for future consistent product icons.
+- Source/method: original24-unit SVG paths authored for Paths, using rounded1.8-unit strokes. The owner's supplied screenshots informed navigation shape/style; no screenshot pixels or third-party icon paths are shipped.
+- License/attribution: original project artwork, owned with the Paths project; no external license or attribution requirement.
+- Editable sources: `assets/icons/{home,likes,chats,profile,plus}.svg`. Exporter: `tools/export_icons.py`; shipped vector geometry: `lib/shared/widgets/generated/paths_icon_geometry.dart`; runtime consumer: `PathsIcon`. No raster scaling or SVG runtime dependency.
+- Guidance: `docs/design/ICONS.md`. Generated source renders at28px (Plus26px), using runtime ink/blue/white.320/390px navigation golden renders inspected; physical Android appearance remains owner-tested.
+
+
+## Verification badge vectors — 24 October 2026
+
+Original project artwork: `assets/icons/verified.svg` and `assets/icons/unverified.svg`, authored directly with the navigation family's24-unit grid,1.8-unit rounded strokes and shield outline. The check/minus distinguish approved/unverified visually; text retains exact approved/pending/declined/none meaning. No outside assets or attribution requirement. Exported through `tools/export_icons.py` into `generated/paths_icon_geometry.dart`, rendered by PathsIcon inside VerificationBadge at20px. Editable masters retained. Light and dark-profile fixtures: `test/shared/goldens/verification-badges.png`; profile/navigation snapshots inspected. Native phone appearance remains pending.
+
+## Chat controls — 24 October 2026
+
+Original editable SVG masters `assets/icons/{search,back,more,send}.svg` extend the navigation family's24-unit grid and1.8-unit rounded strokes. They serve conversation search, thread back/options and sending. Source: directly authored Paths artwork; no external asset, attribution or added dependency. Exported by `tools/export_icons.py` to `lib/shared/widgets/generated/paths_icon_geometry.dart`, consumed by PathsIcon. Runtime tint follows ink on white and white on blue. Chat gradients are Flutter vector fills; no downloaded background or fake user photo is included. Layout snapshots in `test/features/chat/goldens/` use isolated synthetic messages and generic avatars; live profiles use existing authenticated R2 photos.
+
+## Profile and settings controls — 24 October 2026
+
+Original editable masters: `assets/icons/{settings,lock,globe,location,bell,block,key,logout,trash,chevronRight,review}.svg`. Purpose: profile controls/visibility and supported settings rows. Authored directly for Paths on the existing24-unit grid with1.8-unit rounded strokes; no third-party paths, external assets or attribution requirement. License/ownership: original Paths project artwork. Compiled by `tools/export_icons.py` to `lib/shared/widgets/generated/paths_icon_geometry.dart`; tinted by PathsIcon, no new dependency. Settings renders at320/390px include normal and scrolled account-action rows; original masters retained.
+
+Portrait backgrounds and photo tiles use the member's existing authorized media from R2, not bundled sample people. The gradient/blur is native Flutter vector/filter composition; one decoded private frame paints the sharp image and masked blurred copy, then is cleared/disposed by PrivateImage. No new download/font/image source. Test-only profile goldens reuse the already licensed local `assets/onboarding/friends-walking.jpg` photo (source/license recorded in the onboarding entry above), clearly labelled Fixture User and isolated to tests. It is not a profile fixture seeded into live accounts or a fabricated active user/testimonial. Outputs: `test/features/profile/goldens/profile-{own,member}-{320,390}.png`, `settings-{320,390}.png`, `settings-actions-{320,390}.png` and the updated fallback `own-profile.png`. Privacy/frame lifecycle and actual rendering are covered by widget tests; native GPU appearance remains owner-tested.
+
+
+## Likes photo cards — 24 October 2026
+
+Production cards reuse existing authenticated member thumbnails from private R2 and the original Paths search/profile/verified/trash icons documented above; no new asset download or external license. Gradients, pills and separators are Flutter vector fills. Existing editable SVG masters/compiled geometry remain the source of the icon family. Photos retain PrivateImage authorization, cancellation and decoded-frame cleanup; an image's noninteractive semantics are excluded inside the working profile card action.
+
+Test-only snapshots `test/features/likes/goldens/likes-{320,390}.png` and `likes-{320,390}-large-keyboard.png` reuse the licensed local `assets/onboarding/friends-walking.jpg` described in the onboarding entry. The repeated photo and demo labels are isolated layout fixtures, never seeded as people, active members or testimonials. Small-width and200percent/keyboard renders inspected; exact Android appearance remains owner-tested. No font, icon package or other dependency added.
+
+## Home map — 24 October 2026
+
+- `assets/maps/paths-light.json`: original editable Paths vector-map style, authored directly for the supplied light street/park/water direction. No reference screenshot geometry or third-party style code is bundled. Original styling is project artwork. Gray buildings, white roads, green parks and aqua water use the existing blue controls and bundled UI font family.
+- Runtime vector data/glyph source: [OpenFreeMap](https://openfreemap.org/) and its [native/custom-style guidance](https://openfreemap.org/quick_start/). Public source `https://tiles.openfreemap.org/planet`; map glyphs use its existing Noto Sans font service. This is a free online map service requiring no key; availability has no SLA. Map tiles/glyphs require internet; the app does not promise offline map downloads. App UI fonts remain locally bundled.
+- Attribution: retain the native attribution control with OpenFreeMap/OpenMapTiles and [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). OSM data is ODbL; OpenMapTiles schema is BSD/CC-BY as linked by the provider. No self-hosted data export or external style is redistributed here. The stock Liberty setting resolves to the original bundled style; an explicit other HTTPS style remains configurable.
+- `assets/icons/{locate,fit}.svg`: original 24-unit,1.8-stroke rounded masters for recenter/fit controls; no external attribution. Compiled using the existing `tools/export_icons.py` to PathsIcon geometry. No extra package or bitmap dependency.
+- Production marker/preview photos use authenticated PrivateImage in Flutter, never native map image caches. Native maps only receive already authorized coarse encounter positions. The current-position puck is local native location; peer pins are encounter areas, not live peer positions.
+- Test-only `test/features/discovery/goldens/home-{map,preview}-{320,390}.png` use the existing licensed onboarding photo and a locally painted native-renderer boundary. Synthetic names/photos are isolated layout fixtures. These prove Flutter layout, not real tile appearance, camera synchronization, GPU performance or Android permissions. Native appearance/attribution remain owner-device checks.
+
+
+## Demo photography — 24 October 2026
+
+The development backend now serves six explicitly labelled demo profiles with licensed Unsplash sample photos and gallery scenery. Source files, exact download URLs, SHA-256 hashes and license ledger are versioned in `paths-backend/docs/testing/photos/sources.json` and `paths-backend/docs/ASSETS.md`. These are private backend fixtures, not app-bundled member photos or endorsements. The mobile app continues using authorized private media delivery and existing cleanup rules. No new production icon/font/image dependency.

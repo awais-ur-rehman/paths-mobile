@@ -8,8 +8,8 @@ class ResetPasswordScreen extends StatelessWidget {
   const ResetPasswordScreen({super.key});
   @override
   Widget build(BuildContext context) => AuthScaffold(
-    title: 'Choose a new password',
-    subtitle: 'Use 12–128 characters. After resetting, sign in again on each of your devices.',
+    title: 'New password',
+    subtitle: 'Use 12–128 characters. All devices will be signed out.',
     onBack: () => context.read<AuthCubit>().cancelFlow(),
     child: const _ResetForm(),
   );
@@ -52,17 +52,11 @@ class _ResetFormState extends State<_ResetForm> {
             newPassword: true,
           ),
           const SizedBox(height: 16),
-          TextFormField(
+          PasswordField(
             controller: confirmation,
-            decoration: const InputDecoration(
-              labelText: 'Confirm new password',
-            ),
-            obscureText: true,
-            autocorrect: false,
-            enableSuggestions: false,
-            autofillHints: const [AutofillHints.newPassword],
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => submit(),
+            label: 'Confirm new password',
+            newPassword: true,
+            onSubmitted: submit,
             validator: (value) =>
                 value != password.text ? 'The passwords do not match.' : null,
           ),

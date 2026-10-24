@@ -45,6 +45,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Hello Fern');
+      await tester.pump();
       await tester.tap(find.byTooltip('Send message'));
       await tester.pumpAndSettle();
       expect(find.text('Not sent · Retry'), findsOneWidget);
@@ -154,5 +155,69 @@ void main() {
     expect(r.reads, contains(2));
     await tester.pumpWidget(const SizedBox());
     await r.changes.close();
+  });
+  testWidgets(
+    'populated sync failure keeps history and offers an inline retry',
+    (tester) async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      final repo = FakeChat();
+      repo.historyResult = (_, _) async => page([message(1)]);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          builder: (_, child) => PathsToastHost(child: child!),
+          home: ChatScreen(
+            repository: repo,
+            conversationId: 'c',
+            peerId: 'peer',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      repo.historyResult = (_, _) async => throw const AuthFailure('offline');
+      repo.changes.add(
+        const ChatSignal(type: 'message.created', resourceId: 'c'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Message 1'), findsOneWidget);
+      expect(find.text('Could not sync · Retry'), findsOneWidget);
+      repo.historyResult = (_, _) async => page([message(2)]);
+      await tester.tap(find.text('Could not sync · Retry'));
+      await tester.pumpAndSettle();
+      expect(find.text('Message 2'), findsOneWidget);
+      expect(find.text('Could not sync · Retry'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await repo.changes.close();
+    },
+  );
+  testWidgets('gradient empty and review actions have light foregrounds', (
+    tester,
+  ) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final repo = FakeChat();
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: PathsTheme.light,
+        builder: (_, child) => PathsToastHost(child: child!),
+        home: ChatScreen(repository: repo, conversationId: 'c', peerId: 'peer'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<Text>(find.text('Say hello')).style?.color,
+      Colors.white,
+    );
+    repo.sendResult = (_, _) async =>
+        throw const AuthFailure('CONTENT_REVIEW_REQUIRED');
+    await tester.enterText(find.byType(TextField), 'Review check');
+    await tester.pump();
+    await tester.tap(find.byTooltip('Send message'));
+    await tester.pumpAndSettle();
+    final review = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Request review'),
+    );
+    expect(review.style?.foregroundColor?.resolve({}), Colors.white);
+    await tester.pumpWidget(const SizedBox());
+    await repo.changes.close();
   });
 }

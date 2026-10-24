@@ -1,5 +1,51 @@
 # Implementation status
 
+## Current result — phone connectivity restored
+
+Owner confirmed the phone was not connected to Wi-Fi; connecting it restored the basemap. Native logs had shown `tiles.openfreemap.org` DNS resolution failure while view/attribution/avatars remained present. The blank basemap is resolved by restoring phone connectivity; the previous TextureView change is not established as its fix. No further application changes made.
+
+- **Verified evidence:** owner-supplied Android source-load error; read-only backend aggregate shows sharing enabled,1active lease and0recent current samples. No coordinates, IDs, tokens or private messages logged.
+- **Owner verified:** map visible after phone Wi-Fi connection. USB API port forwarding does not provide public map internet. See docs/LOCATION_MAP_RETEST.md.
+- **Backend recovery verified:** after connectivity restoration,2current samples reached the active lease (counts only). **Pending separately:** owner Nearby/recenter and background notification evidence. Current UI's style-ready callback does not detect all source-level network failures; empty source background is a known unresolved error-state limitation. No claim of completed phone acceptance or release readiness.
+
+
+## Current fix — location and blank Android map, 24 October 2026
+
+**Implemented and locally verified; awaiting owner phone retest.** Branch `feature/logo-refresh`, source `f85d0b0` and bridge `c598410`; draft PR16; API1.15.0/main unchanged. Backend/admin unchanged.
+
+- [x] Reproduce stale Nearby response after successful upload and default Android surface selection in regressions; add scoped native acknowledgment stream and refresh unavailable Nearby after server acknowledgment.
+- [x] Dispatch Android tracking events on UI thread; skip destroyed activity and deliver current status. Reject stale lease/epoch and post-pause upload events.
+- [x] Use fresh in-memory tracker fixes for recentering; retain SDK callbacks; validate age/coordinates and clear on revocation/pause/service loss. Distinguish waiting/upload/offline from permission-disabled status and map-unavailable feedback.
+- [x] Select opaque Android TextureView before map construction. APK style matches source; provider source/world tile reachable from development machine. This is a rendering-mode remedy to test, not proof of the phone's rendering/network cause.
+- [x] Analyzer clean;387Flutter tests,14Android/tooling checks, offline ARM64 assemble/Kotlin and compiler/staged/APK kernel check pass. Kernel SHA256 `ff689f76fd857e82f4c82458e4083d8646459fc08b7ed9949da2066d1023be1c`,76,351,648bytes. Full diff reviewed for authorization/privacy/lifecycle and late events.
+- [ ] Owner cold-start map/GPS/Nearby/background-notification/revocation retest: docs/LOCATION_MAP_RETEST.md. No agent phone/emulator operation; iOS not built (source event added only); existing capacity/battery/soak gates still pending.
+
+No package/tool download, storage reset, extra service or contract change. Implementation does not silently resume paused sharing or claim OS permission guarantees a GPS fix.
+
+
+## Current update — Home map, 24 October 2026
+
+Current task: Home map UI; **implemented, locally verified, awaiting Android device test**. Branch `feature/logo-refresh`; source `8ffd5ed`, search/state `9dcd999`; API **1.15.0**. Draft PR16. Main unchanged; historical phase entries below retain their original evidence and are not current release claims.
+
+| Applicable task | Status and evidence |
+| --- | --- |
+| Whole-screen map, no inline cards/list | Implemented; HomeScreen/EncounterMap, dead card/results/filter source removed; no-card and route regressions verified |
+| Original light style/free provider/consistent icons | Implemented; assets/maps/paths-light.json and locate/fit SVG masters; attribution retained; ASSETS/ICONS updated; actual tiles/attribution awaiting phone |
+| Current location, recenter, history fit, pan/zoom | Implemented; existing consent/permission recovery; shortest-arc Mercator camera regression covers Android date-line bounds issue; actual native synchronization awaiting phone |
+| Private avatars/grouped pins and preview | Implemented; batched/coalesced DPR-correct projection, viewport culling, immutable coarse/collision groups, authorized Flutter images, draggable member selection; no native private image cache |
+| Search/Recent/Nearby/radius/bounded paging | Verified locally; literal server name/username search, debounce/cancel/account guards, query-bound cursors, paging retry;50 per page and explicit More paths |
+| Save/request/incoming/outgoing/connected actions | Existing RelationshipCubit reused; preview and direct profile/chat navigation implemented; nested branch dialogs dismiss on safety/pause; owner state checks pending |
+| Loading/empty/API/map errors/offline/retry/lifecycle | Focused tests pass including style timeout/recreation, pause/resume and safety dismissal; native map removed when inactive/paused; map remains the only Home surface |
+| Automated validation | Analyzer clean;383 Flutter tests pass. Final visual fixture scope adjusted to match production media scope; final focused rerun and analyzer pass recorded below.14 Android/tooling tests pass; no iOS build requested |
+| Backend/admin/API | Backend lint,56unit/13feasibility/4metrics/221integration pass; admin lint/build/11unit pass. Three real OpenAPI exports match SHA256 `9ab9fce037c39c858ba9b7a3015647af78802c14155d81339ce5183509ff5153` |
+| Live local API | Cached network-disabled Docker rebuild; only API/worker recreated; ready1.15.0. Owner-scoped search/name/username/literal/cursor checks and6encounters/6private photos pass; temporary session removed |
+| Code review | One fresh read-only review. Fixed both Important findings: root confirmation surviving sheet invalidation and native Android wrapped-bounds conversion. Nested safety test demonstrated RED with old behavior, GREEN with scoped dialog; camera/date-line/poles tests pass |
+| Android build/handoff | Offline ARM64 assemble passes; compiler/staged/APK kernel matches (76,347,400bytes, SHA256 e66357ad7aee7fd818f328af07d69d7e8dfb9293ce9f9bcac7c5a8ffb05ece81); final analyzer clean and8focused tests pass. No agent phone operation. docs/HOME_MAP_DEVICE_TESTS.md has exact implementation commits, install/build commands and acceptance steps |
+| Remaining gates | Awaiting owner Android native visual/permission/camera test; iOS runtime not checked. Existing Task13 capacity/native baseline/battery/soak qualification remains open. No deployment/merge/main promotion |
+
+No new dependencies, installs or Docker pulls. Provider metadata was read; map runtime requires online free tiles/glyphs. Synthetic layout photos remain isolated to tests, credentials/QR/local defines remain ignored.
+
+
 Current phase: **Phase 6 Task13 load, security, battery and UI hardening; in progress**. Task12 phone/restore acceptance received and PRs merged; main unchanged. API contract1.11.0.
 
 Main is a documentation baseline, not a working release. Phase0 integration into development is explicitly approved by the owner. Detailed field metrics and iOS validation remain pending release evidence.
@@ -870,3 +916,282 @@ Backend nativeCI39154572320/39154869416/39155026735 passed at their respective i
 Owner explicitly requested merging the open PRs and promoting all current work to main for continued testing, overriding the earlier requirement to wait for the encounter load gate. This promotion does not qualify Task13 or represent a verified performance release. Final measured source df64321 passed chatp95=531.834ms and failed encounterp95=36,652.463ms against5,000ms; all5,000samples/44,850pairs/300sockets/API/drain passed. Existing218integration/56unit/13feasibility/4metric and5recovery results remain the evidence for that source; documentation updates do not rerun those tests.
 
 Proceed through normal feature→development and development→main PR merges, preserving published history and branch protections. Keep the failed load measurements and outstanding native baseline/soak/field/push/iOS gates open. No UI change, deployment or device operation is included. UI work and further owner testing are deferred to the next session.
+
+
+## UI pass1 — logo refresh, 23 October 2026
+
+Current work: owner requested an elegant, subtle replacement logo using the linked logo-design skill, followed by app integration. API contract remains1.12.0. Branch: feature/logo-refresh, from development.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Read requested skill / inspect current brand and consumers | Verified | Read remote SKILL.md and redesign/construction/testing/library references; inspected existing SVG/exporter/Flutter painter/loader and admin uses |
+| Three original concepts / refinement | Implemented; visual checks verified | design/logo-refresh contains V1/V2 vectors, outlined bundled Inter wordmarks and comparison; recommendation B—Open P |
+| Asset validation | Verified |12SVGs parsed,31PNGs decoded; inspected actual16/24/32/64px, reversed/mirror/rotation/blur views using existing Sharp/Pillow |
+| Direction selection | Awaiting owner choice | Requested skill explicitly requires a concept checkpoint before final asset kit/integration |
+| App, splash, launcher, loader and admin integration | Not started; depends on selection | Production assets/code remain unchanged; no runtime/native rendering result claimed |
+| Device/build gate | Pending integration | No phone/emulator operated; no Flutter build or application tests rerun for concept-only work |
+
+No dependency, SDK, font or plugin installation. Read the skill over HTTPS and kept three reference-library study SVGs temporarily outside the repositories; only original concept artwork is committed. Draft asset sources/licensing are in docs/ASSETS.md. Existing encounter performance qualification remains open and is unaffected by this design work.
+
+
+## UI pass 1 — approved Open P integration, 23 October 2026
+
+Owner chose **B — Open P**, superseding the concept-selection checkpoint above. Branch: `feature/logo-refresh`; API contract **1.12.0**, unchanged.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Editable approved masters and export kit | Implemented | bbc384e; SVG symbol, horizontal/stacked/wordmark compositions, ink/white/blue SVG and PNG variants; `tools/export_brand.py` uses existing local Sharp/Pillow/Dart |
+| Flutter brand and loader | Implemented; automated checks verified | cc32efd; generated vector lettering/route shared by brand and loader, retained semantics/reduced motion/disposal; inspected actual login golden |
+| Android launchers, splash and notification silhouette | Implemented; offline ARM64 build verified; appearance pending | Distinct legacy/adaptive/splash scales; white notification drawable; source parity and conservative circular safe-area tests passed after observed failure against old artwork |
+| iOS app icons and launch images | Implemented; catalog checks verified; compile blocked | All 22 app-icon entries checked against slot sizes and opaque RGB; launch assets inspected; Xcode's selected iOS 26.5 platform is not installed, so generic unsigned build exited 70 before compilation |
+| Admin / browser brand | Implemented; automated checks verified | Admin 50611c3/a5d25dc; matching exported assets, favicon and Apple touch icon; lint/build and 8 tests passed; draft PR16 |
+| Flutter checks | Verified | `flutter analyze --no-pub`: no issues; `flutter test --no-pub`: 301 passed on final run without golden updates |
+| Offline build failure privacy | Verified by regression | 8d95b84; observed encoded configuration leaking through failed subprocess exception, then removed argv traceback and retained exit status; focused regression passed |
+| Independent final review | Verified within inspection scope | No critical/important defect found; source/Flutter/native parity, safe areas, notification silhouette, icon opacity, semantics and cleanup inspected; generated build report excluded from commits |
+| Device appearance / merge | Awaiting device test | No phone/emulator operated; draft PRs remain unmerged; main unchanged |
+
+The initial offline Android attempt was blocked by missing pinned Kotlin artifacts (including Google sign-in plugin Kotlin 2.3.0). The two native Kotlin tooling checks also require cached Kotlin compiler/stdlib/script-runtime 2.4.0. A separate owner-authorized cache fill is running with Android SDK downloads disabled; no manifest versions changed. Final build/tooling results follow below when available.
+
+Brand use, source and license records: `docs/brand/OPEN_P.md`, `docs/ASSETS.md`. No backend application change. Existing failed encounter load qualification and unavailable iOS runtime evidence remain open; these brand checks do not qualify either gate.
+
+Additional native verification: installed Android build-tools 36.0.0 `aapt2 compile --dir android/app/src/main/res` passed; compiled entries include the P symbol, splash, notification and adaptive icon. Deterministic re-export left tracked assets/generated Dart unchanged. Final tooling run: 15 executed, 13 passed, 2 prerequisite failures for absent Kotlin 2.4.0 compiler/stdlib. iOS retry outside sandbox restrictions also exited 70 with the same unavailable generic iOS 26.5 destination; no SDK/package was installed for that retry.
+
+Native tooling prerequisite resolved: the authorized cache fill provided compiler 2.4.0; the exact missing test dependency kotlinx-coroutines-core-jvm 1.10.2 was resolved separately using a temporary Gradle project outside the repository. Final `python3 -m unittest discover -s test/tools` passed **15/15** with existing Swift module-cache write access. Earlier prerequisite failures above are retained as attempt history, not final code failures. No manifests or lockfiles changed.
+
+Build scope adjustment: the all-ABI build was stopped with SIGTERM after identifying three uncached Flutter debug-engine libraries, rather than a source failure. The test APK is now explicitly ARM64 via Flutter/Gradle target-platform; this does not change the project default or qualify 32-bit/x86 builds. The new device-test command preserves that target so later offline rebuilds do not request unused engines.
+
+
+### Final brand verification — 24 October 2026
+
+Current implementation: `cc32efd` (Flutter) / `bbc384e` (native/exports), plus `70b5c34` (offline cache support and device instructions). This closes the Android dependency/build prerequisites recorded in the attempt history above. Owner appearance acceptance and iOS validation remain open.
+
+- Final ARM64 debug build **passed fully offline** in 14 seconds: 274 tasks, 20 executed / 254 up-to-date. The preceding authorized cache fill passed in 1m18s. No SDK download or dependency version change.
+- Kernel matched compiler output: **76,129,064 bytes**, SHA256 `289b2c75a9a89b01d21055dbdddb169db4b950aa0bf4a2018fae37f6c979341f`. APK SHA256 `bb81640aa263ac5044b2c006b5ce8b681704b0fd50a0d0fb0a537c12482873de`. Launcher pixels match the approved export; P symbol/splash/notification entries are packaged; engine is ARM64 only.
+- Final tooling suite **15 passed** (9.168s). Existing final Flutter suite **301 passed**, analyzer clean; source geometry and application code did not change during native cache preparation. Native `aapt2 compile` passed. Admin final head b0e5b8c passed [CI 40007548648](https://github.com/awais-ur-rehman/paths-admin/actions/runs/40007548648), alongside local lint/build and 8 tests.
+- The pinned 180,591,679-byte engine artifact was fetched in bounded HTTPS ranges, checked against Google's published MD5 and ZIP CRC, and mirrored with the original vendor POM. Details/checksums are in `docs/LOGO_DEVICE_TESTS.md`. The optional local Maven cache is restricted to the app module's io.flutter resolution. Initial inclusion of the SDK Gradle project failed its repository policy; restricting to `:app` fixed that issue, and the final actual offline build passed. Included SDK/plugin repositories and normal project versions are unchanged.
+- Final review found no functional brand blocker. Generated Android problem report was restored and excluded from commits. `git diff --check` passed. Local backend `/health/ready` returned ok / contract1.12.0 without service changes.
+- iOS generic unsigned build **blocked**: Xcode reports its generic iOS26.5 destination unavailable, exit70, including a retry outside sandbox cache restrictions. Catalog validation is not a compile/runtime pass. No phone or emulator was operated.
+
+Draft PRs: [mobile16](https://github.com/awais-ur-rehman/paths-mobile/pull/16), [admin16](https://github.com/awais-ur-rehman/paths-admin/pull/16). Main is unchanged. Owner next action: use `docs/LOGO_DEVICE_TESTS.md` to install the verified APK while retaining data, then check launcher/splash/headers/loader/notification artwork. No existing backend performance gate is closed by this brand update.
+
+
+## UI pass 2 — authentication forms, 24 October 2026
+
+Current phase/task: screen-by-screen authentication UI, implemented and locally verified; awaiting Android device test. Owner accepted the Open P direction and requested the supplied form/reference layout with existing Paths colors. Branch `feature/logo-refresh`; API contract **1.12.0**, unchanged. Source commits: `06858ef` (shared forms/confirmation), `0385c34` (provider controls/artwork/visual tests). No backend/admin application change in this pass. Earlier concept-selection and logo-direction checkpoints are superseded by owner acceptance; the combined auth appearance gate remains pending.
+
+| Applicable item | Status | Files / evidence |
+| --- | --- | --- |
+| Center P without wordmark; centered short title/description; scoped pill fields/buttons | Implemented; automated checks verified | auth_widgets.dart, auth_form_theme.dart; login/signup/recovery visual fixtures and symbol positioning tests |
+| Signup, reset and password reveal consistency | Implemented; automated checks verified | credential_screens.dart, password_field.dart, reset_screen.dart; mismatched confirmation blocks requests, corrected confirmation sends once, independent reveal state and controller disposal |
+| OTP, age and profile setup fields | Implemented; automated checks verified | otp_screen.dart, account_screens.dart, profile_setup_screen.dart; existing signup/OTP/adult/profile routing tests pass |
+| Required consent and policy links | Implemented; automated checks verified | auth_consent.dart; 48px checkbox target, retained edits, independent link access, policy visit does not auto-accept |
+| Circular supported-provider controls and provider setup | Implemented; automated checks verified | provider_button.dart, provider_auth_sheet.dart, official round Google SVG/PNG; keyboard/disabled semantics, capability and busy gates retained. Apple remains deferred, not advertised as available |
+| Keyboard, narrow layout and large text | Automated checks verified; awaiting device test | Existing and new 320/390/768 layouts; actual large-font label truncation reproduced and fixed with floating labels/compact inset at large text |
+| Full automated verification | Verified | 311 Flutter tests passed without golden updates on final source; flutter analyze --no-pub clean; 15 tooling tests passed; git diff --check passed |
+| Fresh whole-change review | Verified within source-review scope | No critical/important functional defect found; accidental nested provider-email shadow removed. Temporary rendering diagnostics removed before final checks |
+| Android ARM64 APK and bundled assets | Verified | Offline debug build 21s, 274 tasks:24 executed/250 up-to-date. Kernel/compiler/APK comparison passed; official round Google bytes match source, old pill absent, new auth copy compiled and engine ARM64 only |
+| Android native UI/provider/autofill appearance | Awaiting device test | docs/AUTH_UI_DEVICE_TESTS.md; no phone/emulator operated |
+| iOS build/runtime | Not run / runtime validation pending | Owner explicitly excluded iOS builds this round; implementation preserved. Earlier missing Xcode destination remains unresolved; no iOS result inferred from Android |
+| Push and draft handoff | Verified; awaiting device test | Source/evidence pushed through4c9ff6b to feature/logo-refresh. Mobile PR16 targets development and remains draft; main unchanged pending owner phone acceptance. GitHub reported no checks yet at handoff; local results above are the executed evidence |
+
+Final kernel: **76,139,616 bytes**, SHA256 `71400d110aeff05161b55df10a46901aedccb8648c4a73e0892c2edcf9647ad2`. APK SHA256 `6775dba6ffb0c81abf8309ef853e304a1d51d93610bae8bd8a27b45955728419`. Actual APK: `build/app/outputs/apk/debug/app-debug.apk`. Local backend readiness returned ok / contract1.12.0. No dependencies or SDKs installed; official Google artwork fetched under the visual-assets exception and recorded in docs/ASSETS.md.
+
+Review/check fixes: a large-font Confirm password label was clipped and the initial compact consent target was40px; both were reproduced by failing tests and corrected. First configured Google golden initially raced image decoding; explicit asset precaching fixed the harness. Shared location/verification goldens were deliberately updated for the centered P header. An apparently missing verification P was investigated rather than accepted: cropped output contains629 ink pixels, and a live rendered pixel assertion verifies the symbol; no production painter workaround was required. Final full suite reran without updating goldens.
+
+Material decisions: use existing OTP recovery rather than adding reset links; preserve persistent secure sessions rather than adding a decorative Remember me checkbox; retain supported Google/Apple filtering rather than add unsupported Facebook. Login remains the signed-out root with no inert Back button; signup/recovery/challenges retain functional navigation. Shared AuthScaffold styling intentionally reaches setup forms while unrelated app controls keep their current theme.
+
+Phone instructions and acceptance steps: docs/AUTH_UI_DEVICE_TESTS.md. Existing encounter load qualification remains open; this UI pass does not rerun or close backend performance gates.
+
+
+## UI pass 3 — bottom navigation, 24 October 2026
+
+Current task: reference-shaped bottom bar and original icon family, implemented and locally verified; **awaiting Android device test**. Branch `feature/logo-refresh`; API contract **1.12.0**, unchanged. Source commits: `2bb3636` (icons), `83ad77c` (navigation). Draft mobile PR16 targets development; main unchanged. No backend/admin source change.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Rounded floating surface, smooth notch and raised Plus | Implemented; rendered checks verified | paths_bottom_navigation.dart; inspected320/390px goldens, existing Paths white/ink/blue |
+| Existing destinations / center action | Implemented; automated checks verified | DiscoveryShell maps Home/Likes/Chats/Profile directly to stateful branches; Plus retains existing Camera. No calls/settings destination added from reference imagery |
+| Original custom icon assets and future design rules | Implemented; verified | assets/icons/*.svg → tools/export_icons.py → generated/paths_icon_geometry.dart; PathsIcon; docs/design/ICONS.md and docs/ASSETS.md. Deterministic export passed |
+| State, reselection, capability combinations and camera return | Automated checks verified | Real go_router tests; eight optional Likes/Chats/Camera combinations; camera return from Chats preserves selected branch |
+| Accessibility / keyboard / RTL / safe area | Automated checks verified; native acceptance pending | >=48px targets at320px with large text/system inset; named/selected semantics; keyboard visual order; RTL mirrored sides/center stable; keyboard hides/restores bar |
+| Notch background and content clearance | Implemented; rendered regression verified | extendBody:true; contrasting-page regression reproduced gray blocked background, then passed after fix. Explicit Likes/profile scroll padding consumes inherited bottom clearance; existing Home SafeArea/Chats list retain theirs |
+| Full Flutter suite / analysis / diff | Verified |325 tests passed without golden updates; flutter analyze --no-pub clean; git diff --check passed |
+| Whole-change source review | Verified within source scope | Accepted missing body extension and exporter unsupported-attribute findings; fixed both. Aligned RTL spec wording with behavior. Reviewer independently ran13 navigation tests; final full-suite result is local executor evidence |
+| Android offline build / packaged code | Verified |35s/274 tasks (24 executed/250 up-to-date); kernel/compiler/APK match; new navigation/vector names compiled; ARM64 only |
+| Phone appearance / native accessibility | Awaiting device test | docs/NAVIGATION_DEVICE_TESTS.md; no phone/emulator operation |
+| iOS build/runtime | Not run / pending | Owner excludes iOS builds for current UI work; Android result does not validate iOS |
+| Draft handoff | Awaiting owner test | Updated existing mobile PR16; no merge/main promotion |
+
+Final kernel:76,163,264 bytes, SHA256 `18388007efc663aaab5aa36848f47d75737af1c0f51dfdc9aaccf1ab27d822a7`. APK SHA256 `9d4fa193849a5020b658702f14a4e66f4055cabfee6842437b53527d8a3cd993`, actual path `build/app/outputs/apk/debug/app-debug.apk`.
+
+Check history: first regression failed against the labelled Material bar as intended. A selected-semantics issue in the initial implementation was fixed by merging each control's accessible name/state. Reviewer caught the page not extending behind the bar; a rendered regression failed before the extension fix. One combined reviewer run overlapped golden regeneration and returned a null-image comparison; isolated reviewer rerun passed. The first full run passed324 tests and failed a new keyboard expectation that incorrectly placed Camera last; corrected to visual Home/Likes/Camera/Chats/Profile order, then final full suite325 passed. No thresholds or production focus behavior changed to satisfy that test.
+
+No dependencies, tools or assets downloaded for this task. Original vector masters are retained and shipped through generated geometry. Existing failed backend encounter performance qualification remains open and unaffected by this UI work.
+
+
+## UI pass 4 — profile badges, bar contrast and populated account, 24 October 2026
+
+Current task **implemented and locally verified; awaiting Android device test**. Source `d257626` on feature/logo-refresh. Backend seed source45d72ab on feature/profile-demo-data. API contract1.12.0 unchanged. Main unchanged; draft feature PRs only.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Bar#F5F5F5 | Implemented; verified | paths_bottom_navigation.dart,320/390px updated fixtures; raised blue action retained |
+| Original verified/unverified badge assets | Implemented; verified | assets/icons/{verified,unverified}.svg, generated geometry, export_icons.py, VerificationBadge; same24-unit/1.8-rounded-stroke family. Deterministic re-export passed |
+| Profile badge visibility/status/contrast | Implemented; automated checks verified | ProfileSurface always shows Verified/Unverified; explicit pending/declined labels retained, approved explanation retained, light-surface unverified contrast improved; optional form omits redundant unverified badge |
+| Rendered/behavior checks | Verified |330 full Flutter tests passed without golden updates; analyzer clean; profile/nav/badge fixtures inspected;15 focused badge/profile tests and earlier15 badge/verification checks passed |
+| Android build/kernel | Verified | Offline ARM64 debug1m9s/274 tasks (24 executed/250 up-to-date), kernel/compiler/APK match; badge labels/vector code compiled |
+| Real local dataset | Applied; API verified | Six Demo identities/images,3 chats/6 sample messages,6 saved,1 incoming,4 sent history,8 notifications,1 review update,2 own posts,3 visible demo posts/12 JPEG reads. Existing owner profile/photo/consent preserved; ready pending media approved and synthetic verification simulation recorded |
+| Review findings | Fixed; relevant checks rerun | Backend local URL override guard and media-write/removal race; final220 integration tests passed. No additional important mobile issue found in read-only review; native appearance remains unproven |
+| Phone / iOS gates | Awaiting device test / iOS not run | docs/PROFILE_DEMO_DEVICE_TESTS.md; no phone/emulator operated. iOS build explicitly excluded by owner |
+| Draft handoff | Awaiting owner test | Existing mobile PR16 plus backend feature PR, both development targets; no main promotion |
+
+Kernel76,165,824 bytes, SHA256 `431dfbff8dcb3beb4d295e430c5b07c77d44d9495cd4014a0ca112501a5a4915`; APK SHA256 `8a52e7e55d1fa8e2254b25e70f8a9d022e9c43886e0262c74a41dd472461f74e`. Backend56 unit/13 feasibility/4 metrics and220 isolated integration checks passed, build/lint passed. No new dependencies or downloads. Original labelled art/TEST IMAGE cards are development fixtures; local Verified simulation is not a genuine identity review. Existing failed backend encounter performance qualification remains open.
+
+## Chat list and thread redesign — 24 October 2026
+
+Current task: reference-led chat UI and bounded search/paging, implemented on `feature/logo-refresh`. API contract **1.13.0**. Source: `cd4fa86` (original controls/custom menu), `53f6c2c` (state/repository/screens/tests). Backend source `2324629`, evidence `e1daada` on `feature/chat-list-search`; admin contract `7525c9d` on `feature/chat-api-contract`. Main unchanged; owner Android acceptance remains pending. All changed feature branches have been pushed.
+
+| Applicable checklist item | Status | Evidence |
+| --- | --- | --- |
+| Push previously completed work before starting | Verified | Existing mobile/backend feature branches returned Everything up-to-date at task start |
+| Search-only gradient header, heading and recent contacts | Implemented; automated verified | ChatListHeader; no Chats title/refresh button; up to4 actual recent conversations, unfiltered during search; rendered320/390px fixtures inspected |
+| Name search, pagination and state management | Verified locally | HttpChatRepository requests one bounded page; ChatListCubit300ms debounce/cancellation/generation guards,20-row pages, duplicate removal, snapshot conflict reset, retained data/error retry, account/reset cleanup; UI search/swipe test passes |
+| White lazy conversation list | Verified locally | SliverList.builder, timestamps/previews/unread and authenticated avatars; scroll loads next cursor without eager all-page scans; explicit retry prevents offline scroll request loops |
+| Thread header/custom menu/icons | Verified locally | Back/avatar/name/three dots; authorized detail lookup for deep links; custom PathsOptionsMenu keeps existing member/message reporting; original SVG family documented in ASSETS/design/ICONS |
+| Blue messages/white pill composer | Verified locally | Lazy ListView.builder, readable bubble/time colors, empty-send disabled, failed-intent retry, keyboard/layout/lifecycle/read and safety actions preserved |
+| Error/recovery review findings | Fixed; verified | Two reviewer findings reproduced RED→GREEN: populated history now has visible sync retry; status/review actions use light foregrounds on blue. Earlier-page retry targets the failed cursor and retains history; no scroll-triggered repeat during failure |
+| Local automated checks | Verified |348 Flutter tests passed without golden updates; analyzer no issues;14 Android/tooling Python tests passed; actual OpenAPI SHA matches all3 repos; icon export regenerated; git diff --check passed |
+| Android packaging | Verified locally | Offline ARM64 debug build22s,274 tasks (24 executed/250 cached); compiler/staged/APK kernel matches76,233,376 bytes, SHA25634c137bb920f3ee72b2b7024143d27c4e1735e0a819ed185b87bfcc8b33201a6; APK SHA2561bdb29668f288b8fb1d7798333f25741452c4e6a7dc17c36b70ac232a540194a |
+| Backend/admin handoff | Verified locally | Backend219 clean-source integration/56 unit/13 feasibility/4 metric tests, lint/build; admin lint/build/8 tests. Local API/worker rebuilt offline; authenticated search/paging/detail/peer and3 R2 avatars passed; temporary session removed |
+| Physical Android acceptance | Awaiting device test | docs/CHAT_UI_DEVICE_TESTS.md; exact source53f6c2c; no device/emulator operated |
+| iOS runtime/build | Deferred by owner | No iOS app build. Broad optional tooling discovery initially ran14 tests successfully plus a pre-existing Swift policy compiler probe that exited1; it was excluded from the separate14-test Android/tooling run and not reported as passed |
+| GitHub publication | Verified; acceptance pending | Transient github.com DNS failure recovered. MobilePR16, backendPR19 and adminPR17 are pushed/draft into development; remote CI is tracked separately from local checks |
+| Load/capacity qualification | Pending existing gate | No load rerun for this UI/API change. Prior Task13 encounter latency/native baseline/soak gates remain open; this is not a capacity release |
+
+Test notes: the first design test failed against the old header; search/API and revision-cursor failures were observed before fixes. One old send test required a frame after entering text because the new button correctly starts disabled. A supplemental earlier-page widget test's assertions passed but its fake-clock teardown stalled; placing stream disposal in the test's real async zone resolved it, then the full348-test suite passed. Visual fixtures use local fixed times converted to UTC for time-zone-independent rendering; no generated people or test fixtures are shown as real users. Existing Kotlin/Gradle deprecation warnings remain; no dependency/SDK/image download occurred.
+
+Publication: mobile https://github.com/awais-ur-rehman/paths-mobile/pull/16; backend https://github.com/awais-ur-rehman/paths-backend/pull/19; admin https://github.com/awais-ur-rehman/paths-admin/pull/17. The final cached API image removes old branch compiler files before copying current dist; its first immediate smoke encountered restart502, then readiness, search/detail/paging and3 R2 JPEG reads passed after startup. Main remains unchanged; no merges.
+
+## Portrait profiles and searchable settings — 24 October 2026
+
+Current task: owner/member profile UI redesign from the supplied references. Implemented and locally verified on `feature/logo-refresh`; owner Android acceptance pending. Code: `3fe019a` (original icon family), `7638adf` (profile/settings/grid and regressions). API contract **1.13.0** unchanged; backend/admin source and local services unchanged. Keep mobilePR16 draft; main unchanged.
+
+| Applicable checklist item | Status | Evidence |
+| --- | --- | --- |
+| Push prior code before starting | Verified | Existing feature/logo-refresh returned Everything up-to-date before modifications |
+| Shared portrait/blur composition | Implemented; verified locally | ProfileHero/ProfileSurface; authorized full-size avatar background, masked native blur from the middle, dark fade, centered name/username, parallel verification/visibility, plain bio. ImageFiltered/ClipRect share one decoded private frame; no second portrait fetch or global cache |
+| Owner controls and settings | Verified locally | No edit/message/connect on owner surface; top-right original Settings opens /settings. Searchable grouped supported destinations: edit/privacy, verification, sign-in methods, location, notifications, blocked accounts, reviews, protected deletion and sign out. No unsupported subscriptions/archive/counts. Error profile keeps Settings accessible |
+| Authentication/navigation | Verified locally | Existing adult/setup/auth guards cover settings; self member URL redirects to /profile. Save/privacy/location/signout routing regressions retained. Settings deep-link/back fallback handled |
+| Member view/actions | Verified locally | Same surface, top-right original Back; existing request/accept/cancel/cooldown and connected Message rules retained. Custom connection options preserve explicit Disconnect confirmation; Report remains available. No backend permission expansion |
+| Photo grid/detail/recovery | Verified locally | Lazy SliverGrid, original authenticated media, cursor pages/dedup, request guard at positive near-end scroll, offline retry pauses auto requests, private access revocation clears photos. PostDetail relocated unchanged. Empty/pending/rejected/private/error states retained; top swipe refresh |
+| Original icons/assets | Verified locally |11 new editable SVG masters and compiled vector geometry, existing24-unit/1.8 rounded family; ASSETS.md/design/ICONS.md record use/license/locations. No downloaded assets, fonts, dependencies or SDKs |
+| Automated verification | Verified |362 Flutter tests passed without golden updates, then2 strengthened portrait/frame checks passed; analyzer no issues.14 Android/tooling Python checks passed; unchanged contract artifacts match all3 repos; git diff --check passed |
+| Visual/accessibility inspection | Verified locally |320/390 own/member photo fixtures and settings normal/account-action views inspected; updated fallback own-profile golden.200percent text and keyboard checks passed; exact native crop/blur remains manual |
+| Whole-change review | Reviewed | Fresh read-only reviewer found no actionable regressions in guards, privacy, ownership, paging, lifecycle or actions; independently confirmed PostDetail body relocation. Review did not execute suites/device tests |
+| Android package | Verified locally | Offline ARM64 build19s;274 tasks (24 executed/250 cached). Kernel/compiler/APK match76,259,720 bytes; SHA256850a7d3674c09df4ab5e326ecab29cf424a6538240719801ca690493897f9ee0. APK SHA2566c5142707dcb7c61470810415612a33cb567ce852a8ed250a2d336bfdbc7b849 |
+| Owner device acceptance | Awaiting device test | docs/PROFILE_UI_DEVICE_TESTS.md; no agent-operated device/emulator, iOS app build or runtime claim |
+| Capacity qualification | Pending existing gate | UI changes do not qualify prior Task13 encounter/native baseline/soak gates; no load rerun or main promotion in this pass |
+
+Observed/fixed during author checks: empty-grid layout notifications requested a second page prematurely, now gated by actual positive scroll; ClipRect bounds the filter so it does not bleed into the grid. Initial profile/menu tests failed against the old layout, then passed. Existing test navigation was updated for the new settings page/lazy rows; two old age/edit-label assertions were updated to the requested name-only/Settings composition. Two test import diagnostics were corrected before the clean analyzer result. Existing Kotlin/Gradle deprecation warnings remain; no new prerequisite/download blocker. iOS Swift-policy probe was intentionally omitted from the14-test Android/tooling run. Test photographs are isolated licensed local fixtures, never live profile/active-user data.
+
+Publication: profile code3fe019a/7638adf and evidence5e736c9 pushed to existing draftPR16: https://github.com/awais-ur-rehman/paths-mobile/pull/16. PR description includes current profile/settings scope and actual checks. Only mobile changed; no empty backend/admin commits, merges, main promotion or automatic claim of device acceptance. Next action: owner runs PROFILE_UI_DEVICE_TESTS.md.
+
+
+## Likes screen redesign — 24 October 2026
+
+Current task: useful Likes search/filter UI; API **1.14.0**, branch `feature/logo-refresh`. State6c2a2b5, card UId3f2a6b, small-phone spacingd7dbf19. Existing draftPR16 targets development; main unchanged.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Research/design | Implemented | Official Hinge Likes separation and Bumble filter guidance recorded in docs/superpowers/specs/2026-10-24-likes-redesign-design.md. User delegated final design; no new dating/paywall/ranking behavior |
+| Four sections/photo cards | Verified locally | Saved/Requests/Sent/Connected visible; two-column lazy photo grid, original icon family/verification badge, concise status and existing profile route. No quick accept or fake totals |
+| Whole-list search/filter state | Verified locally | Server-side name/username,300ms debounce, cancel/generation/account guards, deduped cursor pages, Verified and request Pending-only, explicit Reset; criteria-bound API cursors |
+| Refresh/error/lifecycle | Verified locally | Pull refresh, no reload popup, offline/empty/retry/cancellation, current-tab resume/profile-return refresh, unavailable Saved removal. Retry records refresh versus pagination; confirmed removals stay removed after offline reload |
+| Privacy/assets/accessibility | Verified locally | Authorized private thumbnails keep existing lifecycle; hidden profile fields excluded from search. Actual card action replaces misleading image retry semantics; no downloads/dependencies. ASSETS.md records fixture reuse |
+| Static/full suite | Verified |372 Flutter tests passed in final run, analyzer no issues,14 Android/tooling checks passed; git diff --check. Swift policy probe intentionally omitted under Android-only request |
+| Visual inspection | Verified locally | Four320/390 normal/200percent+keyboard renders inspected. Reproduced/fixed Connected label wrap at320; line-box regression and updated goldens passed |
+| Backend/admin and local API | Verified locally | Backend220integration/56unit/13feasibility/4metrics plus lint/build; admin8tests/lint/build. Real1.14 exports identicalSHA256e5c3b3d454546d38d8a444b326db72774afebfc00e8d9f278eecf81e84e74375; localcachedAPI/worker1.14 live6saved/2verified/1incoming/4sent(1pending)/3connected/6R2photos passed |
+| Fresh code review | Reviewed and findings fixed | One read-only review; no critical/security finding. Refresh retry, photo semantics and stale confirmed removal reproduced and fixed, final full suite passed. Executor inspected snapshots and separately verified admin MFA login/logout; reviewer did not run device/platform checks |
+| Admin guide | Implemented/verified locally | Root documents/ADMIN_LOGIN.md and admin/docs copy; existing test staff password/MFA/session/logout passed. Secrets remain in protected ignored files; no real credentials in Markdown/Git |
+| Android package | Verification recorded below | Final offline ARM64 build and compiler/staged/APK kernel check; no emulator/agent phone operation |
+| Owner device acceptance | Awaiting device test | docs/LIKES_UI_DEVICE_TESTS.md, source d7dbf19. Draft PRs remain pending acceptance; no iOS build or native runtime claim |
+| Prior capacity gates | Existing pending gate | No load rerun or change to Task13 encounter/native baseline/soak evidence; UI tests do not qualify capacity |
+
+Author checks also corrected three analyzer brace diagnostics and a stale1.13 contract assertion before the successful reruns. Test-only semantics-handle disposal and lazy-footer scrolling were corrected before their regression assertions were used as evidence. No deferred review findings, new dependency prerequisite or download blocker for this task.
+
+Final Android evidence atd7dbf19: offline ARM64 build25s,274tasks(24executed/250cached); compiler/staged/APK kernel76,296,656bytes SHA256490f6aa7f9ed338fc332577f99d0c589102eeae8271152acf454f2ae67bd8f50. APK SHA25645c97a77694ad76cd9611fc24ff3625ccf89be7239adeda13254dd15a413f8d7. Existing Kotlin/Gradle deprecation warnings remain; build succeeded without downloads.
+
+Publication: all three changed branches pushed; draft mobilePR16 https://github.com/awais-ur-rehman/paths-mobile/pull/16, backendPR19 https://github.com/awais-ur-rehman/paths-backend/pull/19 (a2cff9f), adminPR17 https://github.com/awais-ur-rehman/paths-admin/pull/17 (6fa4cd6). Mobile application source d7dbf19, evidencef1bdb91. All target development and remain draft; no main merge/promotion. Remote CI is separate from the local passing checks. Next action: owner runs LIKES_UI_DEVICE_TESTS.md and optionally the admin login guide.
+
+
+## Startup, refresh and demo follow-up — 24 October 2026
+
+Current task: remove duplicate splash, investigate rapid-switch failures, prepare a cache strategy and replace demo artwork with real licensed photos. API **1.15.0**, branch `feature/logo-refresh`; application commits `f5d3406`, `1cf7875`. Prior phase/capacity qualification remains open.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Single startup handoff | Verified locally; awaiting device test | Defer first native frame until committed auth/setup destination or actionable error. No startup spinner on duplicate Flutter splash. Successful, incomplete, restricted, revoked and setup-error routes covered; release once only |
+| Warm validation cleanup | Verified locally | Preserve tracking/media on successful same-account validation; retain cold/logout/restriction/terminal cleanup. Regression covers repeated restores and logout; failed terminal cleanup still blocks sign-in until retry |
+| Own-profile refresh/skeleton | Verified locally; awaiting device test | Retain loaded profile during refresh, coalesce overlapping reads, retain only permitted offline state, clear terminal access failure, cancel/discard late result on disposal. Initial skeleton only; existing private-image revocation remains |
+| Performance strategy | Implemented proposal | docs/PERFORMANCE_PLAN.md and root documents/PERFORMANCE_PLAN.md: staged measurement, bounded requests, own memory snapshot, revision freshness, encrypted account-scoped disk cache with key in vault. No persistent cache dependency or retention change implemented |
+| API-switch failure investigation | Verified bounded local case | Backend exclusive media read locks reproduced six HTTP 500s/30 requests, p95 2,440 ms. Shared authorized read locks: identical 30 requests all HTTP 200, p95 1,442 ms. This is not the full Task13 capacity/soak gate |
+| Demo profiles/areas | Implemented in backend | Six licensed photo avatars, three gallery photos each, four Islamabad/two Mirpur coarse fixture areas; sources and license ledger in backend. No real live-location insertion or owner/profile/consent change |
+| Automated checks | Verified | 394 Flutter tests, analyzer no issues, 14 Android/tooling tests; offline ARM64 APK build 21s, 274 tasks; compiler/staged/APK kernel 76,361,352 bytes, SHA256 0ba2f6dc3530002bc6b1fa9ef3a5b58c8400d6bc5cca1d5102e9caba66371dec. git diff --check clean |
+| Review findings | Fixed and rechecked | Fresh read-only review found no critical/important issue. Additional author tests caught first-frame release using an incoming URI during immediate redirects; now checks committed router configuration. Updated terminal-cleanup fixture and fixed one analyzer brace issue |
+| Device and iOS | Awaiting device test / not run | docs/STARTUP_PERFORMANCE_DEVICE_TESTS.md; owner operates phone. No iOS build, native first-frame timing, phone jank/memory/battery or 100-switch claim |
+| Publication | Draft review | Existing mobile PR16/backend PR19; main unchanged. No new dependencies or images pulled; only requested visual photographs downloaded |
+
+Known limits: private images still clear on pause/hidden as required by the existing policy; persistent own-avatar cache is a proposal. Backend still holds database read locks/connections during R2 access; much larger bursts need bounded request scheduling and separate capacity measurement. Existing Kotlin/Gradle deprecation warnings remain. Next action: owner follows the startup/performance device guide.
+
+Publication: mobile implementation/evidence pushed through `d175aef` to `feature/logo-refresh`, including prior map-connectivity note `a373fdf`; remote main remains `fc7603f`. Existing draft PR16 is attached. Git push/remote head verification succeeded, but `api.github.com` failed DNS resolution during both PR-description update attempts, so the new PR body and current CI status could not be confirmed. No merge or main promotion. This note records the publication limit; complete current evidence and owner instructions are in the pushed docs.
+
+
+## Performance plan stages 1–2 — 24 October 2026
+
+Prior startup/profile/demo build accepted by owner on Android. Current work: staged request sharing and own-profile memory cache; API **1.15.0**, branch `feature/logo-refresh`, commits `4b09ba4`, `a523fc7`, review fix **`7ac2c7f`**. Existing draft PR16 targets development; keep draft until the owner's new tests. Backend/admin unchanged, no empty commits there.
+
+| Applicable checklist item | Status | Files / actual evidence |
+| --- | --- | --- |
+| Baseline | Verified locally; prior phone acceptance recorded | Existing 394 Flutter tests passed before modifications. No new phone timing/memory/battery measurements claimed |
+| Stage 1 request ownership | Verified locally; awaiting device test | core/network/shared_read_queue.dart and HttpMediaRepository: account/asset/variant keys, subscriber cancellation, independent buffer copies, shared-buffer wipe, no completed peer cache, no automatic retry |
+| Stage 1 scheduling | Verified locally | Four transports, own-avatar priority, cancelled pending work removed, cancelled active transports retain slots until settlement, explicit auth account lifecycle + dispatch guards. Aggregate diagnostics exclude identities/keys/URLs/payloads |
+| Stage 2 own memory snapshot | Verified locally; awaiting device test | own_profile_memory.dart: one immutable summary, 30-second freshness, only validated unrestricted adult/unexpired session. ProfilePreview initializes from fresh snapshot; loaded content retained during refresh. Setup/profile-completion and peer reads stay server-authorized |
+| Stage 2 freshness | Verified locally | Forced pull/resume, profile/verification write invalidation before+after, logout/restriction/account replacement/close and access/reconnect invalidation. Snapshot cannot revive from an older read. Expired access bypasses cache into ordinary authenticated transport |
+| Controlled comparison | Verified locally | Identical old/new repository transport: 20 waves × 10 consumer reads, baseline 200 downloads/peak 10 → new 120/peak 4. Own-summary initial + 20 repeat reads: 21 HTTP requests → 1 inside TTL. Count comparison only; no real-network or phone latency claim |
+| Meaningful regressions | Verified locally | Completion-before-cancel delivery, cancelled queued transport, replacement-account preflight, logout without a settled binary response, purge/late wipe, separate buffers, TTL boundary, forced refresh, edit ordering, peer reads, initial model and session invalidation |
+| Final checks | Verified locally | **416 Flutter tests**, analyzer no issues, **14 Android/tooling checks**, git diff --check. No dependencies installed/resolved or new visual assets downloaded |
+| Android package | Verified offline | Source 7ac2c7f; ARM64 debug build 19s, 274 tasks (24 executed/250 cached). Kernel compiler/staged/APK match 76,389,912 bytes, SHA256 0ced24b74310d1d31bdffb2fcc4c9d6fea43ee0067c74fb378eaea155d57b4b5. APK SHA256 4022179d958dee7275ce849d26f790d96bf6507d950918d9f072ce8c270c7987 |
+| Code review | Reviewed; important findings fixed and tested | One fresh read-only whole-change review. Both Important races reproduced RED then fixed GREEN; focused 22 tests and final 416-test suite pass. No re-review or device commands by reviewer |
+| Stage 3 server revisions | Not started; pending staged device gate | API ETag/revision and conflict work remains in parent plan; no contract/migration fabricated |
+| Stage 4 persistent own cache | Pending measurement/lifecycle gate | Direction authorized; no additional permission needed for the approved plan. Encryption/key/file retention/cleanup audit required before persistence. No profile JSON/photos written to preferences or disk in this batch |
+| Stage 5 image sizing/cache | Partly existing; further work pending | Existing private frame ownership/cleanup unchanged; request sharing reduces overlap. Size-aware decode/persistent own thumbnail remain planned |
+| Stage 6 release/device comparison | Awaiting device test | docs/CACHE_STAGE_ONE_DEVICE_TESTS.md: cold/warm routing, TTL/pull/edit, 100 switches, logout/account separation and offline recovery. Debug APK is behavior evidence; actual profile/release frame/memory/native measurements remain pending |
+| iOS / existing capacity gates | Not run / existing gate pending | Android-only request retained. No iOS runtime, full load/soak/battery or main qualification claim |
+
+Review minor tracked: ProfilePreviewCubit force-refresh currently assumes an own-profile destination; the peer screen uses its separate cubit and never calls this path. Add a peer guard before reusing this cubit for forced peer previews. No current peer UI behavior was changed by that latent interface issue.
+
+Decisions and evidence limits: reuse the clean existing feature checkout to preserve owner SDK/config/workflow; this requires coordination if concurrent edits appear (none observed). Deliver roadmap steps 1–2 first, then owner measurement/lifecycle acceptance before disk/API-revision changes; some avatar reloads therefore remain. Physical Android performance and iOS runtime are not established by code inspection/tests. Existing HttpAuthRepository clones Dio's source byte buffer; this change proves its new shared-buffer wipe and independent consumer ownership, not zeroing of every upstream allocation. Audit that path before persistent media storage; current transient source copies can remain until GC. These limits are not represented as completed optimization or privacy qualification.
+
+Author verification also corrected analyzer annotations/braces before clean checks and replaced a racy fixture wait with an explicit transport-start signal. Existing Kotlin/Gradle deprecation warnings remain. Next action: owner tests current APK using CACHE_STAGE_ONE_DEVICE_TESTS.md; continue the already approved subsequent cache stages after that gate.
+
+Publication confirmed: source 7ac2c7f and cache evidence pushed to feature/logo-refresh; GitHub draft PR16 head 5e6b2dd matched the remote at verification. PR body updated with current scope/checks and remains draft. No CI checks were listed for that head; no CI-pass claim. Remote main remains fc7603f. Backend PR19 remains draft; backend/admin working trees unchanged. This final note contains no application change.
+
+
+## Performance stages 3–5: encrypted own cache — 25 October 2026
+
+Current task: implemented locally, awaiting owner Android/native crypto test. Branch feature/logo-refresh; draftPR16 into development. Stage1–2 owner acceptance received; stage6 release/device comparison pending. Main unchanged. API1.16.0.
+
+| Applicable checklist | Status | Evidence |
+| --- | --- | --- |
+| Conditional freshness and stale edits | Verified locally |08cb0ba contract;20dfafd session/profile integration. Backend expectedRevision comparison serialized under existing account lock; conflict offers Reload latest profile. No silent overwrite |
+| Encrypted own metadata/avatar | Implemented; native runtime pending |a4b3266 fixed3slots, AndroidAES256GCM/Keystore/AtomicFile/nonbackup; iOSCryptoKit/ThisDeviceOnly/protected sources. Metadata64KiB, thumbnail1MiB, display8MiB; atomic transient below20MiB. TTL24h; approved own current asset only; no persistent peers/gallery/CNIC/messages/locations |
+| Authorization and cleanup | Verified Dart/HTTP; native pending |Session plus conditional snapshot required after restart. Current adult/unrestricted/unexpired session and30sec snapshot authorization before/after native reads. Hide/pause/mutations/safety invalidate; restriction-refresh/logout/deletion/account change purge; late writes bound to native owner/nonce. Cleanup failure explicit; no plaintext fallback |
+| Decode sizing | Verified locally |ab20054;48logical px atDPR2 decodes96px vs320previously. Existing visibility/pause/cancel/dispose ownership retained. Inspected resized-image visual comparisons; refreshed12affected screenshot baselines without layout change |
+| Business/failure checks | Verified locally |flutter analyze --no-pub: no issues. flutter test --no-pub:432passed.15Python tool/generator tests passed (native iOS upload probe excluded by Android-only policy); generator determinism/three export hashes match. git diff --check passed |
+| Android compile/package | Verified locally |Offline arm64debug Gradle build passed274tasks. Kernel compiler/staged/APK match76,440,376bytes SHA256a93cfcafdfd569af56c696b87085883ab11687cb4fb060d932ac04bd9efa9a10. APK SHA256969edcd900fef4fdd47e64aac545f11b8e7748f800abd27b8a1184f6b3ff7602 |
+| Review and repairs | Reviewed; regressions passed |Fresh read-only review found expiry eligibility and restriction-refresh purge gaps; both reproduced failing and fixed. Also fixed async-retirement invalidation, late old-read failure disabling new binding and clock-tick TTL defects. Rejected/malformed snapshots cannot unlock disk pixels; write failure falls back; failed purge stays unusable |
+| Local runtime/API compatibility | Verified locally |Cached Docker rebuilt network=none/pull=false; API/worker restarted without volume deletion. API1.16 own snapshot200/full448bytes→conditional200/98bytes, no-store and omitted profile verified.30request switching burst30HTTP200,p951558ms. Not full Task13/load/device evidence |
+| Device/native/security/performance acceptance | Awaiting device test |docs/ENCRYPTED_CACHE_DEVICE_TESTS.md includes exact install, restart, account/offline/edit/switch steps and isolated debug Keystore/tamper/purge probe. Agent did not operate phone/emulator; real native crypto probe not executed. Stage6 frame/memory/battery comparison still pending |
+| iOS validation | Blocked/deferred runtime |Source implementation and project wiring inspected; no iOS build/runtime per owner Android-only direction. Android acceptance cannot verify Keychain/data-protection behavior |
+
+Source to test:ab20054 plus this documentation commit; backendd0971f1. Existing ignored config remains local. No new packages, SDKs, images or dependency downloads. Real exported API SHA25606730832ec465ffc8d1bdc0bef5be2b117817796d13b3b1cd449946c88b7b641 is identical in all3repos. Drafts remain until owner acceptance; no merge/main promotion.

@@ -1,0 +1,9 @@
+# Chat redesign
+
+Use the supplied reference as visual contract, with Paths blue gradients and white list/composer surfaces. Conversation screen: search only at top (no Chats title/refresh icon), Let's Stay Connected heading, up to four real recent conversations sorted by activity, then virtualized white conversation list with avatar/name/preview/time/unread. No fake Add/contact/voice controls. Pull-to-refresh remains available even for empty/error/search states. Debounced server name search,20-row cursor pages, cancellation/generation guards, bounded recent query, incremental loading and retry; no fetch-every-page before first paint.
+
+Thread: back, photo/name and custom three-dot options; no refresh icon. Same blue gradient, readable incoming/outgoing bubbles with timestamps and existing sending/retry behavior. White footer containing rounded input and send icon. Preserve history pagination, read visibility, realtime reconnect, safety/reporting and session cleanup. Build rows lazily. Themed options use original rounded-stroke icons and real actions; no default popup menu.
+
+API: additive search/peer filtering and authenticated single-conversation lookup for deep-link headers/profile-to-chat; recent-order keyset pagination, query/account-bound cursor and revision conflict restart. Contract1.13.0 generated from actual OpenAPI in all clients. No new dependencies or downloads. Existing failed load qualification remains separate; no capacity claim.
+
+Owner has supplied detailed design and delegates routine choices. Implement inline; native Flutter/Material/BLoC, current palette/fonts, original SVG-derived icon family. Separate backend feature from development; retain ongoing mobile UI branch; synchronize admin contract in a focused branch. Draft PRs, main unchanged, Android only and owner phone acceptance pending.

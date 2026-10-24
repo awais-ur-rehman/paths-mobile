@@ -55,9 +55,13 @@ def generate(contract, raw):
                 lines += [f"    final {field} = List<{item_type}>.unmodifiable({raw}.map((item) {{ if(item is! {guard}) {{ throw const FormatException('Invalid {name}.{field} item'); }} return {result}; }}));"]
                 continue
             if '$ref' in value:
-                if field not in required or value.get('nullable'): raise ValueError('Optional objects need explicit support')
                 raw='raw'+field[0].upper()+field[1:]
-                lines += [f"    final {raw} = json['{field}'];", f"    if ({raw} is! Map<String, dynamic>) {{ throw const FormatException('Invalid {name}.{field}'); }}", f"    final {field} = {field_type(value)}.fromJson({raw});"]
+                nullable = field not in required or value.get('nullable', False)
+                guard = f'{raw} != null && ' if nullable else ''
+                parsed = f'{field_type(value)}.fromJson({raw})'
+                if nullable: parsed = f'{raw} == null ? null : {parsed}'
+                if field in required: lines += [f"    if (!json.containsKey('{field}')) {{ throw const FormatException('Missing {name}.{field}'); }}"]
+                lines += [f"    final {raw} = json['{field}'];", f"    if ({guard}{raw} is! Map<String, dynamic>) {{ throw const FormatException('Invalid {name}.{field}'); }}", f"    final {field} = {parsed};"]
                 continue
             nullable = field not in required or value.get('nullable', False)
             if field in required:
@@ -68,7 +72,7 @@ def generate(contract, raw):
             if 'enum' in value:
                 lines += [f"    if ({guard}!const {json.dumps(value['enum'])}.contains({field})) {{ throw const FormatException('Unsupported {field}'); }}"]
         lines += [f"    return {name}({', '.join(f'{f}: {f}' for f in properties)});", '  }',
-                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': " + (f"{f}.toJson()" if '$ref' in properties[f] else f"{f}.map((item) => item.toJson()).toList(growable: false)" if properties[f].get('type')=='array' and '$ref' in properties[f].get('items',{}) else f) for f in properties) + '};', '}']
+                  "  Map<String, dynamic> toJson() => {" + ', '.join(("if (" + f + " != null) " if f not in required else "") + f"'{f}': " + (f"{f}{'?' if (f not in required or properties[f].get('nullable')) else ''}.toJson()" if '$ref' in properties[f] else f"{f}.map((item) => item.toJson()).toList(growable: false)" if properties[f].get('type')=='array' and '$ref' in properties[f].get('items',{}) else f) for f in properties) + '};', '}']
     return '\n'.join(lines) + '\n'
 
 

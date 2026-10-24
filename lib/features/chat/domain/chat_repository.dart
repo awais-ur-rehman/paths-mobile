@@ -11,7 +11,15 @@ final class ChatSignal {
 abstract interface class ChatRepository {
   String? get accountId;
   Stream<ChatSignal> get events;
-  Future<List<ConversationDto>> conversations({CancelToken? cancelToken});
+  Future<ConversationPageDto> conversations({
+    String? cursor,
+    int? revision,
+    String search = '',
+    String? peerId,
+    int limit = 20,
+    CancelToken? cancelToken,
+  });
+  Future<ConversationDto> conversation(String id, {CancelToken? cancelToken});
   Future<ChatHistoryDto> history(
     String id, {
     String? cursor,

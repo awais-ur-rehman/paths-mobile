@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 final class ProfileDetails {
   const ProfileDetails({
+    this.revision,
     required this.username,
     required this.name,
     required this.gender,
@@ -10,6 +11,7 @@ final class ProfileDetails {
     this.avatarAssetId,
     this.profileComplete = false,
   });
+  final String? revision;
   final String username, name, gender, bio, visibility;
   final String? avatarAssetId;
   final bool profileComplete;
@@ -53,4 +55,11 @@ abstract interface class ProfileSummaryRepository {
     String userId, {
     CancelToken? cancelToken,
   });
+}
+
+/// Optional own-account memory optimization; never used to authorize setup.
+abstract interface class OwnProfileSnapshotRepository {
+  ProfileSummary? get cachedOwnProfile;
+  Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken});
+  void invalidateOwnProfile();
 }

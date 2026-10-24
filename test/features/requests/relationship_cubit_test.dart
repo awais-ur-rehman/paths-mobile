@@ -56,6 +56,9 @@ class RelationshipFixture implements RelationshipRepository {
   Future<RelationshipPageDto> page(
     String box, {
     String? cursor,
+    String search = '',
+    bool verifiedOnly = false,
+    bool pendingOnly = false,
     CancelToken? cancelToken,
   }) async => const RelationshipPageDto(items: [], nextCursor: null);
 }

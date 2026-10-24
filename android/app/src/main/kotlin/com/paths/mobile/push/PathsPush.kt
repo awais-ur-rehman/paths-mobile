@@ -86,7 +86,7 @@ object PathsPush {
   manager.createNotificationChannel(NotificationChannel(CHANNEL,"Paths",NotificationManager.IMPORTANCE_DEFAULT))
   val intent=Intent(context,MainActivity::class.java).setAction("com.paths.mobile.PUSH").setData(Uri.parse("paths://notification/$event")).putExtra("paths_event",event).putExtra("paths_binding",binding).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
   val tap=PendingIntent.getActivity(context,0,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-  manager.notify(event,0,Notification.Builder(context,CHANNEL).setSmallIcon(R.drawable.paths_symbol).setContentTitle("Paths").setContentText(body).setAutoCancel(true).setContentIntent(tap).setVisibility(Notification.VISIBILITY_PRIVATE).build())
+  manager.notify(event,0,Notification.Builder(context,CHANNEL).setSmallIcon(R.drawable.paths_notification).setContentTitle("Paths").setContentText(body).setAutoCancel(true).setContentIntent(tap).setVisibility(Notification.VISIBILITY_PRIVATE).build())
   emit?.invoke("received",null)
  }
  fun status(context:Context)=mapOf("configured" to initialize(context),"granted" to granted(context),"optedIn" to prefs(context).getBoolean("enabled",false),"bound" to (prefs(context).getString("binding",null)!=null))

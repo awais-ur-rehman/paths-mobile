@@ -2008,6 +2008,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "peerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -2017,6 +2035,41 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConversationPageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/v1/conversations/{id}": {
+      "get": {
+        "operationId": "ChatController_detail",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDto"
                 }
               }
             }
@@ -2975,6 +3028,41 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "verification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "verified"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "pending"
+              ]
+            }
           }
         ],
         "responses": {
@@ -3064,6 +3152,41 @@
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "verification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "verified"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "pending"
+              ]
             }
           },
           {
@@ -3256,6 +3379,41 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "verification",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "verified"
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "all",
+              "type": "string",
+              "enum": [
+                "all",
+                "pending"
+              ]
+            }
           }
         ],
         "responses": {
@@ -3319,6 +3477,15 @@
       "get": {
         "operationId": "EncounterController_list",
         "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
           {
             "name": "mode",
             "required": false,
@@ -3845,6 +4012,42 @@
         ]
       }
     },
+    "/v1/me/profile/snapshot": {
+      "get": {
+        "operationId": "ProfileController_snapshot",
+        "parameters": [
+          {
+            "name": "revision",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnProfileSnapshotDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
     "/v1/profiles/{id}": {
       "get": {
         "operationId": "ProfileSummaryController_read",
@@ -4140,7 +4343,7 @@
   "info": {
     "title": "Paths API",
     "description": "",
-    "version": "1.12.0",
+    "version": "1.16.0",
     "contact": {}
   },
   "tags": [],
@@ -6441,7 +6644,7 @@
           "contractVersion": {
             "type": "string",
             "enum": [
-              "1.12.0"
+              "1.16.0"
             ]
           }
         },
@@ -6707,6 +6910,10 @@
       "ProfileDetailsDto": {
         "type": "object",
         "properties": {
+          "revision": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
           "avatarAssetId": {
             "type": "string",
             "format": "uuid",
@@ -6750,53 +6957,6 @@
           "bio",
           "visibility",
           "profileComplete"
-        ]
-      },
-      "ProfileDetailsInput": {
-        "type": "object",
-        "properties": {
-          "avatarAssetId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "username": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 24,
-            "pattern": "^[a-z0-9_]{3,24}$"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 2,
-            "maxLength": 80
-          },
-          "gender": {
-            "type": "string",
-            "enum": [
-              "man",
-              "woman",
-              "another_identity",
-              "prefer_not_to_say"
-            ]
-          },
-          "bio": {
-            "type": "string",
-            "maxLength": 300
-          },
-          "visibility": {
-            "type": "string",
-            "enum": [
-              "private",
-              "public"
-            ]
-          }
-        },
-        "required": [
-          "username",
-          "name",
-          "gender",
-          "bio"
         ]
       },
       "ProfileSummaryDto": {
@@ -6868,6 +7028,76 @@
           "visibility",
           "verificationStatus",
           "photoState"
+        ]
+      },
+      "OwnProfileSnapshotDto": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "notModified": {
+            "type": "boolean"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileSummaryDto"
+          }
+        },
+        "required": [
+          "revision",
+          "notModified"
+        ]
+      },
+      "ProfileDetailsInput": {
+        "type": "object",
+        "properties": {
+          "expectedRevision": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "avatarAssetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 24,
+            "pattern": "^[a-z0-9_]{3,24}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "gender": {
+            "type": "string",
+            "enum": [
+              "man",
+              "woman",
+              "another_identity",
+              "prefer_not_to_say"
+            ]
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "public"
+            ]
+          }
+        },
+        "required": [
+          "username",
+          "name",
+          "gender",
+          "bio"
         ]
       },
       "VerificationDto": {

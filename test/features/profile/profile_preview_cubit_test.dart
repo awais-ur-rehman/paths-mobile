@@ -7,18 +7,46 @@ import 'package:paths_mobile/features/profile/presentation/profile_preview_cubit
 
 class FixtureSummary implements ProfileSummaryRepository {
   final pending = Completer<ProfileSummary>();
+  int reads = 0;
   CancelToken? token;
   @override
   Future<ProfileSummary> loadProfileSummary(
     String userId, {
     CancelToken? cancelToken,
   }) {
+    reads++;
     token = cancelToken;
     return pending.future;
   }
 }
 
 void main() {
+  test(
+    'refresh retains the visible profile and coalesces overlapping reads',
+    () async {
+      final repo = FixtureSummary();
+      final cubit = ProfilePreviewCubit(repo, 'fixture');
+      const profile = ProfileSummary(
+        userId: 'fixture',
+        username: 'fixture',
+        name: 'Fixture',
+        age: 26,
+        gender: 'man',
+        bio: '',
+        visibility: 'private',
+        verificationStatus: 'none',
+      );
+      final first = cubit.load();
+      final duplicate = cubit.load();
+      expect(repo.reads, 1);
+      repo.pending.complete(profile);
+      await Future.wait([first, duplicate]);
+      final refresh = cubit.load();
+      expect(cubit.state.profile, same(profile));
+      await refresh;
+      await cubit.close();
+    },
+  );
   test(
     'disposal cancels preview read and excludes late account data',
     () async {

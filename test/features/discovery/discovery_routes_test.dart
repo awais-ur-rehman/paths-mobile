@@ -1,3 +1,7 @@
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+import 'map_platform_fixture.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +16,9 @@ import 'encounter_repository_test.dart' show EncounterAdapter;
 import 'location_sync_service_test.dart';
 
 void main() {
+  final originalMapFactory = MapLibrePlatform.createInstance;
+  setUp(() => MapLibrePlatform.createInstance = () => TestMapPlatform());
+  tearDown(() => MapLibrePlatform.createInstance = originalMapFactory);
   testWidgets(
     'adult Home/profile stacks preserve filters and signout removes discovery',
     (tester) async {
@@ -43,34 +50,42 @@ void main() {
       await tester.pumpWidget(PathsApp(repository: repo, locationSync: sync));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email address'),
         'fixture@example.invalid',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
         'a long fixture password',
       );
-      await tap(tester, 'Sign in');
+      await tap(tester, 'Login');
       final router = GoRouter.of(tester.element(find.byType(Scaffold).first));
+      router.go('/profiles/11111111-1111-4111-8111-111111111111');
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/profile');
+      expect(find.text('Connect'), findsNothing);
       router.go('/profile');
       await tester.pumpAndSettle();
-      expect(find.text('Home'), findsOneWidget);
-      await tap(tester, 'Home');
-      expect(find.text('Crossed paths'), findsOneWidget);
+      expect(find.byTooltip('Home'), findsOneWidget);
+      await tester.tap(find.byTooltip('Home'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MapLibreMap), findsOneWidget);
       await tap(tester, 'Nearby');
       expect(adapter.discovery!.uri.queryParameters['mode'], 'nearby');
-      await tap(tester, 'Profile');
-      await tap(tester, 'Home');
+      await tester.tap(find.byTooltip('Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Home'));
+      await tester.pumpAndSettle();
       expect(adapter.discovery!.uri.queryParameters['mode'], 'nearby');
-      await tap(tester, 'Profile');
-      await tester.tap(find.byTooltip('Profile options'));
+      await tester.tap(find.byTooltip('Profile'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Settings'));
       await tester.pumpAndSettle();
       await tap(tester, 'Sign out');
-      expect(find.text('Good to see you'), findsOneWidget);
+      expect(find.text('Log in'), findsOneWidget);
       router.go('/home');
       await tester.pumpAndSettle();
-      expect(find.text('Good to see you'), findsOneWidget);
-      expect(find.text('Crossed paths'), findsNothing);
+      expect(find.text('Log in'), findsOneWidget);
+      expect(find.byType(MapLibreMap), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await sync.close();

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../shared/widgets/paths_loader.dart';
 import '../../../shared/widgets/paths_brand.dart';
 import '../../../shared/widgets/arrow_slide_button.dart';
 
@@ -45,11 +44,7 @@ class SplashScreen extends StatelessWidget {
                       label: 'Retry',
                       onPressed: () => context.read<AuthCubit>().initialize(),
                     ),
-                  ] else
-                    Semantics(
-                      label: 'Loading your session',
-                      child: const PathsLoader(),
-                    ),
+                  ],
                 ],
               ),
             ),

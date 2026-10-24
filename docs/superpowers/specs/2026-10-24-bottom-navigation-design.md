@@ -1,0 +1,9 @@
+# Bottom navigation
+
+Use the supplied reference's floating rounded surface, smooth central scoop, raised circular plus, four unlabelled tab icons and short selected underline. Keep Paths white/ink/blue. Existing destinations remain Home, Likes, Chats, Profile; plus opens the existing post camera. Do not introduce calls/settings tabs from reference imagery. Tooltips and selected semantics retain accessible labels despite no visible text.
+
+Implementation choice: a focused Flutter navigation widget with a shaped Material surface and real IconButtons, preserving go_router stateful branches/reselection. An opaque rectangular overlay would hide page content behind the notch; use an actual shaped surface instead. No dependency is needed. Reuse current feature/logo-refresh checkout and draft PR for this ongoing UI pass, preserving private local build configuration/caches. Owner's standing direction delegates routine implementation choices; no additional concept approval needed for the supplied reference.
+
+Original editable 24-unit SVG icons use 1.8-unit rounded strokes and consistent optical bounds. Generate Flutter vector geometry from those masters so shipped assets and future icon edits share one source. A shared icon widget supplies size/color without a new SVG package or raster scaling. Draw selected icons blue with a short rounded underline. Keep touch targets >=48px, system gesture padding, focus/keyboard support, direction-aware tab order (Home/Likes leading, Chats/Profile trailing) and a stable physical center action. Missing optional capabilities must not shift branch indices or leave dead controls. Hide the bar while the keyboard is open. Clamp width560 on large screens; support320px width. No iOS build/device operation this pass.
+
+Scope: navigation/icon family only. Auth, destination content, backend and API unchanged. Draft PR/main gate remains owner device acceptance. Record sources/licensing and exact Android test steps.

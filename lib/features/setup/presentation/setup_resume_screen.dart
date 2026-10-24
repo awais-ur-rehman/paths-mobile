@@ -12,6 +12,7 @@ import 'setup_resume_cubit.dart';
 class SetupResumeScreen extends StatelessWidget {
   const SetupResumeScreen({
     required this.profiles,
+    this.onError,
     required this.verification,
     required this.progress,
     required this.owner,
@@ -20,6 +21,7 @@ class SetupResumeScreen extends StatelessWidget {
     this.requirePermissionEducation = true,
     super.key,
   });
+  final VoidCallback? onError;
   final ProfileRepository profiles;
   final VerificationRepository verification;
   final SetupProgressStore progress;
@@ -67,9 +69,15 @@ class _ResumeOwnerState extends State<_ResumeOwner> {
       child: BlocConsumer<SetupResumeCubit, SetupResumeState>(
         bloc: cubit,
         listenWhen: (a, b) =>
-            a.destination != b.destination && b.destination != null,
-        listener: (context, state) =>
-            widget.configuration.onDestination(state.destination!),
+            (a.destination != b.destination && b.destination != null) ||
+            (a.error != b.error && b.error != null),
+        listener: (context, state) {
+          if (state.destination != null) {
+            widget.configuration.onDestination(state.destination!);
+          } else if (state.error != null) {
+            widget.configuration.onError?.call();
+          }
+        },
         builder: (context, state) => Center(
           child: state.error == null
               ? const PathsLoader()

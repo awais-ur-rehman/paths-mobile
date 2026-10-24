@@ -7,11 +7,13 @@ import '../../../app/theme/paths_tokens.dart';
 import '../../../shared/widgets/paths_brand.dart';
 import '../../../shared/widgets/paths_toast.dart';
 import 'auth_cubit.dart';
+import 'auth_form_theme.dart';
+export 'auth_form_theme.dart' show AuthFieldSurface, AuthFormTheme;
 
 class AuthBrand extends StatelessWidget {
   const AuthBrand({super.key});
   @override
-  Widget build(BuildContext context) => const PathsWordmark();
+  Widget build(BuildContext context) => const PathsSymbol(size: 64);
 }
 
 class AuthScaffold extends StatelessWidget {
@@ -28,76 +30,96 @@ class AuthScaffold extends StatelessWidget {
   final VoidCallback? onBack;
   final Future<void> Function()? onRefresh;
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: SizedBox.expand(
-      child: Material(
-        color: Colors.white,
-        child: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final scroll = SingleChildScrollView(
-                physics: onRefresh == null
-                    ? null
-                    : const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
-                  PathsTokens.gutter(constraints.maxWidth),
-                  20,
-                  PathsTokens.gutter(constraints.maxWidth),
-                  32,
-                ),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: PathsTokens.maxFormWidth,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
+  Widget build(BuildContext context) => AuthFormTheme(
+    child: Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final scroll = SingleChildScrollView(
+              physics: onRefresh == null
+                  ? null
+                  : const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                PathsTokens.gutter(constraints.maxWidth),
+                16,
+                PathsTokens.gutter(constraints.maxWidth),
+                32,
+              ),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: PathsTokens.maxFormWidth,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(
+                        height: 72,
+                        child: Stack(
+                          alignment: Alignment.center,
                           children: [
-                            if (onBack != null)
-                              IconButton(
-                                onPressed: onBack,
-                                icon: const Icon(Icons.arrow_back_rounded),
-                                tooltip: 'Back',
-                              ),
                             const AuthBrand(),
+                            if (onBack != null)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Material(
+                                  color: Colors.white,
+                                  shape: const CircleBorder(),
+                                  elevation: 2,
+                                  shadowColor: const Color(0x14101418),
+                                  child: IconButton(
+                                    onPressed: onBack,
+                                    icon: const Icon(
+                                      Icons.chevron_left_rounded,
+                                      size: 28,
+                                    ),
+                                    tooltip: 'Back',
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                        const SizedBox(height: 32),
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF101418),
-                              ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 30,
+                          height: 1.2,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -.6,
+                          color: Color(0xFF101418),
                         ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Text(
                           subtitle,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 14,
                             height: 1.5,
                             color: Color(0xFF52616D),
                           ),
                         ),
-                        const SizedBox(height: 28),
-                        child,
                       ],
-                    ),
+                      const SizedBox(height: 36),
+                      child,
+                    ],
                   ),
                 ),
-              );
-              return onRefresh == null
-                  ? scroll
-                  : RefreshIndicator.noSpinner(
-                      onRefresh: onRefresh!,
-                      child: scroll,
-                    );
-            },
-          ),
+              ),
+            );
+            return onRefresh == null
+                ? scroll
+                : RefreshIndicator.noSpinner(
+                    onRefresh: onRefresh!,
+                    child: scroll,
+                  );
+          },
         ),
       ),
     ),
@@ -143,12 +165,16 @@ class PasswordField extends StatefulWidget {
     required this.label,
     this.newPassword = false,
     this.onSubmitted,
+    this.validator,
+    this.textInputAction = TextInputAction.done,
     super.key,
   });
   final TextEditingController controller;
   final String label;
   final bool newPassword;
   final VoidCallback? onSubmitted;
+  final FormFieldValidator<String>? validator;
+  final TextInputAction textInputAction;
   @override
   State<PasswordField> createState() => _PasswordFieldState();
 }
@@ -156,30 +182,37 @@ class PasswordField extends StatefulWidget {
 class _PasswordFieldState extends State<PasswordField> {
   bool hidden = true;
   @override
-  Widget build(BuildContext context) => TextFormField(
-    controller: widget.controller,
-    obscureText: hidden,
-    autocorrect: false,
-    enableSuggestions: false,
-    autofillHints: [
-      widget.newPassword ? AutofillHints.newPassword : AutofillHints.password,
-    ],
-    textInputAction: TextInputAction.done,
-    onFieldSubmitted: (_) => widget.onSubmitted?.call(),
-    decoration: InputDecoration(
-      labelText: widget.label,
-      suffixIcon: IconButton(
-        onPressed: () => setState(() => hidden = !hidden),
-        tooltip: hidden ? 'Show password' : 'Hide password',
-        icon: Icon(
-          hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+  Widget build(BuildContext context) => AuthFieldSurface(
+    child: TextFormField(
+      controller: widget.controller,
+      obscureText: hidden,
+      autocorrect: false,
+      enableSuggestions: false,
+      autofillHints: [
+        widget.newPassword ? AutofillHints.newPassword : AutofillHints.password,
+      ],
+      textInputAction: widget.textInputAction,
+      onFieldSubmitted: (_) => widget.onSubmitted?.call(),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        prefixIcon: const Icon(Icons.lock_rounded, size: 20),
+        suffixIcon: IconButton(
+          onPressed: () => setState(() => hidden = !hidden),
+          tooltip: hidden ? 'Show password' : 'Hide password',
+          icon: Icon(
+            hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          ),
         ),
       ),
+      validator:
+          widget.validator ??
+          (value) =>
+              value == null ||
+                  value.runes.length < 12 ||
+                  value.runes.length > 128
+              ? 'Use 12–128 characters.'
+              : null,
     ),
-    validator: (value) =>
-        value == null || value.runes.length < 12 || value.runes.length > 128
-        ? 'Use 12–128 characters.'
-        : null,
   );
 }
 

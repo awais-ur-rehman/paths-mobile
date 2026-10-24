@@ -3,6 +3,7 @@ import UIKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  private let ownCache=OwnCacheChannel()
   private let push = PathsPushNotifications()
   private let tracker = PathsLocationTracker()
   private var channel: FlutterMethodChannel?
@@ -17,6 +18,7 @@ import UIKit
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PathsLocation") else { return }
     push.attach(registrar.messenger())
+    ownCache.attach(registrar.messenger())
     let channel = FlutterMethodChannel(name: "paths/location", binaryMessenger: registrar.messenger())
     self.channel = channel
     tracker.emit = { [weak channel] event in channel?.invokeMethod("event", arguments:event) }

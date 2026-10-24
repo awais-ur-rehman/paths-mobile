@@ -14,6 +14,8 @@ import '../../../core/network/authenticated_api.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
+import '../../profile/data/own_profile_memory.dart';
+import '../../profile/data/own_persistent_cache.dart';
 import '../../discovery/domain/location_repository.dart';
 import '../../discovery/domain/encounter_repository.dart';
 import '../../verification/domain/verification_repository.dart';
@@ -25,10 +27,12 @@ final class HttpAuthRepository
         ProviderAuthRepository,
         ProfileRepository,
         ProfileSummaryRepository,
+        OwnProfileSnapshotRepository,
         VerificationRepository,
         LocationRepository,
         EncounterRepository,
         AuthenticatedApi,
+        AuthenticatedAccountChanges,
         AuthenticatedMediaApi {
   HttpAuthRepository({
     required String origin,
@@ -39,6 +43,8 @@ final class HttpAuthRepository
     this._purgeTracking,
     this._purgeNotifications,
     this.purgeMedia,
+    DateTime Function()? profileCacheClock,
+    this._ownCache,
   }) : _public = publicTransport ?? Dio(),
        _private = authenticatedTransport ?? Dio() {
     final uri = Uri.tryParse(origin);
@@ -61,11 +67,49 @@ final class HttpAuthRepository
         followRedirects: false,
       );
     }
+    _profileMemory = OwnProfileMemory(
+      owner: () {
+        final session = _session;
+        if (session == null ||
+            session.account.restricted ||
+            !session.account.adultChecked ||
+            !session.accessExpiresAt.isAfter(DateTime.now())) {
+          return null;
+        }
+        return session.account.id;
+      },
+      load: (id, token) => _fetchProfileSummary(id, cancelToken: token),
+      clock: profileCacheClock,
+    );
     _coordinator = RefreshCoordinator(_refresh);
     _private.interceptors.add(
       SessionRefreshInterceptor(_private, _coordinator),
     );
   }
+  final OwnPersistentCache? _ownCache;
+  int _cacheGeneration = -1, _cacheEpoch = 0;
+  late final OwnProfileMemory _profileMemory;
+  @override
+  ProfileSummary? get cachedOwnProfile => _profileMemory.snapshot;
+  @override
+  void invalidateOwnProfile() {
+    _cacheEpoch++;
+    _ownCache?.invalidate();
+    _profileMemory.invalidate();
+  }
+
+  @override
+  Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken}) {
+    final owner = accountId;
+    if (owner == null) {
+      return Future.error(const AuthFailure('SESSION_INVALID'));
+    }
+    if (_profileMemory.owner() != owner) {
+      return _fetchProfileSummary(owner, cancelToken: cancelToken);
+    }
+    return _profileMemory.read(force: true, cancelToken: cancelToken);
+  }
+
   final Future<void> Function()? purgeMedia;
   final Future<void> Function()? _purgeTracking;
   final Future<void> Function()? _purgeNotifications;
@@ -74,6 +118,9 @@ final class HttpAuthRepository
   final Dio _public, _private;
   late final RefreshCoordinator _coordinator;
   final _changes = StreamController<AuthAccount?>.broadcast(sync: true);
+  final _accountChanges = StreamController<String?>.broadcast(sync: true);
+  @override
+  Stream<String?> get accountChanges => _accountChanges.stream;
   AuthSession? _session;
   int _generation = 0;
   bool _cleanupPending = false;
@@ -264,6 +311,8 @@ final class HttpAuthRepository
         },
       );
       if (generation != _generation || account != accountId) {
+        final abandoned = response.data;
+        if (abandoned is List<int>) abandoned.fillRange(0, abandoned.length, 0);
         throw const AuthFailure('cancelled');
       }
       return response;
@@ -306,23 +355,71 @@ final class HttpAuthRepository
     );
   }
 
+  bool get _cacheSessionEligible {
+    final session = _session;
+    return session != null &&
+        !session.account.restricted &&
+        session.account.adultChecked &&
+        session.accessExpiresAt.isAfter(DateTime.now());
+  }
+
   @override
   Future<Uint8List> imageBytes(
     String assetId, {
     bool thumbnail = true,
     CancelToken? cancelToken,
   }) async {
-    final token = cancelToken ?? CancelToken();
+    _mediaId(assetId);
+    final token = cancelToken ?? CancelToken(),
+        generation = _generation,
+        epoch = _cacheEpoch;
+    final cached = _cacheSessionEligible
+        ? await _ownCache?.avatar(assetId, thumbnail)
+        : null;
+    if (generation != _generation ||
+        epoch != _cacheEpoch ||
+        token.isCancelled) {
+      cached?.fillRange(0, cached.length, 0);
+      throw const AuthFailure('cancelled');
+    }
+    if (cached != null) {
+      if (_cacheSessionEligible) return cached;
+      cached.fillRange(0, cached.length, 0);
+    }
     final response = await _binary<List<int>>(
       assetId,
       thumbnail: thumbnail,
       cancelToken: token,
     );
     final bytes = response.data;
-    if (bytes == null || bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
-      throw const AuthFailure('invalid_response');
+    try {
+      if (bytes == null || bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
+        throw const AuthFailure('invalid_response');
+      }
+      if (generation != _generation ||
+          epoch != _cacheEpoch ||
+          token.isCancelled) {
+        throw const AuthFailure('cancelled');
+      }
+      if (_ownCache != null && _cacheSessionEligible) {
+        final staging = bytes is Uint8List ? bytes : Uint8List.fromList(bytes);
+        try {
+          await _ownCache.writeAvatar(assetId, thumbnail, staging);
+        } finally {
+          if (!identical(staging, bytes)) {
+            staging.fillRange(0, staging.length, 0);
+          }
+        }
+      }
+      if (generation != _generation ||
+          epoch != _cacheEpoch ||
+          token.isCancelled) {
+        throw const AuthFailure('cancelled');
+      }
+      return Uint8List.fromList(bytes);
+    } finally {
+      bytes?.fillRange(0, bytes.length, 0);
     }
-    return Uint8List.fromList(bytes);
   }
 
   AuthAccount _account(AccountDto dto) => AuthAccount(
@@ -379,7 +476,32 @@ final class HttpAuthRepository
       await _preferences.setFlag('paths.auth.signedOut', false);
     });
     if (generation != _generation) throw const AuthFailure('cancelled');
+    if (_session?.account.id != session.account.id ||
+        session.account.restricted ||
+        !session.account.adultChecked) {
+      invalidateOwnProfile();
+    }
+    final previousAccount = _session?.account.id;
     _session = session;
+    final cache = _ownCache;
+    if (cache != null &&
+        (session.account.restricted || !session.account.adultChecked)) {
+      await cache.purge();
+      if (generation != _generation) throw const AuthFailure("cancelled");
+    }
+    if (cache != null &&
+        !session.account.restricted &&
+        session.account.adultChecked &&
+        (_cacheGeneration != generation ||
+            cache.owner != session.account.id ||
+            !cache.ready)) {
+      await cache.activate(session.account.id);
+      if (generation != _generation) throw const AuthFailure('cancelled');
+      _cacheGeneration = generation;
+    }
+    if (previousAccount != session.account.id) {
+      _accountChanges.add(session.account.id);
+    }
   }
 
   Future<void> _clearPush() async {
@@ -390,8 +512,13 @@ final class HttpAuthRepository
     }
   }
 
-  Future<void> _purge({bool notifications = true}) async {
+  Future<void> _purge({
+    bool notifications = true,
+    bool persistent = true,
+  }) async {
+    invalidateOwnProfile();
     await Future.wait([
+      if (persistent && _ownCache != null) _ownCache.purge(),
       if (notifications) _clearPush(),
       _clearTracking(),
       if (purgeMedia != null) purgeMedia!(),
@@ -410,6 +537,7 @@ final class HttpAuthRepository
     final generation = ++_generation;
     _cleanupPending = true;
     _session = null;
+    _accountChanges.add(null);
     _coordinator.replace(null);
     try {
       await Future.wait([
@@ -501,10 +629,12 @@ final class HttpAuthRepository
       await _invalidate();
       return null;
     }
-    await _purge(notifications: false);
+    // Cold restoration clears prior-process resources; a warm validation must not stop live tracking.
+    if (_session == null) await _purge(notifications: false, persistent: false);
     if (!await _stored<bool?>(() => _preferences.flag('paths.auth.installed'))
         .then((value) => value ?? false)) {
       await _clearPush();
+      await _ownCache?.purge();
       await _serialize(() async {
         await _vault.clear();
         await _preferences.setFlag('paths.auth.installed', true);
@@ -513,6 +643,7 @@ final class HttpAuthRepository
     if (await _stored<bool?>(() => _preferences.flag('paths.auth.signedOut')) ==
         true) {
       await _clearPush();
+      await _ownCache?.purge();
       await _serialize(_vault.clear);
       return null;
     }
@@ -554,6 +685,7 @@ final class HttpAuthRepository
       if (current == null || generation != _generation) {
         throw const AuthFailure('cancelled');
       }
+      if (account.restricted) await _purge(notifications: false);
       final updated = AuthSession(
         account: account,
         tokens: current.tokens,
@@ -574,6 +706,7 @@ final class HttpAuthRepository
   }
 
   ProfileDetails _profile(ProfileDetailsDto dto) => ProfileDetails(
+    revision: dto.revision,
     username: dto.username,
     name: dto.name,
     gender: dto.gender,
@@ -598,38 +731,126 @@ final class HttpAuthRepository
   Future<ProfileDetails> saveProfile(
     ProfileDetails profile, {
     CancelToken? cancelToken,
-  }) async => _profile(
-    ProfileDetailsDto.fromJson(
-      await _request(
-        'PUT',
-        '/v1/me/profile',
-        authenticated: true,
-        cancelToken: cancelToken,
-        data: ProfileDetailsInput(
-          username: profile.username,
-          name: profile.name,
-          gender: profile.gender,
-          bio: profile.bio,
-          visibility: profile.visibility,
-          avatarAssetId: profile.avatarAssetId,
-        ).toJson(),
+  }) => _profileChange(
+    () async => _profile(
+      ProfileDetailsDto.fromJson(
+        await _request(
+          'PUT',
+          '/v1/me/profile',
+          authenticated: true,
+          cancelToken: cancelToken,
+          data: ProfileDetailsInput(
+            expectedRevision: profile.revision,
+            username: profile.username,
+            name: profile.name,
+            gender: profile.gender,
+            bio: profile.bio,
+            visibility: profile.visibility,
+            avatarAssetId: profile.avatarAssetId,
+          ).toJson(),
+        ),
       ),
     ),
   );
+
+  Future<T> _profileChange<T>(Future<T> Function() action) async {
+    invalidateOwnProfile();
+    try {
+      return await action();
+    } finally {
+      invalidateOwnProfile();
+    }
+  }
 
   @override
   Future<ProfileSummary> loadProfileSummary(
     String userId, {
     CancelToken? cancelToken,
+  }) {
+    if (userId == accountId && _profileMemory.owner() == userId) {
+      return _profileMemory.read(cancelToken: cancelToken);
+    }
+    return _fetchProfileSummary(userId, cancelToken: cancelToken);
+  }
+
+  Future<ProfileSummary> _fetchProfileSummary(
+    String userId, {
+    CancelToken? cancelToken,
   }) async {
-    final dto = ProfileSummaryDto.fromJson(
-      await _request(
-        'GET',
-        '/v1/profiles/$userId',
-        authenticated: true,
-        cancelToken: cancelToken,
+    final cache = _ownCache, generation = _generation, epoch = _cacheEpoch;
+    if (cache != null && userId == accountId && cache.owner == userId) {
+      try {
+        final candidate = await cache.candidate();
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            userId != accountId) {
+          throw const AuthFailure('cancelled');
+        }
+        final path = Uri(
+          path: '/v1/me/profile/snapshot',
+          queryParameters: {
+            if (candidate != null) 'revision': candidate.revision,
+          },
+        ).toString();
+        final snapshot = OwnProfileSnapshotDto.fromJson(
+          await _request(
+            'GET',
+            path,
+            authenticated: true,
+            cancelToken: cancelToken,
+          ),
+        );
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            userId != accountId ||
+            cancelToken?.isCancelled == true) {
+          throw const AuthFailure('cancelled');
+        }
+        final ProfileSummary result;
+        if (snapshot.notModified) {
+          if (candidate == null ||
+              snapshot.revision != candidate.revision ||
+              snapshot.profile != null) {
+            throw const AuthFailure('invalid_response');
+          }
+          result = candidate.profile;
+        } else {
+          if (snapshot.profile == null) {
+            throw const AuthFailure('invalid_response');
+          }
+          result = _summary(snapshot.profile!);
+        }
+        if (result.userId != userId) {
+          throw const AuthFailure('invalid_response');
+        }
+        await cache.record(result, snapshot.revision);
+        if (generation != _generation ||
+            epoch != _cacheEpoch ||
+            cancelToken?.isCancelled == true) {
+          throw const AuthFailure('cancelled');
+        }
+        return result;
+      } on FormatException {
+        cache.invalidate();
+        throw const AuthFailure('invalid_response');
+      } on AuthFailure catch (error) {
+        if (!error.offline && error.code != 'cancelled') cache.invalidate();
+        rethrow;
+      }
+    }
+    return _summary(
+      ProfileSummaryDto.fromJson(
+        await _request(
+          'GET',
+          '/v1/profiles/$userId',
+          authenticated: true,
+          cancelToken: cancelToken,
+        ),
       ),
     );
+  }
+
+  ProfileSummary _summary(ProfileSummaryDto dto) {
     return ProfileSummary(
       userId: dto.userId,
       username: dto.username,
@@ -651,6 +872,7 @@ final class HttpAuthRepository
   Future<EncounterPage> loadEncounters({
     EncounterMode mode = EncounterMode.recent,
     double radiusKm = 1,
+    String search = '',
     String? cursor,
     CancelToken? cancelToken,
   }) async {
@@ -661,6 +883,8 @@ final class HttpAuthRepository
       path: '/v1/encounters',
       queryParameters: {
         'mode': mode.name,
+        'limit': '50',
+        if (search.trim().isNotEmpty) 'search': search.trim(),
         'radiusKm': radiusKm.toString(),
         'cursor': ?cursor,
       },
@@ -728,14 +952,16 @@ final class HttpAuthRepository
         ),
       );
   @override
-  Future<VerificationInfo> skipVerification({CancelToken? cancelToken}) async =>
-      _verification(
-        VerificationDto.fromJson(
-          await _request(
-            'POST',
-            '/v1/me/verification/skip',
-            authenticated: true,
-            cancelToken: cancelToken,
+  Future<VerificationInfo> skipVerification({CancelToken? cancelToken}) =>
+      _profileChange(
+        () async => _verification(
+          VerificationDto.fromJson(
+            await _request(
+              'POST',
+              '/v1/me/verification/skip',
+              authenticated: true,
+              cancelToken: cancelToken,
+            ),
           ),
         ),
       );
@@ -745,18 +971,20 @@ final class HttpAuthRepository
     String? backAssetId,
     required bool consent,
     CancelToken? cancelToken,
-  }) async => _verification(
-    VerificationDto.fromJson(
-      await _request(
-        'POST',
-        '/v1/me/verification',
-        authenticated: true,
-        cancelToken: cancelToken,
-        data: VerificationInput(
-          frontAssetId: frontAssetId,
-          backAssetId: backAssetId,
-          consent: consent,
-        ).toJson(),
+  }) => _profileChange(
+    () async => _verification(
+      VerificationDto.fromJson(
+        await _request(
+          'POST',
+          '/v1/me/verification',
+          authenticated: true,
+          cancelToken: cancelToken,
+          data: VerificationInput(
+            frontAssetId: frontAssetId,
+            backAssetId: backAssetId,
+            consent: consent,
+          ).toJson(),
+        ),
       ),
     ),
   );
@@ -920,6 +1148,7 @@ final class HttpAuthRepository
       throw const AuthFailure('cancelled');
     }
     final generation = ++_generation;
+    invalidateOwnProfile();
     _coordinator.replace(null);
     final session = await _accept(SessionDto.fromJson(value), generation);
     if (cancelToken?.isCancelled == true) {
@@ -936,6 +1165,7 @@ final class HttpAuthRepository
     CancelToken? cancelToken,
   }) async {
     final generation = ++_generation;
+    invalidateOwnProfile();
     _coordinator.replace(null);
     return _accept(
       SessionDto.fromJson(
@@ -1076,10 +1306,15 @@ final class HttpAuthRepository
   @override
   Future<void> close() async {
     _generation++;
+    _profileMemory.dispose();
+    await _ownCache?.close();
+    _session = null;
+    _accountChanges.add(null);
     _coordinator.replace(null);
     _public.close(force: true);
     _private.close(force: true);
     await _storageTail;
     await _changes.close();
+    await _accountChanges.close();
   }
 }

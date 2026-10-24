@@ -80,6 +80,7 @@ void main() {
     expect(adapter.discovery!.headers['Authorization'], 'Bearer old-access');
     expect(adapter.discovery!.uri.queryParameters, {
       'mode': 'nearby',
+      'limit': '50',
       'radiusKm': '3.0',
       'cursor': 'opaque',
     });

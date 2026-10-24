@@ -101,8 +101,9 @@ class _VerificationOwnerState extends State<_VerificationOwner> {
           children: [
             BlocSelector<VerificationCubit, VerificationState, String?>(
               selector: (s) => s.info?.status,
-              builder: (_, status) =>
-                  VerificationBadge(status: status ?? 'none'),
+              builder: (_, status) => status == null || status == 'none'
+                  ? const SizedBox.shrink()
+                  : VerificationBadge(status: status),
             ),
             BlocBuilder<VerificationCubit, VerificationState>(
               buildWhen: (a, b) =>

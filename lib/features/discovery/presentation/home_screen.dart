@@ -1,23 +1,25 @@
-import '../../safety/presentation/safety_scope.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' show UserLocation, LatLng;
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../app/theme/paths_tokens.dart';
 import '../../../core/platform/location_tracker.dart';
-import '../../../shared/widgets/paths_brand.dart';
+import '../../../shared/widgets/paths_icon.dart';
+import '../../../shared/widgets/paths_loader.dart';
+import '../../../shared/widgets/paths_options_menu.dart';
 import '../../../shared/widgets/paths_toast.dart';
-import 'widgets/encounter_filters.dart';
-import 'widgets/encounter_results.dart';
+import '../../media/presentation/media_scope.dart';
+import '../../safety/presentation/safety_scope.dart';
+import '../../relationships/data/relationship_repository.dart';
 import '../data/location_sync_service.dart';
 import '../domain/encounter_repository.dart';
 import 'encounter_bloc.dart';
 import 'location_cubit.dart';
-import 'widgets/encounter_card.dart';
 import 'widgets/encounter_map.dart';
-import '../../relationships/data/relationship_repository.dart';
+import 'widgets/encounter_preview.dart';
+import 'widgets/home_map_header.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -27,22 +29,27 @@ class HomeScreen extends StatelessWidget {
     this.locations,
     this.relationships,
     this.onNotifications,
+    this.onChat,
     this.mapStyleUrl = const String.fromEnvironment('PATHS_MAP_STYLE_URL'),
     super.key,
   });
   final EncounterRepository repository;
   final RelationshipRepository? relationships;
   final FutureOr<void> Function(String) onProfile;
+  final Future<void> Function(String)? onChat;
   final VoidCallback onLocationSetup;
   final VoidCallback? onNotifications;
   final LocationSyncService? locations;
   final String mapStyleUrl;
   @override
-  Widget build(BuildContext context) => _HomeOwner(configuration: this);
+  Widget build(BuildContext context) => _HomeOwner(
+    key: ValueKey((repository, repository.discoveryAccountId)),
+    configuration: this,
+  );
 }
 
 class _HomeOwner extends StatefulWidget {
-  const _HomeOwner({required this.configuration});
+  const _HomeOwner({required this.configuration, super.key});
   final HomeScreen configuration;
   @override
   State<_HomeOwner> createState() => _HomeOwnerState();
@@ -52,10 +59,48 @@ class _HomeOwnerState extends State<_HomeOwner> {
   late final bloc = EncounterBloc(widget.configuration.repository);
   LocationCubit? location;
   AppLifecycleListener? _lifecycle;
-  late bool _showMap = validMapStyle(widget.configuration.mapStyleUrl);
-  bool _mapFailed = false;
-  bool _active = true;
+  StreamSubscription<void>? _uploads;
+  final _search = TextEditingController();
+  var _mapKey = GlobalKey<EncounterMapState>();
+  bool _mapFailed = false,
+      _active = true,
+      _foreground = true,
+      _sheetOpen = false;
   bool _openingSettings = false, _requestingLocation = false;
+  Route<dynamic>? _homeRoute;
+  @override
+  void initState() {
+    super.initState();
+    bloc.add(const RefreshEncounters());
+    if (widget.configuration.locations case final sync?) {
+      location = LocationCubit(sync);
+      _uploads = sync.tracker.uploadStream.listen((_) {
+        if (mounted &&
+            _active &&
+            _foreground &&
+            bloc.state.mode == EncounterMode.nearby &&
+            !bloc.state.nearbyAvailable) {
+          bloc.add(const RefreshEncounters());
+        }
+      });
+      unawaited(_prepareLocation());
+    }
+    _lifecycle = AppLifecycleListener(
+      onPause: () {
+        if (mounted) {
+          _dismissPreview();
+          setState(() => _foreground = false);
+        }
+      },
+      onResume: () {
+        if (mounted) {
+          setState(() => _foreground = true);
+          if (_active) unawaited(_resumeLocation());
+        }
+      },
+    );
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -64,64 +109,113 @@ class _HomeOwnerState extends State<_HomeOwner> {
     _active = active;
   }
 
-  Future<void> _openProfile(String id) async {
-    await widget.configuration.onProfile(id);
-    if (mounted) bloc.add(const RefreshEncounters());
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    bloc.add(const RefreshEncounters());
-    final sync = widget.configuration.locations;
-    if (sync != null) {
-      location = LocationCubit(sync);
-      unawaited(_prepareLocation());
-    }
-    _lifecycle = AppLifecycleListener(
-      onResume: () {
-        if (mounted && TickerMode.valuesOf(context).enabled) {
-          bloc.add(const RefreshEncounters());
-          unawaited(_resumeLocation());
-        }
-      },
-    );
-  }
-
   @override
   void dispose() {
     _lifecycle?.dispose();
+    unawaited(_uploads?.cancel());
+    _search.dispose();
     unawaited(bloc.close());
     unawaited(location?.close());
     super.dispose();
   }
 
-  void _area(String area) {
-    showModalBottomSheet<void>(
+  void _dismissPreview() {
+    if (!_sheetOpen) return;
+    _sheetOpen = false;
+    final route = _homeRoute;
+    if (route != null) {
+      Navigator.of(context).popUntil((current) => identical(current, route));
+    }
+  }
+
+  void _invalidate() {
+    _dismissPreview();
+    bloc.add(const InvalidateEncounters());
+  }
+
+  Future<void> _openProfile(String id) async {
+    await widget.configuration.onProfile(id);
+    if (mounted && _active) bloc.add(const RefreshEncounters());
+  }
+
+  Future<void> _preview(List<Encounter> items) async {
+    if (_sheetOpen || items.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    _sheetOpen = true;
+    _homeRoute = ModalRoute.of(context);
+    var navigated = false;
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(20),
-          children: [
-            for (final item in bloc.state.items.where(
-              (item) => item.coarseAreaId == area,
-            ))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: EncounterCard(
-                  encounter: item,
-                  relationships: widget.configuration.relationships,
-                  onTap: () {
-                    Navigator.pop(context);
-                    unawaited(_openProfile(item.userId));
-                  },
-                ),
-              ),
-          ],
-        ),
+      backgroundColor: Colors.white,
+      useSafeArea: true,
+      builder: (sheet) => EncounterPreview(
+        items: items,
+        relationships: widget.configuration.relationships,
+        onProfile: (id) {
+          navigated = true;
+          _dismissPreview();
+          unawaited(_openProfile(id));
+        },
+        onChat: widget.configuration.onChat == null
+            ? null
+            : (id) {
+                navigated = true;
+                _dismissPreview();
+                unawaited(widget.configuration.onChat!(id));
+              },
       ),
+    );
+    _sheetOpen = false;
+    if (mounted && _active && _foreground && !navigated) {
+      bloc.add(const RefreshEncounters());
+    }
+  }
+
+  void _refresh() {
+    unawaited(MediaScope.maybeOf(context)?.media.purge());
+    bloc.add(const RefreshEncounters());
+  }
+
+  Future<void> _options() async {
+    final action = await showPathsOptions(context, [
+      const PathsMenuOption('refresh', 'Refresh paths', PathsIconName.review),
+      if (bloc.state.items.isNotEmpty)
+        const PathsMenuOption('browse', 'Browse paths', PathsIconName.profile),
+      if (widget.configuration.onNotifications != null)
+        const PathsMenuOption(
+          'notifications',
+          'Notifications',
+          PathsIconName.bell,
+        ),
+      const PathsMenuOption(
+        'location',
+        'Location sharing',
+        PathsIconName.location,
+      ),
+    ]);
+    if (!mounted) return;
+    switch (action) {
+      case 'refresh':
+        _refresh();
+      case 'browse':
+        await _preview(bloc.state.items);
+      case 'notifications':
+        widget.configuration.onNotifications?.call();
+      case 'location':
+        await _requestLocation();
+    }
+  }
+
+  Future<void> _radius() async {
+    final value = await showPathsOptions(context, [
+      for (final radius in encounterRadii)
+        PathsMenuOption('$radius', '$radius km', PathsIconName.location),
+    ]);
+    if (!mounted || value == null) return;
+    bloc.add(
+      EncounterFilterChanged(bloc.state.mode, radiusKm: double.parse(value)),
     );
   }
 
@@ -221,10 +315,10 @@ class _HomeOwnerState extends State<_HomeOwner> {
   Widget _locationButton() {
     final cubit = location;
     if (cubit == null) {
-      return IconButton(
-        tooltip: 'Enable location',
+      return MapRoundButton(
+        label: 'Enable location',
+        icon: PathsIconName.location,
         onPressed: _requestLocation,
-        icon: const Icon(Icons.location_on_outlined),
       );
     }
     return BlocListener<LocationCubit, LocationState>(
@@ -244,155 +338,272 @@ class _HomeOwnerState extends State<_HomeOwner> {
                 TrackingStatus.permissionNeeded,
               ].contains(s.status),
         ),
-        builder: (_, value) => IconButton(
-          tooltip: value.$2 ? 'Location settings' : 'Enable location',
+        builder: (_, value) => MapRoundButton(
+          label: value.$2 ? 'Location settings' : 'Enable location',
+          icon: PathsIconName.location,
           onPressed: value.$1 ? null : _requestLocation,
-          icon: Icon(value.$2 ? Icons.location_on : Icons.location_on_outlined),
         ),
       ),
     );
   }
 
   Widget _map(EncounterState state) {
-    Widget map(bool enabled) => EncounterMap(
+    Widget map(bool enabled, [LocationSample? fix]) => EncounterMap(
+      key: _mapKey,
       items: state.items,
       latitude: state.centerLatitude,
       longitude: state.centerLongitude,
       showUserLocation: enabled,
+      userLocation: fix == null
+          ? null
+          : UserLocation(
+              position: LatLng(fix.latitude, fix.longitude),
+              timestamp: fix.capturedAt,
+              altitude: null,
+              bearing: null,
+              speed: null,
+              horizontalAccuracy: fix.horizontalAccuracyM,
+              verticalAccuracy: null,
+              heading: null,
+            ),
       styleUrl: widget.configuration.mapStyleUrl,
-      onAreaSelected: _area,
+      focusKey: '${state.query}:${state.mode}:${state.radiusKm}',
+      onSelected: (items) => unawaited(_preview(items)),
       onUnavailable: () {
-        if (mounted) {
-          setState(() {
-            _mapFailed = true;
-            _showMap = false;
-          });
-        }
+        if (mounted) setState(() => _mapFailed = true);
       },
     );
     final cubit = location;
     if (cubit == null) return map(false);
-    return BlocSelector<LocationCubit, LocationState, bool>(
+    return BlocSelector<LocationCubit, LocationState, (bool, LocationSample?)>(
       bloc: cubit,
-      selector: (s) =>
-          s.permissions?.granted == true &&
-          s.permissions?.servicesEnabled == true,
-      builder: (_, enabled) => map(enabled),
+      selector: (s) => (
+        s.permissions?.granted == true &&
+            s.permissions?.servicesEnabled == true,
+        s.fix,
+      ),
+      builder: (_, value) => map(value.$1, value.$2),
+    );
+  }
+
+  Widget _status(EncounterState state) {
+    String? label;
+    VoidCallback? action;
+    String? actionLabel;
+    if (_mapFailed || !validMapStyle(widget.configuration.mapStyleUrl)) {
+      label = 'Map unavailable';
+      actionLabel = 'Retry map';
+      action = () {
+        setState(() {
+          _mapFailed = false;
+          _mapKey = GlobalKey<EncounterMapState>();
+        });
+      };
+    } else if (state.error != null) {
+      label = state.error!.offline ? 'You’re offline' : 'Could not load paths';
+      actionLabel = 'Retry';
+      action = () => bloc.add(const RetryEncounters());
+    } else if (state.mode == EncounterMode.nearby &&
+        !state.nearbyAvailable &&
+        !state.loading) {
+      final current = location?.state;
+      final collecting =
+          current?.permissions?.granted == true &&
+          current?.permissions?.servicesEnabled == true &&
+          current?.pendingStop == false &&
+          [
+            TrackingStatus.active,
+            TrackingStatus.background,
+            TrackingStatus.inaccurate,
+            TrackingStatus.offline,
+          ].contains(current?.status);
+      if (collecting) {
+        label = current?.status == TrackingStatus.offline
+            ? 'Location updates offline'
+            : current?.fix == null
+            ? 'Waiting for location'
+            : 'Updating Nearby';
+        if (current?.status == TrackingStatus.offline) {
+          actionLabel = 'Retry';
+          action = () => unawaited(location?.refresh());
+        }
+      } else {
+        label = 'Location needed for Nearby';
+        actionLabel = 'Enable';
+        action = _requestLocation;
+      }
+    } else if (state.loading && state.items.isEmpty) {
+      label = 'Finding paths';
+    } else if (state.items.isEmpty) {
+      label = state.query.isEmpty
+          ? 'No paths crossed yet'
+          : 'No matching paths';
+    } else if (state.nextCursor != null || state.loadingMore) {
+      label = state.loadingMore ? 'Loading paths' : 'More paths';
+      if (!state.loadingMore) {
+        actionLabel = 'Load';
+        action = () => bloc.add(const MoreEncounters());
+      }
+    }
+    if (label == null) return const SizedBox.shrink();
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      elevation: 2,
+      shadowColor: Colors.black12,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (state.loading || state.loadingMore) ...[
+              const PathsLoader(size: 20),
+              const SizedBox(width: 10),
+            ],
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF52616D),
+                  ),
+                ),
+              ),
+            ),
+            if (action != null) ...[
+              const SizedBox(width: 8),
+              Flexible(
+                child: TextButton(onPressed: action, child: Text(actionLabel!)),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) => SafetyRefresh(
-    onChanged: () => bloc.add(const InvalidateEncounters()),
+    onChanged: _invalidate,
     child: BlocProvider.value(
       value: bloc,
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final gutter = PathsTokens.gutter(constraints.maxWidth);
-              return Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      final done = bloc.stream
-                          .where((s) => !s.loading)
-                          .take(1)
-                          .drain<void>();
-                      bloc.add(const RefreshEncounters());
-                      await done;
-                    },
-                    child: CustomScrollView(
-                      key: const PageStorageKey('encounter-list'),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(gutter, 16, gutter, 8),
-                          sliver: SliverToBoxAdapter(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const PathsWordmark(width: 116),
-                                    const Spacer(),
-                                    if (widget.configuration.onNotifications !=
-                                        null)
-                                      IconButton(
-                                        tooltip: "Notifications",
-                                        onPressed: widget
-                                            .configuration
-                                            .onNotifications,
-                                        icon: const Icon(
-                                          Icons.notifications_outlined,
-                                        ),
-                                      ),
-                                    _locationButton(),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                Text(
-                                  'Crossed paths',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium,
-                                ),
-                                const SizedBox(height: 16),
-                                EncounterFiltersBar(
-                                  styleUrl: widget.configuration.mapStyleUrl,
-                                  showMap: _showMap,
-                                  mapFailed: _mapFailed,
-                                  onToggleMap: () => setState(() {
-                                    _showMap = _mapFailed ? true : !_showMap;
-                                    _mapFailed = false;
-                                  }),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (_showMap &&
-                            !_mapFailed &&
-                            TickerMode.valuesOf(context).enabled)
-                          BlocBuilder<EncounterBloc, EncounterState>(
-                            buildWhen: (a, b) =>
-                                a.items != b.items ||
-                                a.centerLatitude != b.centerLatitude ||
-                                a.centerLongitude != b.centerLongitude,
-                            builder: (context, state) => SliverPadding(
-                              padding: EdgeInsets.fromLTRB(
-                                gutter,
-                                8,
-                                gutter,
-                                16,
-                              ),
-                              sliver: SliverToBoxAdapter(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(28),
-                                  child: SizedBox(
-                                    height: 360,
-                                    child: _map(state),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        EncounterResults(
-                          relationships: widget.configuration.relationships,
-                          gutter: gutter,
-                          mapFailed: _mapFailed,
-                          onProfile: (id) => unawaited(_openProfile(id)),
-                          onLocationSetup: _requestLocation,
-                        ),
-                      ],
+        backgroundColor: const Color(0xFFF5F5F3),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (_active &&
+                _foreground &&
+                !_mapFailed &&
+                validMapStyle(widget.configuration.mapStyleUrl))
+              BlocBuilder<EncounterBloc, EncounterState>(
+                buildWhen: (a, b) =>
+                    a.items != b.items ||
+                    a.centerLatitude != b.centerLatitude ||
+                    a.centerLongitude != b.centerLongitude ||
+                    a.query != b.query ||
+                    a.mode != b.mode ||
+                    a.radiusKm != b.radiusKm,
+                builder: (context, state) => _map(state),
+              ),
+            Positioned(
+              top: 12,
+              left: 20,
+              right: 20,
+              child:
+                  BlocSelector<
+                    EncounterBloc,
+                    EncounterState,
+                    (EncounterMode, double)
+                  >(
+                    selector: (s) => (s.mode, s.radiusKm),
+                    builder: (context, filter) => HomeMapHeader(
+                      search: _search,
+                      onSearch: (query) =>
+                          bloc.add(EncounterSearchChanged(query)),
+                      mode: filter.$1,
+                      radius: filter.$2,
+                      onMode: (mode) => bloc.add(
+                        EncounterFilterChanged(mode, radiusKm: filter.$2),
+                      ),
+                      onRadius: _radius,
+                      locationButton: _locationButton(),
+                      onOptions: () => unawaited(_options()),
                     ),
                   ),
+            ),
+            if (MediaQuery.viewInsetsOf(context).bottom == 0)
+              Positioned(
+                right: 20,
+                bottom: MediaQuery.paddingOf(context).bottom + 88,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MapRoundButton(
+                      label: 'Your location',
+                      icon: PathsIconName.locate,
+                      onPressed: () async {
+                        final centered =
+                            await _mapKey.currentState?.centerOnUser() ?? false;
+                        if (!centered && context.mounted) {
+                          if (_mapFailed || _mapKey.currentState == null) {
+                            PathsToast.show(
+                              context,
+                              'Map unavailable. Tap Retry map.',
+                            );
+                          } else if (location
+                                  ?.state
+                                  .permissions
+                                  ?.servicesEnabled ==
+                              false) {
+                            await _requestLocation();
+                          } else if (location?.state.permissions?.granted ==
+                              true) {
+                            PathsToast.show(
+                              context,
+                              'Waiting for your location',
+                            );
+                          } else {
+                            await _requestLocation();
+                          }
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    BlocSelector<EncounterBloc, EncounterState, bool>(
+                      selector: (s) => s.items.isNotEmpty,
+                      builder: (context, available) => MapRoundButton(
+                        label: 'Show crossed paths',
+                        icon: PathsIconName.fit,
+                        onPressed: available
+                            ? () => unawaited(
+                                _mapKey.currentState?.showEncounters(),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: MediaQuery.paddingOf(context).bottom + 16,
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: BlocBuilder<EncounterBloc, EncounterState>(
+                  builder: (context, state) => location == null
+                      ? _status(state)
+                      : BlocBuilder<LocationCubit, LocationState>(
+                          bloc: location,
+                          builder: (context, _) => _status(state),
+                        ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     ),
