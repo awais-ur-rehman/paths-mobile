@@ -33,6 +33,7 @@ class EncounterMap extends StatefulWidget {
     this.longitude,
     required this.styleUrl,
     this.showUserLocation = false,
+    this.userLocation,
     required this.onSelected,
     required this.onUnavailable,
     this.focusKey = '',
@@ -41,6 +42,7 @@ class EncounterMap extends StatefulWidget {
   final List<Encounter> items;
   final double? latitude, longitude;
   final bool showUserLocation;
+  final UserLocation? userLocation;
   final String styleUrl, focusKey;
   final ValueChanged<List<Encounter>> onSelected;
   final VoidCallback onUnavailable;
@@ -66,7 +68,12 @@ class EncounterMapState extends State<EncounterMap> {
   @override
   void initState() {
     super.initState();
+    // SurfaceView/Virtual Display cannot reliably compose this map beneath Flutter overlays.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      MapLibreMap.useHybridComposition = true;
+    }
     _areas = encounterAreas(widget.items);
+    if (widget.userLocation case final fix?) _userLocation(fix);
     _timeout = Timer(const Duration(seconds: 15), _unavailable);
   }
 
@@ -201,6 +208,10 @@ class EncounterMapState extends State<EncounterMap> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.focusKey != widget.focusKey) _fitPending = true;
     if (oldWidget.items != widget.items) _dataChanged();
+    if (oldWidget.userLocation != widget.userLocation &&
+        widget.userLocation != null) {
+      _userLocation(widget.userLocation!);
+    }
     if (!widget.showUserLocation) {
       _userPosition = null;
       _centeredOnUser = false;

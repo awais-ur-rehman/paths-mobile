@@ -85,6 +85,123 @@ void main() {
   tearDown(() {
     MapLibrePlatform.createInstance = originalMapFactory;
   });
+  testWidgets(
+    'Nearby refreshes after an acknowledged location, not just permission',
+    (tester) async {
+      final tracker = CapturingTracker()..status = TrackingStatus.active;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      final repo = HomeFixture()..result = page([], nearby: false);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          home: HomeScreen(
+            repository: repo,
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Nearby'));
+      await tester.pumpAndSettle();
+      final before = repo.modes.length;
+      repo.result = page([], nearby: true);
+      tracker.uploads.add(null);
+      await tester.pumpAndSettle();
+      expect(repo.modes.length, before + 1);
+      expect(find.text('Location needed for Nearby'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
+  testWidgets('Android map uses an opaque compositable texture for overlays', (
+    tester,
+  ) async {
+    final previous = MapLibreMap.useHybridComposition;
+    MapLibreMap.useHybridComposition = false;
+    addTearDown(() => MapLibreMap.useHybridComposition = previous);
+    await tester.pumpWidget(app(HomeFixture()));
+    await tester.pumpAndSettle();
+    expect(MapLibreMap.useHybridComposition, isTrue);
+    expect(
+      tester
+          .widget<MapLibreMap>(find.byType(MapLibreMap))
+          .translucentTextureSurface,
+      isFalse,
+    );
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+  });
+  testWidgets(
+    'recenter uses a fresh tracker fix without a map-engine callback',
+    (tester) async {
+      final platform = TestMapPlatform();
+      MapLibrePlatform.createInstance = () => platform;
+      final tracker = CapturingTracker()..status = TrackingStatus.active;
+      final sync = LocationSyncService(
+        FixtureLocationRepository(),
+        tracker,
+        MemoryTrackingControls(),
+        'https://api.example.invalid',
+      );
+      final repo = HomeFixture()..result = page([]);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: PathsTheme.light,
+          home: HomeScreen(
+            repository: repo,
+            locations: sync,
+            onProfile: (_) {},
+            onLocationSetup: () {},
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      tracker.samples.add(
+        LocationSample(
+          sampleId: 'fixture',
+          deviceSessionId: 'fixture',
+          consentEpoch: 1,
+          sequence: 1,
+          capturedAt: DateTime.now(),
+          latitude: 1,
+          longitude: 2,
+          horizontalAccuracyM: 5,
+          appState: 'foreground',
+          precisionMode: 'precise',
+          policyVersion: 'adaptive.v1',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Your location'));
+      await tester.pumpAndSettle();
+      expect(platform.cameraUpdates, isNotEmpty);
+      expect(platform.cameraUpdates.last.toJson(), [
+        'newLatLngZoom',
+        [1.0, 2.0],
+        15.0,
+      ]);
+      tracker.granted = false;
+      tracker.statuses.add(TrackingStatus.permissionNeeded);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<EncounterMap>(find.byType(EncounterMap)).userLocation,
+        isNull,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      await sync.close();
+      await tracker.dispose();
+    },
+  );
   testWidgets('empty history still renders map before server center exists', (
     tester,
   ) async {

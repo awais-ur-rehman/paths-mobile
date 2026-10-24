@@ -1,3 +1,5 @@
+import 'package:maplibre_gl/maplibre_gl.dart' show UserLocation, LatLng;
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -57,6 +59,7 @@ class _HomeOwnerState extends State<_HomeOwner> {
   late final bloc = EncounterBloc(widget.configuration.repository);
   LocationCubit? location;
   AppLifecycleListener? _lifecycle;
+  StreamSubscription<void>? _uploads;
   final _search = TextEditingController();
   var _mapKey = GlobalKey<EncounterMapState>();
   bool _mapFailed = false,
@@ -71,6 +74,15 @@ class _HomeOwnerState extends State<_HomeOwner> {
     bloc.add(const RefreshEncounters());
     if (widget.configuration.locations case final sync?) {
       location = LocationCubit(sync);
+      _uploads = sync.tracker.uploadStream.listen((_) {
+        if (mounted &&
+            _active &&
+            _foreground &&
+            bloc.state.mode == EncounterMode.nearby &&
+            !bloc.state.nearbyAvailable) {
+          bloc.add(const RefreshEncounters());
+        }
+      });
       unawaited(_prepareLocation());
     }
     _lifecycle = AppLifecycleListener(
@@ -100,6 +112,7 @@ class _HomeOwnerState extends State<_HomeOwner> {
   @override
   void dispose() {
     _lifecycle?.dispose();
+    unawaited(_uploads?.cancel());
     _search.dispose();
     unawaited(bloc.close());
     unawaited(location?.close());
@@ -335,12 +348,24 @@ class _HomeOwnerState extends State<_HomeOwner> {
   }
 
   Widget _map(EncounterState state) {
-    Widget map(bool enabled) => EncounterMap(
+    Widget map(bool enabled, [LocationSample? fix]) => EncounterMap(
       key: _mapKey,
       items: state.items,
       latitude: state.centerLatitude,
       longitude: state.centerLongitude,
       showUserLocation: enabled,
+      userLocation: fix == null
+          ? null
+          : UserLocation(
+              position: LatLng(fix.latitude, fix.longitude),
+              timestamp: fix.capturedAt,
+              altitude: null,
+              bearing: null,
+              speed: null,
+              horizontalAccuracy: fix.horizontalAccuracyM,
+              verticalAccuracy: null,
+              heading: null,
+            ),
       styleUrl: widget.configuration.mapStyleUrl,
       focusKey: '${state.query}:${state.mode}:${state.radiusKm}',
       onSelected: (items) => unawaited(_preview(items)),
@@ -350,12 +375,14 @@ class _HomeOwnerState extends State<_HomeOwner> {
     );
     final cubit = location;
     if (cubit == null) return map(false);
-    return BlocSelector<LocationCubit, LocationState, bool>(
+    return BlocSelector<LocationCubit, LocationState, (bool, LocationSample?)>(
       bloc: cubit,
-      selector: (s) =>
-          s.permissions?.granted == true &&
-          s.permissions?.servicesEnabled == true,
-      builder: (_, enabled) => map(enabled),
+      selector: (s) => (
+        s.permissions?.granted == true &&
+            s.permissions?.servicesEnabled == true,
+        s.fix,
+      ),
+      builder: (_, value) => map(value.$1, value.$2),
     );
   }
 
@@ -379,9 +406,32 @@ class _HomeOwnerState extends State<_HomeOwner> {
     } else if (state.mode == EncounterMode.nearby &&
         !state.nearbyAvailable &&
         !state.loading) {
-      label = 'Location needed for Nearby';
-      actionLabel = 'Enable';
-      action = _requestLocation;
+      final current = location?.state;
+      final collecting =
+          current?.permissions?.granted == true &&
+          current?.permissions?.servicesEnabled == true &&
+          current?.pendingStop == false &&
+          [
+            TrackingStatus.active,
+            TrackingStatus.background,
+            TrackingStatus.inaccurate,
+            TrackingStatus.offline,
+          ].contains(current?.status);
+      if (collecting) {
+        label = current?.status == TrackingStatus.offline
+            ? 'Location updates offline'
+            : current?.fix == null
+            ? 'Waiting for location'
+            : 'Updating Nearby';
+        if (current?.status == TrackingStatus.offline) {
+          actionLabel = 'Retry';
+          action = () => unawaited(location?.refresh());
+        }
+      } else {
+        label = 'Location needed for Nearby';
+        actionLabel = 'Enable';
+        action = _requestLocation;
+      }
     } else if (state.loading && state.items.isEmpty) {
       label = 'Finding paths';
     } else if (state.items.isEmpty) {
@@ -498,7 +548,19 @@ class _HomeOwnerState extends State<_HomeOwner> {
                         final centered =
                             await _mapKey.currentState?.centerOnUser() ?? false;
                         if (!centered && context.mounted) {
-                          if (location?.state.permissions?.granted == true) {
+                          if (_mapFailed || _mapKey.currentState == null) {
+                            PathsToast.show(
+                              context,
+                              'Map unavailable. Tap Retry map.',
+                            );
+                          } else if (location
+                                  ?.state
+                                  .permissions
+                                  ?.servicesEnabled ==
+                              false) {
+                            await _requestLocation();
+                          } else if (location?.state.permissions?.granted ==
+                              true) {
                             PathsToast.show(
                               context,
                               'Waiting for your location',
@@ -532,7 +594,12 @@ class _HomeOwnerState extends State<_HomeOwner> {
               child: Align(
                 alignment: Alignment.bottomCenter,
                 child: BlocBuilder<EncounterBloc, EncounterState>(
-                  builder: (context, state) => _status(state),
+                  builder: (context, state) => location == null
+                      ? _status(state)
+                      : BlocBuilder<LocationCubit, LocationState>(
+                          bloc: location,
+                          builder: (context, _) => _status(state),
+                        ),
                 ),
               ),
             ),
