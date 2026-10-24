@@ -981,3 +981,22 @@ Final kernel:76,163,264 bytes, SHA256 `18388007efc663aaab5aa36848f47d75737af1c0f
 Check history: first regression failed against the labelled Material bar as intended. A selected-semantics issue in the initial implementation was fixed by merging each control's accessible name/state. Reviewer caught the page not extending behind the bar; a rendered regression failed before the extension fix. One combined reviewer run overlapped golden regeneration and returned a null-image comparison; isolated reviewer rerun passed. The first full run passed324 tests and failed a new keyboard expectation that incorrectly placed Camera last; corrected to visual Home/Likes/Camera/Chats/Profile order, then final full suite325 passed. No thresholds or production focus behavior changed to satisfy that test.
 
 No dependencies, tools or assets downloaded for this task. Original vector masters are retained and shipped through generated geometry. Existing failed backend encounter performance qualification remains open and unaffected by this UI work.
+
+
+## UI pass 4 — profile badges, bar contrast and populated account, 24 October 2026
+
+Current task **implemented and locally verified; awaiting Android device test**. Source `d257626` on feature/logo-refresh. Backend seed source45d72ab on feature/profile-demo-data. API contract1.12.0 unchanged. Main unchanged; draft feature PRs only.
+
+| Applicable item | Status | Evidence |
+| --- | --- | --- |
+| Bar#F5F5F5 | Implemented; verified | paths_bottom_navigation.dart,320/390px updated fixtures; raised blue action retained |
+| Original verified/unverified badge assets | Implemented; verified | assets/icons/{verified,unverified}.svg, generated geometry, export_icons.py, VerificationBadge; same24-unit/1.8-rounded-stroke family. Deterministic re-export passed |
+| Profile badge visibility/status/contrast | Implemented; automated checks verified | ProfileSurface always shows Verified/Unverified; explicit pending/declined labels retained, approved explanation retained, light-surface unverified contrast improved; optional form omits redundant unverified badge |
+| Rendered/behavior checks | Verified |330 full Flutter tests passed without golden updates; analyzer clean; profile/nav/badge fixtures inspected;15 focused badge/profile tests and earlier15 badge/verification checks passed |
+| Android build/kernel | Verified | Offline ARM64 debug1m9s/274 tasks (24 executed/250 up-to-date), kernel/compiler/APK match; badge labels/vector code compiled |
+| Real local dataset | Applied; API verified | Six Demo identities/images,3 chats/6 sample messages,6 saved,1 incoming,4 sent history,8 notifications,1 review update,2 own posts,3 visible demo posts/12 JPEG reads. Existing owner profile/photo/consent preserved; ready pending media approved and synthetic verification simulation recorded |
+| Review findings | Fixed; relevant checks rerun | Backend local URL override guard and media-write/removal race; final220 integration tests passed. No additional important mobile issue found in read-only review; native appearance remains unproven |
+| Phone / iOS gates | Awaiting device test / iOS not run | docs/PROFILE_DEMO_DEVICE_TESTS.md; no phone/emulator operated. iOS build explicitly excluded by owner |
+| Draft handoff | Awaiting owner test | Existing mobile PR16 plus backend feature PR, both development targets; no main promotion |
+
+Kernel76,165,824 bytes, SHA256 `431dfbff8dcb3beb4d295e430c5b07c77d44d9495cd4014a0ca112501a5a4915`; APK SHA256 `8a52e7e55d1fa8e2254b25e70f8a9d022e9c43886e0262c74a41dd472461f74e`. Backend56 unit/13 feasibility/4 metrics and220 isolated integration checks passed, build/lint passed. No new dependencies or downloads. Original labelled art/TEST IMAGE cards are development fixtures; local Verified simulation is not a genuine identity review. Existing failed backend encounter performance qualification remains open.
