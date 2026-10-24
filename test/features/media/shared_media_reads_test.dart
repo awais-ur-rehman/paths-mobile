@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paths_mobile/features/auth/domain/auth_models.dart';
 import 'package:paths_mobile/features/media/data/http_media_repository.dart';
 
+import 'package:paths_mobile/features/profile/domain/profile_repository.dart';
+
 import 'private_image_lifecycle_test.dart' show PictureFixture;
 
 class PendingPhoto {
@@ -33,6 +35,26 @@ class DelayedPhotos extends PictureFixture {
       p.result.complete(Uint8List.fromList([1, 2, 3]));
     }
   }
+}
+
+class OwnPhotos extends DelayedPhotos implements OwnProfileSnapshotRepository {
+  @override
+  ProfileSummary? get cachedOwnProfile => const ProfileSummary(
+    userId: 'fixture',
+    username: 'fixture',
+    name: 'Fixture',
+    age: 26,
+    gender: 'man',
+    bio: '',
+    visibility: 'private',
+    verificationStatus: 'none',
+    avatarAssetId: 'own-avatar',
+  );
+  @override
+  void invalidateOwnProfile() {}
+  @override
+  Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken}) =>
+      throw UnsupportedError('No profile writes');
 }
 
 Future<void> turn() => Future<void>.delayed(Duration.zero);
@@ -174,6 +196,31 @@ void main() {
       api.finish();
       expect(await b, [1, 2, 3]);
       expect(await c, [1, 2, 3]);
+      repo.dispose();
+    },
+  );
+  test(
+    'a queued visible own-avatar read is prioritized without exceeding the cap',
+    () async {
+      final api = OwnPhotos();
+      final repo = HttpMediaRepository(api, api);
+      final busy = [
+        for (var i = 0; i < 4; i++)
+          repo.bytes('busy$i', cancelToken: CancelToken()),
+      ];
+      final peer = repo.bytes('peer', cancelToken: CancelToken());
+      final own = repo.bytes('own-avatar', cancelToken: CancelToken());
+      await turn();
+      api.pending.first.result.complete(Uint8List.fromList([1, 2, 3]));
+      await turn();
+      expect(api.pending.length, 5);
+      expect(api.pending.last.id, 'own-avatar:true');
+      for (var i = 0; i < 3; i++) {
+        api.finish();
+        await turn();
+      }
+      await Future.wait([...busy, peer, own]);
+      expect(repo.readStatistics.peak, 4);
       repo.dispose();
     },
   );

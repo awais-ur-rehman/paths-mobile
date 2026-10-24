@@ -14,6 +14,7 @@ import '../../../core/network/authenticated_api.dart';
 import '../../../core/network/refresh_coordinator.dart';
 import '../domain/auth_models.dart';
 import '../../profile/domain/profile_repository.dart';
+import '../../profile/data/own_profile_memory.dart';
 import '../../discovery/domain/location_repository.dart';
 import '../../discovery/domain/encounter_repository.dart';
 import '../../verification/domain/verification_repository.dart';
@@ -25,6 +26,7 @@ final class HttpAuthRepository
         ProviderAuthRepository,
         ProfileRepository,
         ProfileSummaryRepository,
+        OwnProfileSnapshotRepository,
         VerificationRepository,
         LocationRepository,
         EncounterRepository,
@@ -39,6 +41,7 @@ final class HttpAuthRepository
     this._purgeTracking,
     this._purgeNotifications,
     this.purgeMedia,
+    DateTime Function()? profileCacheClock,
   }) : _public = publicTransport ?? Dio(),
        _private = authenticatedTransport ?? Dio() {
     final uri = Uri.tryParse(origin);
@@ -61,11 +64,42 @@ final class HttpAuthRepository
         followRedirects: false,
       );
     }
+    _profileMemory = OwnProfileMemory(
+      owner: () {
+        final session = _session;
+        if (session == null ||
+            session.account.restricted ||
+            !session.account.adultChecked ||
+            !session.accessExpiresAt.isAfter(DateTime.now())) {
+          return null;
+        }
+        return session.account.id;
+      },
+      load: (id, token) => _fetchProfileSummary(id, cancelToken: token),
+      clock: profileCacheClock,
+    );
     _coordinator = RefreshCoordinator(_refresh);
     _private.interceptors.add(
       SessionRefreshInterceptor(_private, _coordinator),
     );
   }
+  late final OwnProfileMemory _profileMemory;
+  @override
+  ProfileSummary? get cachedOwnProfile => _profileMemory.snapshot;
+  @override
+  void invalidateOwnProfile() => _profileMemory.invalidate();
+  @override
+  Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken}) {
+    final owner = accountId;
+    if (owner == null) {
+      return Future.error(const AuthFailure('SESSION_INVALID'));
+    }
+    if (_profileMemory.owner() != owner) {
+      return _fetchProfileSummary(owner, cancelToken: cancelToken);
+    }
+    return _profileMemory.read(force: true, cancelToken: cancelToken);
+  }
+
   final Future<void> Function()? purgeMedia;
   final Future<void> Function()? _purgeTracking;
   final Future<void> Function()? _purgeNotifications;
@@ -379,6 +413,11 @@ final class HttpAuthRepository
       await _preferences.setFlag('paths.auth.signedOut', false);
     });
     if (generation != _generation) throw const AuthFailure('cancelled');
+    if (_session?.account.id != session.account.id ||
+        session.account.restricted ||
+        !session.account.adultChecked) {
+      invalidateOwnProfile();
+    }
     _session = session;
   }
 
@@ -391,6 +430,7 @@ final class HttpAuthRepository
   }
 
   Future<void> _purge({bool notifications = true}) async {
+    invalidateOwnProfile();
     await Future.wait([
       if (notifications) _clearPush(),
       _clearTracking(),
@@ -600,27 +640,48 @@ final class HttpAuthRepository
   Future<ProfileDetails> saveProfile(
     ProfileDetails profile, {
     CancelToken? cancelToken,
-  }) async => _profile(
-    ProfileDetailsDto.fromJson(
-      await _request(
-        'PUT',
-        '/v1/me/profile',
-        authenticated: true,
-        cancelToken: cancelToken,
-        data: ProfileDetailsInput(
-          username: profile.username,
-          name: profile.name,
-          gender: profile.gender,
-          bio: profile.bio,
-          visibility: profile.visibility,
-          avatarAssetId: profile.avatarAssetId,
-        ).toJson(),
+  }) => _profileChange(
+    () async => _profile(
+      ProfileDetailsDto.fromJson(
+        await _request(
+          'PUT',
+          '/v1/me/profile',
+          authenticated: true,
+          cancelToken: cancelToken,
+          data: ProfileDetailsInput(
+            username: profile.username,
+            name: profile.name,
+            gender: profile.gender,
+            bio: profile.bio,
+            visibility: profile.visibility,
+            avatarAssetId: profile.avatarAssetId,
+          ).toJson(),
+        ),
       ),
     ),
   );
 
+  Future<T> _profileChange<T>(Future<T> Function() action) async {
+    invalidateOwnProfile();
+    try {
+      return await action();
+    } finally {
+      invalidateOwnProfile();
+    }
+  }
+
   @override
   Future<ProfileSummary> loadProfileSummary(
+    String userId, {
+    CancelToken? cancelToken,
+  }) {
+    if (userId == accountId && _profileMemory.owner() == userId) {
+      return _profileMemory.read(cancelToken: cancelToken);
+    }
+    return _fetchProfileSummary(userId, cancelToken: cancelToken);
+  }
+
+  Future<ProfileSummary> _fetchProfileSummary(
     String userId, {
     CancelToken? cancelToken,
   }) async {
@@ -733,14 +794,16 @@ final class HttpAuthRepository
         ),
       );
   @override
-  Future<VerificationInfo> skipVerification({CancelToken? cancelToken}) async =>
-      _verification(
-        VerificationDto.fromJson(
-          await _request(
-            'POST',
-            '/v1/me/verification/skip',
-            authenticated: true,
-            cancelToken: cancelToken,
+  Future<VerificationInfo> skipVerification({CancelToken? cancelToken}) =>
+      _profileChange(
+        () async => _verification(
+          VerificationDto.fromJson(
+            await _request(
+              'POST',
+              '/v1/me/verification/skip',
+              authenticated: true,
+              cancelToken: cancelToken,
+            ),
           ),
         ),
       );
@@ -750,18 +813,20 @@ final class HttpAuthRepository
     String? backAssetId,
     required bool consent,
     CancelToken? cancelToken,
-  }) async => _verification(
-    VerificationDto.fromJson(
-      await _request(
-        'POST',
-        '/v1/me/verification',
-        authenticated: true,
-        cancelToken: cancelToken,
-        data: VerificationInput(
-          frontAssetId: frontAssetId,
-          backAssetId: backAssetId,
-          consent: consent,
-        ).toJson(),
+  }) => _profileChange(
+    () async => _verification(
+      VerificationDto.fromJson(
+        await _request(
+          'POST',
+          '/v1/me/verification',
+          authenticated: true,
+          cancelToken: cancelToken,
+          data: VerificationInput(
+            frontAssetId: frontAssetId,
+            backAssetId: backAssetId,
+            consent: consent,
+          ).toJson(),
+        ),
       ),
     ),
   );
@@ -925,6 +990,7 @@ final class HttpAuthRepository
       throw const AuthFailure('cancelled');
     }
     final generation = ++_generation;
+    invalidateOwnProfile();
     _coordinator.replace(null);
     final session = await _accept(SessionDto.fromJson(value), generation);
     if (cancelToken?.isCancelled == true) {
@@ -941,6 +1007,7 @@ final class HttpAuthRepository
     CancelToken? cancelToken,
   }) async {
     final generation = ++_generation;
+    invalidateOwnProfile();
     _coordinator.replace(null);
     return _accept(
       SessionDto.fromJson(
@@ -1081,6 +1148,7 @@ final class HttpAuthRepository
   @override
   Future<void> close() async {
     _generation++;
+    _profileMemory.dispose();
     _coordinator.replace(null);
     _public.close(force: true);
     _private.close(force: true);

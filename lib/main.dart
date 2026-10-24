@@ -250,6 +250,7 @@ class _PathsAppState extends State<PathsApp> {
           if (signal.type == 'conversation.removed' ||
               signal.type == 'profile.access_changed' ||
               signal.type == 'reconnected') {
+            profiles.invalidateOwnProfile();
             unawaited(media?.purge());
             safety?.invalidate();
             if (signal.type != 'reconnected') realtime?.refresh();

@@ -60,7 +60,7 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
     lifecycle = AppLifecycleListener(
       onResume: () {
         if (visible != false && !cubit.state.loading) {
-          unawaited(cubit.load());
+          unawaited(cubit.load(force: true));
         }
       },
     );
@@ -126,7 +126,7 @@ class _PreviewOwnerState extends State<_PreviewOwner> {
         }
         return ProfileSurface(
           profile: profile,
-          onRefresh: cubit.load,
+          onRefresh: () => cubit.load(force: true),
           menu: ProfileSettingsButton(onPressed: widget.onSettings),
         );
       },

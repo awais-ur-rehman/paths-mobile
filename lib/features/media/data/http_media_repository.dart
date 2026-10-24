@@ -7,6 +7,7 @@ import '../../../core/network/shared_read_queue.dart';
 import '../../../core/network/authenticated_media_api.dart';
 import '../../../core/network/generated/api_contract.dart';
 import '../../auth/domain/auth_models.dart';
+import '../../profile/domain/profile_repository.dart';
 import '../domain/media_repository.dart';
 
 class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
@@ -30,6 +31,7 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
     copy: Uint8List.fromList,
     release: (bytes) => bytes.fillRange(0, bytes.length, 0),
   );
+  ({int active, int queued, int peak, int started, int joined, int cancelled})
   get readStatistics => _reads.statistics;
   @override
   String? get accountId => api.accountId;
@@ -108,7 +110,16 @@ class HttpMediaRepository extends ChangeNotifier implements MediaRepository {
       _readAccount = account;
     }
     if (account == null) throw const AuthFailure('cancelled');
-    return _reads.read((account, id, thumbnail), cancelToken: cancelToken);
+    return _reads.read(
+      (account, id, thumbnail),
+      cancelToken: cancelToken,
+      priority:
+          api is OwnProfileSnapshotRepository &&
+          (api as OwnProfileSnapshotRepository)
+                  .cachedOwnProfile
+                  ?.avatarAssetId ==
+              id,
+    );
   }
 
   Future<void> purge() async {

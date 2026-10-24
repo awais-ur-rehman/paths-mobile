@@ -54,3 +54,10 @@ abstract interface class ProfileSummaryRepository {
     CancelToken? cancelToken,
   });
 }
+
+/// Optional own-account memory optimization; never used to authorize setup.
+abstract interface class OwnProfileSnapshotRepository {
+  ProfileSummary? get cachedOwnProfile;
+  Future<ProfileSummary> refreshOwnProfile({CancelToken? cancelToken});
+  void invalidateOwnProfile();
+}
