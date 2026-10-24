@@ -1003,7 +1003,7 @@ Kernel76,165,824 bytes, SHA256 `431dfbff8dcb3beb4d295e430c5b07c77d44d9495cd4014a
 
 ## Chat list and thread redesign — 24 October 2026
 
-Current task: reference-led chat UI and bounded search/paging, implemented on `feature/logo-refresh`. API contract **1.13.0**. Source: `cd4fa86` (original controls/custom menu), `53f6c2c` (state/repository/screens/tests). Backend source `2324629`, evidence `e1daada` on `feature/chat-list-search`; admin contract `7525c9d` on `feature/chat-api-contract`. Main unchanged; owner acceptance and GitHub publication are pending.
+Current task: reference-led chat UI and bounded search/paging, implemented on `feature/logo-refresh`. API contract **1.13.0**. Source: `cd4fa86` (original controls/custom menu), `53f6c2c` (state/repository/screens/tests). Backend source `2324629`, evidence `e1daada` on `feature/chat-list-search`; admin contract `7525c9d` on `feature/chat-api-contract`. Main unchanged; owner Android acceptance remains pending. All changed feature branches have been pushed.
 
 | Applicable checklist item | Status | Evidence |
 | --- | --- | --- |
@@ -1019,7 +1019,9 @@ Current task: reference-led chat UI and bounded search/paging, implemented on `f
 | Backend/admin handoff | Verified locally | Backend219 clean-source integration/56 unit/13 feasibility/4 metric tests, lint/build; admin lint/build/8 tests. Local API/worker rebuilt offline; authenticated search/paging/detail/peer and3 R2 avatars passed; temporary session removed |
 | Physical Android acceptance | Awaiting device test | docs/CHAT_UI_DEVICE_TESTS.md; exact source53f6c2c; no device/emulator operated |
 | iOS runtime/build | Deferred by owner | No iOS app build. Broad optional tooling discovery initially ran14 tests successfully plus a pre-existing Swift policy compiler probe that exited1; it was excluded from the separate14-test Android/tooling run and not reported as passed |
-| New GitHub push/draft PR update | Blocked external access | GitHub authentication present; repeated authorized backend push attempts failed Could not resolve host:github.com. Current mobile PR16 stays draft; backend/admin companion publication and remote CI remain pending |
+| GitHub publication | Verified; acceptance pending | Transient github.com DNS failure recovered. MobilePR16, backendPR19 and adminPR17 are pushed/draft into development; remote CI is tracked separately from local checks |
 | Load/capacity qualification | Pending existing gate | No load rerun for this UI/API change. Prior Task13 encounter latency/native baseline/soak gates remain open; this is not a capacity release |
 
 Test notes: the first design test failed against the old header; search/API and revision-cursor failures were observed before fixes. One old send test required a frame after entering text because the new button correctly starts disabled. A supplemental earlier-page widget test's assertions passed but its fake-clock teardown stalled; placing stream disposal in the test's real async zone resolved it, then the full348-test suite passed. Visual fixtures use local fixed times converted to UTC for time-zone-independent rendering; no generated people or test fixtures are shown as real users. Existing Kotlin/Gradle deprecation warnings remain; no dependency/SDK/image download occurred.
+
+Publication: mobile https://github.com/awais-ur-rehman/paths-mobile/pull/16; backend https://github.com/awais-ur-rehman/paths-backend/pull/19; admin https://github.com/awais-ur-rehman/paths-admin/pull/17. The final cached API image removes old branch compiler files before copying current dist; its first immediate smoke encountered restart502, then readiness, search/detail/paging and3 R2 JPEG reads passed after startup. Main remains unchanged; no merges.

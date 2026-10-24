@@ -1,6 +1,6 @@
 # Chat redesign Android test
 
-Branch: `feature/logo-refresh`; API branch: `feature/chat-list-search`; contract **1.13.0**. Both remain draft until owner acceptance. Main unchanged. Exact source commits and APK evidence are recorded in IMPLEMENTATION_STATUS.md.
+Branch: `feature/logo-refresh`; API branch: `feature/chat-list-search`; contract **1.13.0**. Both remain draft until owner acceptance. Main unchanged. Source commit: `53f6c2c` (chat), with `cd4fa86` (custom controls). Exact APK evidence is recorded in IMPLEMENTATION_STATUS.md. Draft PRs: mobile16, backend19, admin17.
 
 ## Prepared local setup
 
