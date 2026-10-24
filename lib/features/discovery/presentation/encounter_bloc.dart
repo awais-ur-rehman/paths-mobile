@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,6 +18,15 @@ final class InvalidateEncounters extends EncounterEvent {
   const InvalidateEncounters();
 }
 
+final class RetryEncounters extends EncounterEvent {
+  const RetryEncounters();
+}
+
+final class EncounterSearchChanged extends EncounterEvent {
+  const EncounterSearchChanged(this.query);
+  final String query;
+}
+
 final class MoreEncounters extends EncounterEvent {
   const MoreEncounters();
 }
@@ -29,6 +40,8 @@ final class EncounterFilterChanged extends EncounterEvent {
 final class EncounterState {
   EncounterState({
     this.items = const [],
+    this.query = '',
+    this.retryMore = false,
     this.mode = EncounterMode.recent,
     this.radiusKm = 1,
     this.loading = false,
@@ -40,6 +53,8 @@ final class EncounterState {
     this.centerLongitude,
   });
   final List<Encounter> items;
+  final String query;
+  final bool retryMore;
   final EncounterMode mode;
   final double radiusKm;
   final bool loading, loadingMore, nearbyAvailable;
@@ -50,20 +65,54 @@ final class EncounterState {
 
 class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
   EncounterBloc(this.repository) : super(EncounterState()) {
+    on<EncounterSearchChanged>((event, emit) {
+      final query = event.query.trim();
+      if (query == state.query) return;
+      _generation++;
+      _cancel?.cancel();
+      _searchTimer?.cancel();
+      emit(
+        EncounterState(
+          mode: state.mode,
+          radiusKm: state.radiusKm,
+          query: query,
+          loading: true,
+        ),
+      );
+      _searchTimer = Timer(
+        const Duration(milliseconds: 300),
+        () => add(const RefreshEncounters()),
+      );
+    });
+    on<RetryEncounters>((event, emit) => _load(emit, more: state.retryMore));
     on<InvalidateEncounters>((event, emit) async {
-      emit(EncounterState(mode: state.mode, radiusKm: state.radiusKm));
+      emit(
+        EncounterState(
+          mode: state.mode,
+          radiusKm: state.radiusKm,
+          query: state.query,
+        ),
+      );
       await _load(emit);
     });
     on<RefreshEncounters>((event, emit) => _load(emit));
     on<MoreEncounters>((event, emit) => _load(emit, more: true));
     on<EncounterFilterChanged>((event, emit) async {
       if (!encounterRadii.contains(event.radiusKm)) return;
-      emit(EncounterState(mode: event.mode, radiusKm: event.radiusKm));
+      _searchTimer?.cancel();
+      emit(
+        EncounterState(
+          mode: event.mode,
+          radiusKm: event.radiusKm,
+          query: state.query,
+        ),
+      );
       await _load(emit);
     });
   }
   final EncounterRepository repository;
   CancelToken? _cancel;
+  Timer? _searchTimer;
   int _generation = 0;
   String? _account;
   Future<void> _load(Emitter<EncounterState> emit, {bool more = false}) async {
@@ -71,10 +120,15 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
         (state.loading || state.loadingMore || state.nextCursor == null)) {
       return;
     }
+    _searchTimer?.cancel();
     final account = repository.discoveryAccountId;
     final before = account == _account
         ? state
-        : EncounterState(mode: state.mode, radiusKm: state.radiusKm);
+        : EncounterState(
+            mode: state.mode,
+            radiusKm: state.radiusKm,
+            query: state.query,
+          );
     _account = account;
     final generation = ++_generation;
     _cancel?.cancel();
@@ -84,6 +138,7 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
         items: before.items,
         mode: before.mode,
         radiusKm: before.radiusKm,
+        query: before.query,
         loading: !more,
         loadingMore: more,
         nextCursor: before.nextCursor,
@@ -95,7 +150,13 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
     bool current() {
       if (isClosed || emit.isDone || generation != _generation) return false;
       if (account != repository.discoveryAccountId) {
-        emit(EncounterState(mode: before.mode, radiusKm: before.radiusKm));
+        emit(
+          EncounterState(
+            mode: before.mode,
+            radiusKm: before.radiusKm,
+            query: before.query,
+          ),
+        );
         return false;
       }
       return true;
@@ -107,6 +168,7 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
         repository.loadEncounters(
           mode: before.mode,
           radiusKm: before.radiusKm,
+          search: before.query,
           cursor: more ? before.nextCursor : null,
           cancelToken: token,
         ),
@@ -125,6 +187,7 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
           items: List.unmodifiable(unique.values),
           mode: before.mode,
           radiusKm: before.radiusKm,
+          query: before.query,
           nextCursor: page.nextCursor,
           nearbyAvailable: page.nearbyAvailable,
           centerLatitude: more ? before.centerLatitude : page.centerLatitude,
@@ -142,7 +205,10 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
           items: failure.offline ? before.items : const [],
           mode: before.mode,
           radiusKm: before.radiusKm,
+          query: before.query,
           error: failure,
+          nextCursor: failure.offline ? before.nextCursor : null,
+          retryMore: more && failure.offline && before.nextCursor != null,
           nearbyAvailable: before.nearbyAvailable,
           centerLatitude: before.centerLatitude,
           centerLongitude: before.centerLongitude,
@@ -154,6 +220,7 @@ class EncounterBloc extends Bloc<EncounterEvent, EncounterState> {
   @override
   Future<void> close() {
     _generation++;
+    _searchTimer?.cancel();
     _cancel?.cancel();
     return super.close();
   }

@@ -651,6 +651,7 @@ final class HttpAuthRepository
   Future<EncounterPage> loadEncounters({
     EncounterMode mode = EncounterMode.recent,
     double radiusKm = 1,
+    String search = '',
     String? cursor,
     CancelToken? cancelToken,
   }) async {
@@ -661,6 +662,8 @@ final class HttpAuthRepository
       path: '/v1/encounters',
       queryParameters: {
         'mode': mode.name,
+        'limit': '50',
+        if (search.trim().isNotEmpty) 'search': search.trim(),
         'radiusKm': radiusKm.toString(),
         'cursor': ?cursor,
       },

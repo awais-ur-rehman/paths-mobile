@@ -67,6 +67,7 @@ abstract interface class EncounterRepository {
   Future<EncounterPage> loadEncounters({
     EncounterMode mode = EncounterMode.recent,
     double radiusKm = 1,
+    String search = '',
     String? cursor,
     CancelToken? cancelToken,
   });

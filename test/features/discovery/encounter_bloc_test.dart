@@ -33,8 +33,15 @@ EncounterPage page(List<String> ids, {String? cursor, bool nearby = true}) =>
     );
 
 class PendingEncounterRequest {
-  PendingEncounterRequest(this.mode, this.radius, this.cursor, this.cancel);
+  PendingEncounterRequest(
+    this.mode,
+    this.radius,
+    this.cursor,
+    this.cancel, {
+    this.search = '',
+  });
   final EncounterMode mode;
+  final String search;
   final double radius;
   final String? cursor;
   final CancelToken? cancel;
@@ -49,6 +56,7 @@ class FixtureEncounters implements EncounterRepository {
   Future<EncounterPage> loadEncounters({
     EncounterMode mode = EncounterMode.recent,
     double radiusKm = 1,
+    String search = '',
     String? cursor,
     CancelToken? cancelToken,
   }) {
@@ -57,6 +65,7 @@ class FixtureEncounters implements EncounterRepository {
       radiusKm,
       cursor,
       cancelToken,
+      search: search,
     );
     requests.add(request);
     return request.result.future;
@@ -65,6 +74,49 @@ class FixtureEncounters implements EncounterRepository {
 
 Future<void> settle() => Future<void>.delayed(Duration.zero);
 void main() {
+  test(
+    'map search debounces, cancels stale results and binds filters/pages/retry',
+    () async {
+      final repo = FixtureEncounters(), bloc = EncounterBloc(repo);
+      bloc.add(const RefreshEncounters());
+      await settle();
+      final old = repo.requests.single;
+      bloc.add(const EncounterSearchChanged('Al'));
+      bloc.add(const EncounterSearchChanged('Alex'));
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      expect(repo.requests, hasLength(2));
+      expect(repo.requests.last.search, 'Alex');
+      old.result.complete(page(['stale']));
+      repo.requests.last.result.complete(page(['new'], cursor: 'next'));
+      await settle();
+      expect(bloc.state.items.single.userId, 'new');
+      bloc.add(const MoreEncounters());
+      await settle();
+      expect(repo.requests.last.search, 'Alex');
+      expect(repo.requests.last.cursor, 'next');
+      repo.requests.last.result.completeError(const AuthFailure('offline'));
+      await settle();
+      bloc.add(const RetryEncounters());
+      await settle();
+      expect(repo.requests.last.cursor, 'next');
+      repo.requests.last.result.complete(page(['new', 'more']));
+      await settle();
+      expect(bloc.state.items, hasLength(2));
+      bloc.add(const EncounterFilterChanged(EncounterMode.nearby, radiusKm: 3));
+      await settle();
+      expect(repo.requests.last.search, 'Alex');
+      expect(repo.requests.last.cursor, isNull);
+      repo.requests.last.result.complete(page([]));
+      await settle();
+      bloc.add(const EncounterSearchChanged('cancelled'));
+      await settle();
+      final count = repo.requests.length;
+      await bloc.close();
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      expect(repo.requests, hasLength(count));
+    },
+  );
+
   test(
     'an account change during refresh clears the previous account cards',
     () async {
