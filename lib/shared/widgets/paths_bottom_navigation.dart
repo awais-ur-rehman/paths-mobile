@@ -97,7 +97,7 @@ class PathsBottomNavigationBar extends StatelessWidget {
                   Positioned.fill(
                     top: camera ? 28 : 0,
                     child: Material(
-                      color: Colors.white,
+                      color: const Color(0xFFF5F5F5),
                       elevation: 8,
                       shadowColor: const Color(0x24101418),
                       shape: _NavigationShape(notched: camera),

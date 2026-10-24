@@ -155,3 +155,8 @@ google-round.png SHA256: `b653ff86df9554970c3c88a57a51b208439ee9bc1a2b9944e4bbd1
 - License/attribution: original project artwork, owned with the Paths project; no external license or attribution requirement.
 - Editable sources: `assets/icons/{home,likes,chats,profile,plus}.svg`. Exporter: `tools/export_icons.py`; shipped vector geometry: `lib/shared/widgets/generated/paths_icon_geometry.dart`; runtime consumer: `PathsIcon`. No raster scaling or SVG runtime dependency.
 - Guidance: `docs/design/ICONS.md`. Generated source renders at28px (Plus26px), using runtime ink/blue/white.320/390px navigation golden renders inspected; physical Android appearance remains owner-tested.
+
+
+## Verification badge vectors — 24 October 2026
+
+Original project artwork: `assets/icons/verified.svg` and `assets/icons/unverified.svg`, authored directly with the navigation family's24-unit grid,1.8-unit rounded strokes and shield outline. The check/minus distinguish approved/unverified visually; text retains exact approved/pending/declined/none meaning. No outside assets or attribution requirement. Exported through `tools/export_icons.py` into `generated/paths_icon_geometry.dart`, rendered by PathsIcon inside VerificationBadge at20px. Editable masters retained. Light and dark-profile fixtures: `test/shared/goldens/verification-badges.png`; profile/navigation snapshots inspected. Native phone appearance remains pending.

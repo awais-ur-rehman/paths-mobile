@@ -1,6 +1,6 @@
 # Paths icon family
 
-The navigation uses original editable SVG masters in `assets/icons/`: Home, Likes, Chats, Profile and Plus. Keep future icons in this family instead of mixing platform glyphs with these controls.
+The navigation uses original editable SVG masters in `assets/icons/`: Home, Likes, Chats, Profile, Plus, Verified and Unverified. Keep future icons in this family instead of mixing platform glyphs with these controls.
 
 - Canvas:24×24. Optical content sits between3 and21; leave room for rounded stroke caps.
 - Stroke:1.8 units, rounded caps/joins, no fills. Use smooth curves and simple silhouettes; internal detail must remain legible at24px.
@@ -11,3 +11,5 @@ The navigation uses original editable SVG masters in `assets/icons/`: Home, Like
 - Use `PathsIcon(PathsIconName.chats, color: ..., size:28)` within an accessible control. The icon itself is decorative; the control owns its label/semantics.
 
 New icon checklist: draw an original master, extend the exporter's NAMES list, regenerate, inspect24/28px alongside this set, then verify the real control's hit area/contrast and semantics. No third-party icon source or attribution applies to this original family.
+
+Verification badges use the same rounded1.8-unit stroke: a shield with check for approved, a shield with minus for unverified/pending/declined. Only approved shows Verified; pending/declined retain explicit status labels. The minus is neutral and does not claim that the member is unsafe. Profiles show the badge on both approved and unverified states; the optional submission form omits the redundant Unverified label.

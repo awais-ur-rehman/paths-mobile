@@ -126,22 +126,21 @@ class ProfileSurface extends StatelessWidget {
                                 fontSize: 17,
                               ),
                             ),
-                            if (profile.verificationStatus != 'none')
-                              Center(
-                                child: Theme(
-                                  data: Theme.of(context).copyWith(
-                                    textButtonTheme: TextButtonThemeData(
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.white,
-                                        disabledForegroundColor: Colors.white70,
-                                      ),
+                            Center(
+                              child: Theme(
+                                data: Theme.of(context).copyWith(
+                                  textButtonTheme: TextButtonThemeData(
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      disabledForegroundColor: Colors.white70,
                                     ),
                                   ),
-                                  child: VerificationBadge(
-                                    status: profile.verificationStatus,
-                                  ),
+                                ),
+                                child: VerificationBadge(
+                                  status: profile.verificationStatus,
                                 ),
                               ),
+                            ),
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,

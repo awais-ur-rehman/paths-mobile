@@ -115,7 +115,7 @@ void main() {
         const Offset(0, 350),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Document reviewed'), findsOneWidget);
+      expect(find.text('Verified'), findsOneWidget);
       expect(find.text('Refresh status'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
@@ -168,7 +168,7 @@ void main() {
         home: const Scaffold(body: VerificationBadge(status: 'approved')),
       ),
     );
-    await tester.tap(find.text('Document reviewed'));
+    await tester.tap(find.text('Verified'));
     await tester.pumpAndSettle();
     expect(find.text('Document reviewed by Paths'), findsOneWidget);
     expect(find.textContaining('not a government'), findsOneWidget);
