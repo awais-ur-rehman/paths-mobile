@@ -2,6 +2,16 @@
 
 Branch: `feature/logo-refresh`. Code: `f85d0b0`, with native bridge `c598410`. API remains1.15.0; no backend/admin changes. PR16 stays draft and main is unchanged.
 
+## Follow-up: phone connectivity restored, map confirmed visible
+
+The owner's native Android log reports `Failed to load source openmaptiles: Unable to resolve host "tiles.openfreemap.org": No address associated with hostname`. Screenshots show attribution and projected avatars, confirming a created native view with an unavailable basemap source. The prior TextureView change did not resolve this device report; do not present it as a confirmed fix for the white basemap.
+
+`adb reverse tcp:8080 tcp:8080` forwards the local API only. It does not supply internet/DNS for the separate public map provider. Confirm phone Wi-Fi/mobile data and open `https://tiles.openfreemap.org/planet` in the phone browser. JSON/text confirms reachability; a browser DNS error still requires phone/network resolution. Temporarily testing without a custom Private DNS/VPN/ad blocker can isolate network filtering. Restore preferred settings after the test. Reopen Home after connectivity works; the native SDK retries source loading. No app permission or app-data reset is needed for this DNS error.
+
+Read-only backend evidence at investigation time: sharing not paused,1active lease,0current samples in the last15minutes; no coordinates/IDs/tokens inspected or printed. Missing GPS/upload evidence is a separate pending check and is not proved by OS precise permission or the Background sharing on label. After connectivity is restored, acquire a fresh fix outdoors if needed and test Nearby/recenter; do not infer battery/background reliability from this short check.
+
+Known UI limitation: style-loaded/working projection does not prove tile-source availability, so native source DNS failure can leave the light background behind avatars. This report does not claim the generic style timeout catches source-level failures. No further rendering/permission changes were made without evidence; The owner subsequently confirmed the phone was not connected to Wi-Fi and that connecting it made the map visible. This resolves the reported blank basemap through connectivity recovery, without another application change. A follow-up read-only query confirms2current samples now received by the backend after connectivity restoration; no coordinates inspected. Recenter/Nearby/background UI acceptance remains a separate check.
+
 ## Findings and changes
 
 - Confirmed: Nearby retained its unavailable response after permission/lease enable. No refresh was triggered when the first sample reached the server. Native Android/iOS now emit a nonempty upload-acknowledgment event scoped to device session/consent epoch; Dart rejects old-session, old-epoch and post-pause events. Active Home refreshes unavailable Nearby after acknowledgment, preserving the selected filter/query and existing server eligibility.

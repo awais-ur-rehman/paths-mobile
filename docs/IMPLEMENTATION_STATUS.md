@@ -1,5 +1,14 @@
 # Implementation status
 
+## Current result — phone connectivity restored
+
+Owner confirmed the phone was not connected to Wi-Fi; connecting it restored the basemap. Native logs had shown `tiles.openfreemap.org` DNS resolution failure while view/attribution/avatars remained present. The blank basemap is resolved by restoring phone connectivity; the previous TextureView change is not established as its fix. No further application changes made.
+
+- **Verified evidence:** owner-supplied Android source-load error; read-only backend aggregate shows sharing enabled,1active lease and0recent current samples. No coordinates, IDs, tokens or private messages logged.
+- **Owner verified:** map visible after phone Wi-Fi connection. USB API port forwarding does not provide public map internet. See docs/LOCATION_MAP_RETEST.md.
+- **Backend recovery verified:** after connectivity restoration,2current samples reached the active lease (counts only). **Pending separately:** owner Nearby/recenter and background notification evidence. Current UI's style-ready callback does not detect all source-level network failures; empty source background is a known unresolved error-state limitation. No claim of completed phone acceptance or release readiness.
+
+
 ## Current fix — location and blank Android map, 24 October 2026
 
 **Implemented and locally verified; awaiting owner phone retest.** Branch `feature/logo-refresh`, source `f85d0b0` and bridge `c598410`; draft PR16; API1.15.0/main unchanged. Backend/admin unchanged.
