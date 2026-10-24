@@ -24,6 +24,8 @@ enum PathsIconName {
   trash,
   chevronRight,
   review,
+  locate,
+  fit,
 }
 
 const pathsIconStrokeWidth = 1.8;
@@ -285,4 +287,42 @@ final pathsIconGeometry = <PathsIconName, Path>{
     ..lineTo(16, 15)
     ..moveTo(8, 18)
     ..lineTo(13, 18),
+  PathsIconName.locate: Path()
+    ..moveTo(12, 6)
+    ..cubicTo(15.314, 6, 18, 8.686, 18, 12)
+    ..cubicTo(18, 15.314, 15.314, 18, 12, 18)
+    ..cubicTo(8.686, 18, 6, 15.314, 6, 12)
+    ..cubicTo(6, 8.686, 8.686, 6, 12, 6)
+    ..close()
+    ..moveTo(12, 2)
+    ..lineTo(12, 7)
+    ..moveTo(12, 17)
+    ..lineTo(12, 22)
+    ..moveTo(2, 12)
+    ..lineTo(7, 12)
+    ..moveTo(17, 12)
+    ..lineTo(22, 12),
+  PathsIconName.fit: Path()
+    ..moveTo(8, 3)
+    ..lineTo(4, 3)
+    ..cubicTo(3.448, 3, 3, 3.448, 3, 4)
+    ..lineTo(3, 8)
+    ..moveTo(16, 3)
+    ..lineTo(20, 3)
+    ..cubicTo(20.552, 3, 21, 3.448, 21, 4)
+    ..lineTo(21, 8)
+    ..moveTo(21, 16)
+    ..lineTo(21, 20)
+    ..cubicTo(21, 20.552, 20.552, 21, 20, 21)
+    ..lineTo(16, 21)
+    ..moveTo(8, 21)
+    ..lineTo(4, 21)
+    ..cubicTo(3.448, 21, 3, 20.552, 3, 20)
+    ..lineTo(3, 16)
+    ..moveTo(9, 12)
+    ..cubicTo(9, 10.343, 10.343, 9, 12, 9)
+    ..cubicTo(13.657, 9, 15, 10.343, 15, 12)
+    ..cubicTo(15, 13.657, 13.657, 15, 12, 15)
+    ..cubicTo(10.343, 15, 9, 13.657, 9, 12)
+    ..close(),
 };

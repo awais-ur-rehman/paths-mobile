@@ -17,11 +17,15 @@ class RelationshipControls extends StatefulWidget {
     required this.repository,
     required this.target,
     this.onChat,
+    this.onLightSurface = false,
+    this.useRootNavigator = true,
     super.key,
   });
   final RelationshipRepository repository;
   final String target;
   final VoidCallback? onChat;
+  final bool onLightSurface;
+  final bool useRootNavigator;
   @override
   State<RelationshipControls> createState() => _ControlsState();
 }
@@ -43,6 +47,7 @@ class _ControlsState extends State<RelationshipControls> {
   Future<void> _confirm(String action, String title) async {
     final confirmed = await showDialog<bool>(
       context: context,
+      useRootNavigator: widget.useRootNavigator,
       builder: (context) => AlertDialog(
         title: Text(title),
         actions: [
@@ -88,18 +93,32 @@ class _ControlsState extends State<RelationshipControls> {
         data: Theme.of(context).copyWith(
           filledButtonTheme: FilledButtonThemeData(
             style: FilledButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.black,
+              backgroundColor: widget.onLightSurface
+                  ? const Color(0xFF050708)
+                  : Colors.white,
+              foregroundColor: widget.onLightSurface
+                  ? Colors.white
+                  : Colors.black,
             ),
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white54),
+              foregroundColor: widget.onLightSurface
+                  ? const Color(0xFF101418)
+                  : Colors.white,
+              side: BorderSide(
+                color: widget.onLightSurface
+                    ? const Color(0xFFD8E4EC)
+                    : Colors.white54,
+              ),
             ),
           ),
           textButtonTheme: TextButtonThemeData(
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+            style: TextButton.styleFrom(
+              foregroundColor: widget.onLightSurface
+                  ? const Color(0xFF0B5AA1)
+                  : Colors.white,
+            ),
           ),
         ),
         child: Column(
@@ -125,7 +144,9 @@ class _ControlsState extends State<RelationshipControls> {
                               'Send a connection request?',
                             )
                           : null,
-                      child: const Text('Connect'),
+                      child: Text(
+                        widget.onLightSurface ? 'Send request' : 'Connect',
+                      ),
                     ),
                     'incoming' => FilledButton(
                       onPressed: state.busy ? null : () => cubit.act('accept'),
@@ -151,9 +172,11 @@ class _ControlsState extends State<RelationshipControls> {
                         const SizedBox(width: 8),
                         IconButton(
                           tooltip: 'Connection options',
-                          icon: const PathsIcon(
+                          icon: PathsIcon(
                             PathsIconName.more,
-                            color: Colors.white,
+                            color: widget.onLightSurface
+                                ? const Color(0xFF101418)
+                                : Colors.white,
                           ),
                           onPressed: state.busy
                               ? null
@@ -189,11 +212,15 @@ class _ControlsState extends State<RelationshipControls> {
                           : () => _confirm('disconnect', 'Disconnect?'),
                       child: const Text('Disconnect'),
                     ),
-                    'cooldown' => const Padding(
+                    'cooldown' => Padding(
                       padding: EdgeInsets.all(12),
                       child: Text(
                         'Try connecting later',
-                        style: TextStyle(color: Colors.white70),
+                        style: TextStyle(
+                          color: widget.onLightSurface
+                              ? const Color(0xFF52616D)
+                              : Colors.white70,
+                        ),
                       ),
                     ),
                     _ => const SizedBox.shrink(),

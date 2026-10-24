@@ -1,3 +1,7 @@
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+import 'map_platform_fixture.dart';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +16,9 @@ import 'encounter_repository_test.dart' show EncounterAdapter;
 import 'location_sync_service_test.dart';
 
 void main() {
+  final originalMapFactory = MapLibrePlatform.createInstance;
+  setUp(() => MapLibrePlatform.createInstance = () => TestMapPlatform());
+  tearDown(() => MapLibrePlatform.createInstance = originalMapFactory);
   testWidgets(
     'adult Home/profile stacks preserve filters and signout removes discovery',
     (tester) async {
@@ -61,7 +68,7 @@ void main() {
       expect(find.byTooltip('Home'), findsOneWidget);
       await tester.tap(find.byTooltip('Home'));
       await tester.pumpAndSettle();
-      expect(find.text('Crossed paths'), findsOneWidget);
+      expect(find.byType(MapLibreMap), findsOneWidget);
       await tap(tester, 'Nearby');
       expect(adapter.discovery!.uri.queryParameters['mode'], 'nearby');
       await tester.tap(find.byTooltip('Profile'));
@@ -78,7 +85,7 @@ void main() {
       router.go('/home');
       await tester.pumpAndSettle();
       expect(find.text('Log in'), findsOneWidget);
-      expect(find.text('Crossed paths'), findsNothing);
+      expect(find.byType(MapLibreMap), findsNothing);
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
       await sync.close();

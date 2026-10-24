@@ -1,3 +1,6 @@
+import 'package:maplibre_gl/maplibre_gl.dart';
+
+import '../discovery/map_platform_fixture.dart';
 import 'setup_resume_test.dart' show Progress;
 
 import 'dart:convert';
@@ -242,6 +245,9 @@ Future<void> stop(
 }
 
 void main() {
+  final originalMapFactory = MapLibrePlatform.createInstance;
+  setUp(() => MapLibrePlatform.createInstance = () => TestMapPlatform());
+  tearDown(() => MapLibrePlatform.createInstance = originalMapFactory);
   testWidgets('Chats tab remains reachable after completed setup', (
     tester,
   ) async {

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart' show BuildContext;
+
 import '../features/auth/presentation/identity_settings_screen.dart';
 import '../features/settings/presentation/profile_settings_screen.dart';
 import '../shared/widgets/paths_icon.dart';
@@ -106,6 +108,28 @@ GoRouter createAuthRouter(
     SetupDestination.permissions => '/setup/permissions?onboarding=1',
     SetupDestination.home => encounters == null ? '/profile' : '/home',
   };
+  Future<void> openPeerChat(BuildContext context, String peer) async {
+    final repository = chats;
+    if (repository == null) return;
+    try {
+      final account = repository.accountId;
+      final conversations = await repository.conversations(peerId: peer);
+      if (!context.mounted || repository.accountId != account) return;
+      final item = conversations.items
+          .where((c) => c.peerId == peer && c.canSend)
+          .firstOrNull;
+      if (item == null) {
+        PathsToast.show(context, 'Conversation unavailable');
+        return;
+      }
+      await context.push('/chats/${item.id}', extra: item);
+    } catch (_) {
+      if (context.mounted) {
+        PathsToast.show(context, 'Could not open chat. Try again.');
+      }
+    }
+  }
+
   final profileRoute = GoRoute(
     path: '/profile',
     builder: (context, route) => ProfilePreviewScreen(
@@ -453,6 +477,9 @@ GoRouter createAuthRouter(
                   builder: (context, _) => HomeScreen(
                     repository: encounters,
                     relationships: relationships,
+                    onChat: chats == null
+                        ? null
+                        : (id) => openPeerChat(context, id),
                     locations: locations,
                     onProfile: (id) async {
                       await context.push(
@@ -549,33 +576,7 @@ GoRouter createAuthRouter(
             relationships: relationships,
             onChat: chats == null
                 ? null
-                : () async {
-                    try {
-                      final peer = route.pathParameters['id'];
-                      final account = chats.accountId;
-                      final conversations = await chats.conversations(
-                        peerId: peer,
-                      );
-                      if (!context.mounted || chats.accountId != account) {
-                        return;
-                      }
-                      final item = conversations.items
-                          .where((c) => c.peerId == peer && c.canSend)
-                          .firstOrNull;
-                      if (item == null) {
-                        PathsToast.show(context, 'Conversation unavailable');
-                        return;
-                      }
-                      await context.push('/chats/${item.id}', extra: item);
-                    } catch (_) {
-                      if (context.mounted) {
-                        PathsToast.show(
-                          context,
-                          'Could not open chat. Try again.',
-                        );
-                      }
-                    }
-                  },
+                : () => openPeerChat(context, route.pathParameters['id']!),
             onOpened:
                 notifications == null ||
                     route.uri.queryParameters['notification'] == null
