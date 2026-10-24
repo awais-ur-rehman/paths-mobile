@@ -6,7 +6,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
-NAMES = ('home', 'likes', 'chats', 'profile', 'plus', 'verified', 'unverified')
+NAMES = ('home', 'likes', 'chats', 'profile', 'plus', 'verified', 'unverified', 'search', 'back', 'send', 'more')
 COMMANDS = {'M': ('moveTo', 2), 'L': ('lineTo', 2),
             'C': ('cubicTo', 6), 'Q': ('quadraticBezierTo', 4), 'Z': ('close', 0)}
 

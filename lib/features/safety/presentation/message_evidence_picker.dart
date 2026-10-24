@@ -10,6 +10,8 @@ import '../../auth/domain/auth_models.dart';
 import '../domain/safety_repository.dart';
 import 'safety_scope.dart';
 import 'report_sheet.dart';
+import '../../../shared/widgets/paths_icon.dart';
+import '../../../shared/widgets/paths_options_menu.dart';
 
 Future<void> chooseMessageReport(
   BuildContext context,
@@ -49,31 +51,36 @@ class MessageSafetyMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafetyScope.maybeOf(context) == null
       ? const SizedBox.shrink()
-      : PopupMenuButton<String>(
+      : IconButton(
           tooltip: 'Report options',
-          icon: const Icon(Icons.more_horiz),
-          onSelected: (value) {
+          icon: const PathsIcon(PathsIconName.more, size: 24),
+          onPressed: () async {
+            final value = await showPathsOptions(context, const [
+              PathsMenuOption(
+                'profile',
+                'Report member',
+                PathsIconName.profile,
+              ),
+              PathsMenuOption(
+                'message',
+                'Report a message',
+                PathsIconName.chats,
+              ),
+            ]);
+            if (!context.mounted || value == null) return;
             if (value == 'message') {
-              unawaited(
-                chooseMessageReport(
-                  context,
-                  subject,
-                  alreadyBlocked: alreadyBlocked,
-                ),
+              await chooseMessageReport(
+                context,
+                subject,
+                alreadyBlocked: alreadyBlocked,
               );
             } else {
-              unawaited(
-                showSafetyActions(
-                  context,
-                  SafetyTarget(subject, alreadyBlocked: alreadyBlocked),
-                ),
+              await showSafetyActions(
+                context,
+                SafetyTarget(subject, alreadyBlocked: alreadyBlocked),
               );
             }
           },
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'profile', child: Text('Report member')),
-            PopupMenuItem(value: 'message', child: Text('Report a message')),
-          ],
         );
 }
 
